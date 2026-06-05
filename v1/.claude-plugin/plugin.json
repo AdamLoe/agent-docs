@@ -1,0 +1,6 @@
+{
+  "name": "agent-docs",
+  "version": "1.0.0",
+  "description": "Portable LLM-documentation system (agent-docs v1): the doc-authoring rules + the maintenance/chat commands (fresh-chat, fresh-orchestrator, wrap-up, clear-plans, fix/check/review docs), with the rules/ bundled alongside the skills/. App-specific facts live in each repo's docs/_meta/manifest.md.",
+  "author": { "name": "Adam Loe" }
+}
