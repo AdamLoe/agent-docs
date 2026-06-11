@@ -1,5 +1,5 @@
 ---
-description: Full doc-fix sweep of the WHOLE docs/ tree against the codebase — fan out with subagents, FIX drift in place (stale code anchors, wrong counts/constants, broken links), and escalate judgment calls and suspected code bugs rather than guessing. Sonnet for straightforward docs, Opus for contract-heavy ones. Use when you have context/tokens to spare. The heavyweight, mutates-and-commits cousin of check-docs-consistency-some (report-only, named docs). Loads app-specific surfaces from docs/_meta/manifest.md and authoring rules from ${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md.
+description: Full doc-fix sweep of the WHOLE docs/ tree against the codebase — fan out with subagents, FIX drift in place (stale code anchors, wrong counts/constants, broken links), and escalate judgment calls and suspected code bugs rather than guessing. Sonnet for straightforward docs, Opus for contract-heavy ones. Use when you have context/tokens to spare. The heavyweight, mutates-and-commits cousin of check-docs-consistency-some (report-only, named docs). Loads app-specific surfaces from docs/_meta/manifest.md and authoring rules from ~/agent-docs/v1/rules/authoring-rules.md.
 ---
 
 > **Note.** This skill owns no facts. The docs no longer assert
@@ -29,7 +29,7 @@ Read `docs/_meta/manifest.md` and extract:
 - **`change-to-doc`** — the surface → doc mapping, used to triage
   `Update when` bullets in Phase 3.
 
-Also read `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` — this is the
+Also read `~/agent-docs/v1/rules/authoring-rules.md` — this is the
 house authoring standard all docs are graded against.
 
 ## Fix vs. escalate

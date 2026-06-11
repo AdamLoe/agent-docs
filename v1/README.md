@@ -6,7 +6,7 @@ generic rules they route into; per-repo facts live in each repo's
 `docs/_meta/`.
 
 ```
-~/.claude/agent-docs/v1/        ← the kit (single source of truth)
+~/agent-docs/v1/        ← the kit (single source of truth)
   .claude-plugin/plugin.json    ← optional: lets it install as a Claude plugin
   skills/                       ← the generic commands (fresh-chat, …)
   rules/                        ← authoring-rules, coding-style, repo-rules, orchestrating
@@ -16,7 +16,7 @@ generic rules they route into; per-repo facts live in each repo's
 
 The generic commands are the workflow machinery; `rules/` is the
 app-independent discipline they cite. **Skills reference the rules by an
-absolute path** (`~/.claude/agent-docs/v1/rules/<file>.md`) — see "Why
+absolute path** (`~/agent-docs/v1/rules/<file>.md`) — see "Why
 absolute" below.
 
 ## Per-app binding
@@ -59,7 +59,7 @@ or by checking the skill list. App-specific commands (e.g. `start-app`,
 ### How a skill links back to the rules
 
 Skills reference the rules (and the other kit files) by the **absolute
-path** `~/.claude/agent-docs/v1/…`. This is the official convention — see
+path** `~/agent-docs/v1/…`. This is the official convention — see
 the [root README](../README.md) § "Reference convention." It is the only
 form that resolves correctly when a skill is read through its
 `~/.claude/skills/` symlink:
@@ -86,16 +86,16 @@ from `~/.codex/prompts/*.md`. Both point at this same kit:
   is what keeps it compatible with the agent-docs "no auto-loaded facts"
   rule. This is Codex's equivalent of Claude's `/fresh-chat`.
 - **`~/.codex/prompts/<name>.md`** are thin shims that each say "read and
-  follow `~/.claude/agent-docs/v1/skills/<name>/SKILL.md`." They appear as
+  follow `~/agent-docs/v1/skills/<name>/SKILL.md`." They appear as
   `/fresh-chat`, `/fix-docs-drift-all`, etc. in the Codex TUI.
 
 To (re)generate the Codex prompt shims:
 
 ```sh
 mkdir -p ~/.codex/prompts
-for d in ~/.claude/agent-docs/v1/skills/*/; do
+for d in ~/agent-docs/v1/skills/*/; do
   s=$(basename "$d")
-  printf 'Run the agent-docs **%s** command. Follow this shared instruction file exactly:\n\n    ~/.claude/agent-docs/v1/skills/%s/SKILL.md\n\nIt reads app facts from docs/_meta/ and rules from ~/.claude/agent-docs/v1/rules/.\n\nArguments: $ARGUMENTS\n' "$s" "$s" > ~/.codex/prompts/"$s".md
+  printf 'Run the agent-docs **%s** command. Follow this shared instruction file exactly:\n\n    ~/agent-docs/v1/skills/%s/SKILL.md\n\nIt reads app facts from docs/_meta/ and rules from ~/agent-docs/v1/rules/.\n\nArguments: $ARGUMENTS\n' "$s" "$s" > ~/.codex/prompts/"$s".md
 done
 ```
 

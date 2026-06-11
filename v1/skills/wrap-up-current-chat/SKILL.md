@@ -17,7 +17,7 @@ Only knowledge that passes that test gets written down. The bar is **"bad to los
 - A fact about **what the system currently IS** → the owning `docs/architecture/<doc>.md`.
 - A choice about **why it's shaped this way** → the matching `docs/decisions/<domain>.md`.
 
-Find the canonical owner in `docs/_meta/ownership.json` and follow the authoring rules in `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md`: architecture is rewritten **in place** (no "slice N added…" framing), decisions use the three mandatory fields. This skill restates none of those rules — read them there.
+Find the canonical owner in `docs/_meta/ownership.json` and follow the authoring rules in `~/agent-docs/v1/rules/authoring-rules.md`: architecture is rewritten **in place** (no "slice N added…" framing), decisions use the three mandatory fields. This skill restates none of those rules — read them there.
 
 If **this chat** wrapped up a plan, migrate its durable context into architecture/decisions first, then set that plan's `okay_to_delete` truthfully per `docs/plans/index.md`. (Don't audit the whole `plans/` directory here — that's `clear-plans`.)
 
@@ -26,7 +26,7 @@ If **this chat** wrapped up a plan, migrate its durable context into architectur
 These docs are a **current-state snapshot**, not a changelog or a diary. Each one is meant to stay small (~1–2k tokens). Add the minimum that keeps them true and complete:
 
 - Don't narrate the edits you made — the git log already has them.
-- Don't duplicate what the code already says — link to it by path (relative to `src/`).
+- Don't duplicate what the code already says — link to it by path (relative to the manifest's `code_root`).
 - Don't record transient details (debugging steps, dead ends, scratch numbers, "we tried X then Y") — those should die with the chat.
 - Prefer rewriting an existing sentence over appending a new paragraph.
 - If nothing from this chat clears the bar, say so and change nothing. Adding noise is worse than adding nothing.

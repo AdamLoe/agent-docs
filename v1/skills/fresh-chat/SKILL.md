@@ -26,14 +26,17 @@ self-contained.
    - Editing code, running commands, testing, committing, iterating live,
      creating plans, updating docs, or orchestrating via sub-agents →
      `docs/agent-context/index.md`, then the procedural doc it routes to.
-   - Creating or updating a plan → `docs/plans/index.md`; open
-     `docs/plans/template.md` only when creating a new plan.
+   - Creating or updating a plan → `docs/plans/index.md` (the app's plan
+     landing); the lifecycle rules and skeleton are generic in the kit
+     (`~/agent-docs/v1/plan-lifecycle.md`,
+     `~/agent-docs/v1/plan-template.md`) — open the template only
+     when creating a new plan.
    - Ownership conflict / where a fact belongs → `docs/_meta/ownership.json`
      (query it; don't bulk-load it) and `docs/ownership.md` for how.
    - Where a file or subsystem lives → `docs/repository-layout.md`.
 
 The doc-authoring and maintenance rules are global (agent-docs v1) — load
-`${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` only when you ship a
+`~/agent-docs/v1/rules/authoring-rules.md` only when you ship a
 change and need to update docs.
 
 The user's first message:

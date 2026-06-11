@@ -161,7 +161,7 @@ you're unsure which doc owns it, query the ownership data
 
 | Slot | What it supplies |
 |---|---|
-| `code_root` | the path all doc code-anchors are relative to (e.g. `src/`) |
+| `code_root` | the path all doc code-anchors are relative to (e.g. `app/`) |
 | `change-to-doc` | the "changed file → update doc" table |
 | `drift-gates` | the per-commit gate commands |
 | `decisions-domains` | the app's `decisions/<domain>.md` file set |

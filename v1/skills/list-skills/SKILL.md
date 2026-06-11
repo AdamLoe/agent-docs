@@ -20,7 +20,7 @@ invent skills, only report what actually exists.
    ```
 
    Note: `~/.claude/skills` is a symlink to
-   `~/.claude/agent-docs/v1/skills` (the agent-docs kit is the source of
+   `~/agent-docs/v1/skills` (the agent-docs kit is the source of
    truth), so these are the portable agent-docs commands.
 
 2. **Project skills** — same scan against the current repo, if present:
@@ -50,7 +50,7 @@ Group by origin, in this order: **Global (agent-docs)**, **Project**,
 
 Keep descriptions to their first sentence if they are long. End with a
 one-line note on how the source of truth is organized (global skills live
-in `~/.claude/agent-docs/v1/skills/`; project skills in the repo's
+in `~/agent-docs/v1/skills/`; project skills in the repo's
 `.claude/skills/`). Do not run any of the listed skills — only list them.
 
 Arguments (optional filter substring): $ARGUMENTS

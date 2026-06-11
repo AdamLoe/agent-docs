@@ -1,5 +1,5 @@
 ---
-description: Consistency-check one or more NAMED docs/ docs against the code and the house authoring rules — accuracy-vs-code (stale path→symbol pointers, wrong constant values, contradictions) and clarity/altitude — then report findings. Read-only: no edits, no commits. The lightweight, report-only cousin of fix-docs-drift-all (whole-tree, fixes in place). Mechanical, not editorial — for the big-picture "is this the right doc?" read use review-docs. Loads authoring rules from ${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md and ownership from docs/_meta/ownership.json; waits for you to name the doc(s) if none are passed.
+description: Consistency-check one or more NAMED docs/ docs against the code and the house authoring rules — accuracy-vs-code (stale path→symbol pointers, wrong constant values, contradictions) and clarity/altitude — then report findings. Read-only: no edits, no commits. The lightweight, report-only cousin of fix-docs-drift-all (whole-tree, fixes in place). Mechanical, not editorial — for the big-picture "is this the right doc?" read use review-docs. Loads authoring rules from ~/agent-docs/v1/rules/authoring-rules.md and ownership from docs/_meta/ownership.json; waits for you to name the doc(s) if none are passed.
 ---
 
 You are running a **doc consistency check** over one or more named docs in
@@ -31,7 +31,7 @@ Read `docs/_meta/manifest.md` and extract:
 - **`drift-verification`** — the app-specific high-risk surfaces and
   verification steps; borrow from this when spot-checking accuracy claims.
 
-Also read `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` — this is the
+Also read `~/agent-docs/v1/rules/authoring-rules.md` — this is the
 house authoring standard all docs are graded against (the clarity lens below
 cites its rules by number).
 
@@ -69,7 +69,7 @@ the **`drift-verification`** slot in `docs/_meta/manifest.md` — but
 ### 2. Clarity & altitude — grade against the authoring rules
 
 The rubric is the authoring rules at
-`${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md`. Flag where the doc
+`~/agent-docs/v1/rules/authoring-rules.md`. Flag where the doc
 violates them:
 
 - **Altitude** (rule 4): a subsystem doc is ~1–2k tokens — map + invariants
@@ -118,7 +118,7 @@ One short report per doc — no edits, no commits:
   drift in place and commits.
 - **review-docs** skill — the editorial/direction review (is this the right
   doc, in the right shape?).
-- `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` — the authoring rules
+- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring rules
   this check grades against.
 
 The doc(s) to check are below — a path, several paths, or empty. **If empty,

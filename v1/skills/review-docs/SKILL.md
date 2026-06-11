@@ -1,5 +1,5 @@
 ---
-description: Editorial/direction review of docs/ — is this the RIGHT doc, in the right shape, heading the right way? Judges coverage gaps, macro structure/organization, routing & fresh-chat navigability, altitude/framing, and doc-debt vs where the project is heading. Opinionated and report-only (recommends; offers to draft a plan for structural changes) — it does NOT verify code claims (use check-docs-consistency-some) or fix drift (use fix-docs-drift-all). Scope is a doc, a subtree, or the whole tree. Loads ownership from docs/_meta/ownership.json and authoring rules from ${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md; waits for you to say what to review if nothing is passed.
+description: Editorial/direction review of docs/ — is this the RIGHT doc, in the right shape, heading the right way? Judges coverage gaps, macro structure/organization, routing & fresh-chat navigability, altitude/framing, and doc-debt vs where the project is heading. Opinionated and report-only (recommends; offers to draft a plan for structural changes) — it does NOT verify code claims (use check-docs-consistency-some) or fix drift (use fix-docs-drift-all). Scope is a doc, a subtree, or the whole tree. Loads ownership from docs/_meta/ownership.json and authoring rules from ~/agent-docs/v1/rules/authoring-rules.md; waits for you to say what to review if nothing is passed.
 ---
 
 You are running an **editorial doc review** over a doc, a subtree, or the
@@ -35,7 +35,7 @@ Also read:
 
 - `docs/_meta/ownership.json` — to judge whether concepts sit with the right
   owner.
-- `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` — the authoring
+- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring
   standards the tree is meant to meet.
 
 ## Orient first
@@ -87,7 +87,7 @@ reality:
 - System shape: `docs/overview.md`, `docs/repository-layout.md` (or
   equivalents in the repo).
 - Authoring standards the tree is meant to meet:
-  `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`.
 
 ## How to run it
 
@@ -118,7 +118,7 @@ An opinionated editorial, not a checklist:
   house-rules check on named docs.
 - **fix-docs-drift-all** skill — the whole-tree drift sweep that fixes in
   place and commits.
-- `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` — the authoring
+- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring
   standards.
 
 What to review is below — a doc, a subtree (e.g. `architecture/`), or the

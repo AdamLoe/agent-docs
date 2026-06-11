@@ -4,7 +4,7 @@ description: Sweep docs/plans/ to keep it lean — delete plans already flagged 
 
 You are sweeping `docs/plans/` to keep it lean. A plan is a working coordination doc, not canonical knowledge: once its work has shipped **and** its durable context has been migrated into `architecture/`/`decisions/`, the plan should be deleted. This sweep is **independent of the current chat** — start from what's on disk and in git, not from this conversation's history.
 
-Read the lifecycle rules first: `docs/plans/index.md` (the meaning of `status`, `okay_to_delete`, `long_lived`) and the migration rules in `${CLAUDE_PLUGIN_ROOT}/rules/authoring-rules.md` (architecture rewritten **in place**; decisions get the three mandatory fields). This skill restates neither.
+Read the lifecycle rules first: `docs/plans/index.md` (the meaning of `status`, `okay_to_delete`, `long_lived`) and the migration rules in `~/agent-docs/v1/rules/authoring-rules.md` (architecture rewritten **in place**; decisions get the three mandatory fields). This skill restates neither.
 
 ## The sweep
 
@@ -15,7 +15,7 @@ First do a 10-second sanity check: open the `owning_docs` and confirm they actua
 
 **2. `status: shipped` or `abandoned`, but `okay_to_delete: false` → the main job.**
 - Confirm the work really shipped/was-dropped: check the git log and the code the plan claims to have produced. If you can't confirm, leave it and report why (bucket 4).
-- Migrate every durable fact, decision, and trade-off into the owning `docs/architecture/<doc>.md` / `docs/decisions/<domain>.md`. Same bar as `wrap-up-current-chat`: only what would be **bad to lose** or is **needed to understand the current state**. Skip transient prose (debug logs, dead ends, "tried X then Y"). Code paths in docs are relative to `src/`.
+- Migrate every durable fact, decision, and trade-off into the owning `docs/architecture/<doc>.md` / `docs/decisions/<domain>.md`. Same bar as `wrap-up-current-chat`: only what would be **bad to lose** or is **needed to understand the current state**. Skip transient prose (debug logs, dead ends, "tried X then Y"). Code paths in docs are relative to the manifest's `code_root`.
 - Once migration is complete, set `okay_to_delete: true` and bump `last_updated`. **Then stop — do not delete it this pass.** A freshly-migrated plan is left on disk so the user can eyeball the migration diff; the *next* `clear-plans` run removes it via bucket 1. Record it under *migrated → flagged*.
 
 **3. `status: active` or `draft` → leave it.** Work is in flight. Record it under *left (in flight)*, one line, so the user sees the live set.
