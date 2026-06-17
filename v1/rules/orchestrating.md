@@ -94,12 +94,31 @@ docs/plans/orchestrator/<run-slug>/
     <topic-or-agent>.md   # optional
 ```
 
-`hub.md` is the only required run lifecycle/status surface. The orchestrator
-owns it: phase/status tracker, decisions, open questions, blockers,
-verification evidence, closeout notes, and migration status. Stream files are
-compact subagent-owned notes with observed state, touched files, verification,
-and handoff notes. Findings files are optional read-only investigation notes
-when the run would otherwise overload the hub.
+`hub.md` is the only required run lifecycle/status surface. It starts with
+plan-style frontmatter so cleanup tools can reason about the run without
+parsing prose:
+
+```yaml
+---
+status:        draft | active | shipped | abandoned
+owner:         <name or "unassigned">
+last_updated:  YYYY-MM-DD
+okay_to_delete: false | true
+long_lived:    false | true
+owning_docs:
+  - architecture/<doc>.md
+  - decisions/<domain>.md
+---
+```
+
+The orchestrator owns `hub.md`: phase/status tracker, decisions, open
+questions, blockers, verification evidence, closeout notes, and migration
+status. Before setting `okay_to_delete: true`, the hub must name the durable
+facts/rationale migrated into `owning_docs`. Stream files under `streams/` are
+compact subagent-owned notes and, when needed, implementer planning notes for a
+single workstream; do not create extra root files in the run folder. Findings
+files are optional read-only investigation notes when the run would otherwise
+overload the hub.
 
 Subagents may write only the stream or findings files named in their dispatch.
 The orchestrator keeps the hub consistent, records observed outcomes from

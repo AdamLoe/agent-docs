@@ -98,12 +98,16 @@ the user.
       <topic-or-agent>.md   # optional
   ```
 
-  The orchestrator owns `hub.md`, including lifecycle state, decisions,
-  blockers, verification evidence, closeout notes, and migration status.
-  Subagents may write only the stream or findings files named in their
-  dispatch. Commit run docs at normal orchestration checkpoints or closeout;
-  do not require a commit for every status update. After durable facts migrate
-  into architecture/decisions, committed run docs are disposable plan material.
+  `hub.md` starts with plan-style frontmatter: `status`, `owner`,
+  `last_updated`, `okay_to_delete`, `long_lived`, and `owning_docs`. The
+  orchestrator owns that hub, including lifecycle state, decisions, blockers,
+  verification evidence, closeout notes, and migration status. Subagents may
+  write only the stream or findings files named in their dispatch. Stream files
+  are also the only in-run home for implementer planning notes; do not create
+  extra root files under the run folder. Commit run docs at normal orchestration
+  checkpoints or closeout; do not require a commit for every status update.
+  After durable facts migrate into architecture/decisions, committed run docs
+  are disposable plan material.
 - Do not run two agents against the same files at the same time. Parallelize
   only when ownership is disjoint.
 - The implementer ships the work: code, tests, docs migration, plan status
@@ -121,8 +125,8 @@ Use only the phases the classification needs:
 
 1. **Plan** - dispatch a `/plan`-shaped agent to run think -> batched
    questions until implementation-ready, then produce one implementer planning
-   doc per workstream in `docs/plans/`, or under
-   `docs/plans/orchestrator/<run-slug>/` when opt-in run docs are enabled.
+   doc per workstream in `docs/plans/`, or as the named
+   `streams/<stream-id>.md` file when opt-in run docs are enabled.
 2. **Plan Review** - dispatch `/review-plans` for tracked or risky
    plans. Apply or request plan changes before implementation.
 3. **Implement** - dispatch `/ship-plans` for tracked plans or a bounded

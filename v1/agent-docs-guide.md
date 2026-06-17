@@ -208,9 +208,11 @@ Opt-in orchestration run docs are a nested form of plan material:
 `docs/plans/orchestrator/<run-slug>/` may hold a run `hub.md`, stream notes,
 and optional findings when the user asks for stateful orchestration or grants
 permission for a run folder. These files are committed coordination history,
-not canonical architecture. After closeout, durable facts still migrate into
-architecture and rationale into decisions, and the run folder remains
-disposable through the normal plan cleanup lifecycle.
+not canonical architecture. The hub carries the same lifecycle metadata as a
+plan file so cleanup can read `status`, `okay_to_delete`, and migration targets
+without inferring from stream notes. After closeout, durable facts still
+migrate into architecture and rationale into decisions, and the run folder
+remains disposable through the normal plan cleanup lifecycle.
 
 ## Maintenance is part of the system, not an afterthought
 

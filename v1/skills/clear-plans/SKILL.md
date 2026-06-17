@@ -14,9 +14,10 @@ Read the lifecycle rules first: `docs/plans/index.md` and `~/agent-docs/v1/rules
 `ls docs/plans/`. Sweep top-level plan files (skip `index.md` and
 `template.md`) and immediate run folders under `docs/plans/orchestrator/`.
 Run folders are temporary orchestration coordination history; read `hub.md`
-first and use its lifecycle, closeout, and migration notes as the status
-source. If a run folder has no `hub.md` or no clear closeout/migration state,
-leave it and report it under bucket 4.
+first and use its frontmatter (`status`, `okay_to_delete`, `long_lived`, and
+`owning_docs`) plus closeout/migration notes as the status source. If a run
+folder has no `hub.md`, no lifecycle frontmatter, or no clear
+closeout/migration state, leave it and report it under bucket 4.
 
 For every plan file or run folder, sort it into one bucket:
 
@@ -33,10 +34,10 @@ as bucket 2 instead and note the mislabel.
 - Migrate every durable fact, decision, and trade-off into the owning `docs/architecture/<doc>.md` / `docs/decisions/<domain>.md`. Same bar as `wrap-up-current-chat`: only what would be **bad to lose** or is **needed to understand the current state**. Skip transient prose. Code paths in docs are relative to the manifest's `code_root`.
 - Once migration is complete, set `okay_to_delete: true` and bump
   `last_updated` for a plan file, or record the same closeout state in a run
-  folder's `hub.md`. **Then stop — do not delete it this pass.** Freshly
-  migrated plan material is left on disk so the user can eyeball the migration
-  diff; the *next* `clear-plans` run removes it via bucket 1. Record it under
-  *migrated → flagged*.
+  folder's `hub.md` frontmatter and migration notes. **Then stop — do not
+  delete it this pass.** Freshly migrated plan material is left on disk so the
+  user can eyeball the migration diff; the *next* `clear-plans` run removes it
+  via bucket 1. Record it under *migrated → flagged*.
 
 **3. `status: active` or `draft` → leave it.** Work is in flight. Record it under *left (in flight)*, one line, so the user sees the live set.
 

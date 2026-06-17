@@ -37,8 +37,9 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
   plans already in play. When the user asks for run docs or grants permission
   after a resume-risk prompt, it may create
   `docs/plans/orchestrator/<run-slug>/` with a required `hub.md`, stream
-  notes, and optional findings. Those run docs are committed coordination
-  history and disposable plan material after durable facts migrate.
+  notes, and optional findings. The hub carries plan-style lifecycle metadata
+  so cleanup tools can treat the run folder as disposable plan material after
+  durable facts migrate.
 - `/plan` shapes app-state thoughts into implementer briefs, tracked plans,
   docs, or further discussion.
 - `/quick-fix` fixes a small problem directly and commits when green.
@@ -78,4 +79,7 @@ Use the smallest command that owns the current job:
 
 - [`../../v1/agent-docs-guide.md`](../../v1/agent-docs-guide.md)
 - [`install-and-adapters.md`](install-and-adapters.md)
+- [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
+- [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md)
+- [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md)
 - [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)

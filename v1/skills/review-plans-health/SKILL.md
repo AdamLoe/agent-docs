@@ -46,11 +46,13 @@ For each plan, check:
   architecture, code state, or active direction.
 
 For orchestration run folders, apply the same lens to the run as plan
-material. A healthy in-flight run has a coherent `hub.md` with observed state,
-open questions, blockers, next action, and current stream status. A closed run
-should name its durable migration targets and whether it is ready for
-`clear-plans`; if it lacks a hub, closeout, or migration state, report it as a
-cleanup risk rather than trying to infer status from scattered stream files.
+material. A healthy in-flight run has a coherent `hub.md` with plan-style
+frontmatter (`status`, `owner`, `last_updated`, `okay_to_delete`,
+`long_lived`, `owning_docs`), observed state, open questions, blockers, next
+action, and current stream status. A closed run should name its durable
+migration targets and whether it is ready for `clear-plans`; if it lacks a hub,
+lifecycle frontmatter, closeout, or migration state, report it as a cleanup
+risk rather than trying to infer status from scattered stream files.
 
 ## Report Format
 

@@ -80,9 +80,12 @@ index edit. List the directory (`ls docs/plans/`) to see what's live.
 `docs/plans/orchestrator/<run-slug>/` is reserved for opt-in orchestration run
 docs. A run folder is committed coordination history, not canonical
 architecture. It may contain a required `hub.md`, stream notes under
-`streams/`, and optional read-only findings under `findings/`. Once the run's
-work ships, migrate durable facts and rationale into architecture/decisions;
-the run folder then follows the same disposable cleanup expectation as plans.
+`streams/`, and optional read-only findings under `findings/`. The hub carries
+the same lifecycle frontmatter as a plan file (`status`, `owner`,
+`last_updated`, `okay_to_delete`, `long_lived`, `owning_docs`) and is the
+status source for cleanup. Once the run's work ships, migrate durable facts and
+rationale into architecture/decisions, record the migration targets in the hub,
+and set `okay_to_delete: true` only when the run is disposable.
 
 ## See also (resolved relative to this kit)
 

@@ -87,8 +87,9 @@ When the user provides app-state thoughts:
 
 When the outcome is implementation, produce a separate planning doc for each
 implementer/workstream instead of one blended handoff. Use `docs/plans/` for
-tracked work, or `docs/plans/orchestrator/<run-slug>/` only when the planning
-is part of an opt-in stateful orchestration run.
+tracked work. When the planning is part of an opt-in stateful orchestration
+run, write each implementer/workstream note only to the stream file named by
+the orchestrator, `docs/plans/orchestrator/<run-slug>/streams/<stream-id>.md`.
 
 Each implementer doc should include:
 
