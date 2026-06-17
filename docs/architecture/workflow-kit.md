@@ -33,7 +33,12 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
   registry, and stale reference health.
 - `/orchestrate` asks for a change request, then coordinates the
   quick-fix or plan/review/implement/review lifecycle through specialist
-  agents.
+  agents. Its default state lives in chat, subagent reports, and ordinary
+  plans already in play. When the user asks for run docs or grants permission
+  after a resume-risk prompt, it may create
+  `docs/plans/orchestrator/<run-slug>/` with a required `hub.md`, stream
+  notes, and optional findings. Those run docs are committed coordination
+  history and disposable plan material after durable facts migrate.
 - `/plan` shapes app-state thoughts into implementer briefs, tracked plans,
   docs, or further discussion.
 - `/quick-fix` fixes a small problem directly and commits when green.
@@ -41,13 +46,15 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
   migration, plan shipping, and commit.
 - `/review-shipped-work` reviews completed or in-progress work against named plans.
 - `/review-plans` reviews named plans with a high-level or custom lens.
-- `/review-plans-health` reviews the health of `docs/plans/`.
+- `/review-plans-health` reviews the health of `docs/plans/`, including
+  orchestration run folders under `docs/plans/orchestrator/`.
 - `/review-skills` reviews this kit's skill suite for drift and
   lifecycle gaps.
 - `/ship-current-work` finishes ordinary work and commits if gates pass.
 - `/rebuild-agent-docs` adopts or repairs a repo's docs tree.
 - `/wrap-up-current-chat` captures chat-only durable context.
-- `/clear-plans` cleans shipped or abandoned plans after migration.
+- `/clear-plans` cleans shipped or abandoned plans and orchestration run
+  folders after migration.
 - `/lodge-agent-docs-feedback` records a kit-level comment or request from a
   consuming repo into the upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
 

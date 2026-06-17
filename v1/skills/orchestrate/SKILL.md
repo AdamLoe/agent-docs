@@ -41,6 +41,12 @@ Dials and model policy follow `skill-contracts.md`. Orchestration specifics:
   plan review or implementation review when the risk does not justify it.
 - Explicit user wording about depth wins. Otherwise infer the needed effort
   from risk, ambiguity, blast radius, and expected coordination cost.
+- Run docs are an opt-in stateful mode. Enable them when the user explicitly
+  asks for "run docs", "stateful orchestration", "create an orchestration run
+  folder", or equivalent wording. If the user has not asked and resumability
+  risk is high, ask for permission before creating
+  `docs/plans/orchestrator/<run-slug>/`; if permission is declined, continue
+  with chat state, subagent reports, and any ordinary plans already in play.
 
 ## Classification
 
@@ -55,10 +61,9 @@ Pick the smallest lifecycle that can ship the change safely:
   an `/ship-plans`-shaped agent using the brief. Review only if the
   change is user-facing, cross-cutting, or correctness-sensitive.
 - **Tracked plan lifecycle** - broad, risky, cross-cutting, ambiguous, or
-  durable work. Create or update temporary orchestration docs under
-  `docs/plans/orchestrator/`, dispatch `/plan`, review the plan with
-  `/review-plans`, dispatch `/ship-plans`, then dispatch
-  `/review-shipped-work`.
+  durable work. Dispatch `/plan`, review the plan with `/review-plans`,
+  dispatch `/ship-plans`, then dispatch `/review-shipped-work`. Use
+  `docs/plans/orchestrator/<run-slug>/` only when opt-in run docs are enabled.
 - **Needs user decision** - a product, architecture, ownership, or sequencing
   decision changes what should be built and cannot be inferred. Ask batched
   questions during the original planning intake even at `review-none`. After
@@ -82,9 +87,23 @@ the user.
 - Do not re-plan the work yourself. Hold the map: selected lifecycle,
   current phase, files/dirs owned by each agent, gate evidence, decisions,
   assumptions, blockers, and next action.
-- Use `docs/plans/orchestrator/` for temporary hub docs when the work spans
-  multiple phases or agents. Keep these docs disposable and migrate durable
-  context into architecture/decisions before shipping.
+- When opt-in run docs are enabled, use this layout:
+
+  ```text
+  docs/plans/orchestrator/<run-slug>/
+    hub.md
+    streams/
+      <stream-id>.md
+    findings/
+      <topic-or-agent>.md   # optional
+  ```
+
+  The orchestrator owns `hub.md`, including lifecycle state, decisions,
+  blockers, verification evidence, closeout notes, and migration status.
+  Subagents may write only the stream or findings files named in their
+  dispatch. Commit run docs at normal orchestration checkpoints or closeout;
+  do not require a commit for every status update. After durable facts migrate
+  into architecture/decisions, committed run docs are disposable plan material.
 - Do not run two agents against the same files at the same time. Parallelize
   only when ownership is disjoint.
 - The implementer ships the work: code, tests, docs migration, plan status
@@ -102,8 +121,8 @@ Use only the phases the classification needs:
 
 1. **Plan** - dispatch a `/plan`-shaped agent to run think -> batched
    questions until implementation-ready, then produce one implementer planning
-   doc per workstream, either in `docs/plans/` or temporary material in
-   `docs/plans/orchestrator/`.
+   doc per workstream in `docs/plans/`, or under
+   `docs/plans/orchestrator/<run-slug>/` when opt-in run docs are enabled.
 2. **Plan Review** - dispatch `/review-plans` for tracked or risky
    plans. Apply or request plan changes before implementation.
 3. **Implement** - dispatch `/ship-plans` for tracked plans or a bounded

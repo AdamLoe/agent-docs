@@ -77,6 +77,13 @@ migration, the plan is removed. **The index does not maintain an inventory
 of active plans** — that would rot the moment a plan is added without an
 index edit. List the directory (`ls docs/plans/`) to see what's live.
 
+`docs/plans/orchestrator/<run-slug>/` is reserved for opt-in orchestration run
+docs. A run folder is committed coordination history, not canonical
+architecture. It may contain a required `hub.md`, stream notes under
+`streams/`, and optional read-only findings under `findings/`. Once the run's
+work ships, migrate durable facts and rationale into architecture/decisions;
+the run folder then follows the same disposable cleanup expectation as plans.
+
 ## See also (resolved relative to this kit)
 
 - [`plan-template.md`](plan-template.md) — the skeleton.

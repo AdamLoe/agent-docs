@@ -103,3 +103,20 @@ boundaries and let the orchestrator hold only the map, evidence, assumptions,
 and next action.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/orchestrate/SKILL.md`](../../v1/skills/orchestrate/SKILL.md), [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md).
+
+## Orchestration run docs are opt-in
+
+**Decision.** `/orchestrate` creates
+`docs/plans/orchestrator/<run-slug>/` only when the user asks for stateful run
+docs or grants permission after the orchestrator explains a concrete resume
+risk.
+
+**Why.** Persistent run state is valuable for long multi-agent work, but making
+it the default would create extra temporary documentation for ordinary changes.
+Keeping the mode inside `/orchestrate` preserves the compact command surface
+and avoids reviving retired orchestration command names.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/orchestrate/SKILL.md`](../../v1/skills/orchestrate/SKILL.md), [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
+
+**Tradeoffs.** Default runs are less resumable after context loss, but they
+avoid committed coordination folders unless the user accepts that cost.

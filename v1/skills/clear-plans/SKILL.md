@@ -11,15 +11,32 @@ Read the lifecycle rules first: `docs/plans/index.md` and `~/agent-docs/v1/rules
 
 ## The sweep
 
-`ls docs/plans/`. For every plan file (skip `index.md` and `template.md`), read its frontmatter and sort it into one bucket:
+`ls docs/plans/`. Sweep top-level plan files (skip `index.md` and
+`template.md`) and immediate run folders under `docs/plans/orchestrator/`.
+Run folders are temporary orchestration coordination history; read `hub.md`
+first and use its lifecycle, closeout, and migration notes as the status
+source. If a run folder has no `hub.md` or no clear closeout/migration state,
+leave it and report it under bucket 4.
+
+For every plan file or run folder, sort it into one bucket:
 
 **1. `okay_to_delete: true` → delete it.**
-First do a 10-second sanity check: open the `owning_docs` and confirm they actually carry the plan's key facts/decisions. If migration looks genuinely complete, `rm` the plan (it's tracked — git can recover it) and record it under *deleted*. If migration looks **incomplete** despite the flag, do **not** delete — treat it as bucket 2 instead and note the mislabel.
+First do a 10-second sanity check: open the `owning_docs` or hub migration
+targets and confirm they actually carry the plan or run's key facts/decisions.
+If migration looks genuinely complete, delete the plan file or run folder
+(tracked files are recoverable through git) and record it under *deleted*. If
+migration looks **incomplete** despite the flag, do **not** delete — treat it
+as bucket 2 instead and note the mislabel.
 
 **2. `status: shipped` or `abandoned`, but `okay_to_delete: false` → the main job.**
 - Confirm the work really shipped/was-dropped: check the git log and the code the plan claims to have produced. If you can't confirm, leave it and report why (bucket 4).
 - Migrate every durable fact, decision, and trade-off into the owning `docs/architecture/<doc>.md` / `docs/decisions/<domain>.md`. Same bar as `wrap-up-current-chat`: only what would be **bad to lose** or is **needed to understand the current state**. Skip transient prose. Code paths in docs are relative to the manifest's `code_root`.
-- Once migration is complete, set `okay_to_delete: true` and bump `last_updated`. **Then stop — do not delete it this pass.** A freshly-migrated plan is left on disk so the user can eyeball the migration diff; the *next* `clear-plans` run removes it via bucket 1. Record it under *migrated → flagged*.
+- Once migration is complete, set `okay_to_delete: true` and bump
+  `last_updated` for a plan file, or record the same closeout state in a run
+  folder's `hub.md`. **Then stop — do not delete it this pass.** Freshly
+  migrated plan material is left on disk so the user can eyeball the migration
+  diff; the *next* `clear-plans` run removes it via bucket 1. Record it under
+  *migrated → flagged*.
 
 **3. `status: active` or `draft` → leave it.** Work is in flight. Record it under *left (in flight)*, one line, so the user sees the live set.
 

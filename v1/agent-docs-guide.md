@@ -204,6 +204,14 @@ The goal this enforces: *a fresh chat should never need to read plan
 history to understand the current system.* If it does, migration was
 incomplete.
 
+Opt-in orchestration run docs are a nested form of plan material:
+`docs/plans/orchestrator/<run-slug>/` may hold a run `hub.md`, stream notes,
+and optional findings when the user asks for stateful orchestration or grants
+permission for a run folder. These files are committed coordination history,
+not canonical architecture. After closeout, durable facts still migrate into
+architecture and rationale into decisions, and the run folder remains
+disposable through the normal plan cleanup lifecycle.
+
 ## Maintenance is part of the system, not an afterthought
 
 A docs system that relies on humans remembering to update it will drift.
@@ -254,6 +262,11 @@ End-to-end change orchestration starts with `/orchestrate`: it asks for
 the desired change, decides whether the work is a quick fix, a briefed
 implementation, or a tracked plan lifecycle, and dispatches the specialist
 planning, review, implementation, and work-review agents needed to ship it.
+By default, orchestration state stays in chat, subagent reports, and ordinary
+plans already in play. If the user asks for run docs, or approves them after
+the orchestrator explains a concrete resume risk, `/orchestrate` may create
+`docs/plans/orchestrator/<run-slug>/`; if permission is declined, it continues
+without that folder.
 
 Small problem-driven fixes can start with `/quick-fix`: it skips plan
 machinery unless plans are touched, keeps the change bounded, updates durable
@@ -298,12 +311,10 @@ architecture/decisions when work ships.
 
 ## Future roadmap
 
-Two larger directions are intentionally not part of the current workflow:
+One larger direction is intentionally not part of the current workflow:
 
 - Treat `_meta/ownership.json` as a richer routing API with aliases,
   canonical owners, allowed referencers, and update triggers.
-- Make orchestrated work write cleaner plan-native state without creating a
-  sprawling temporary coordination area.
 
 ## Adopting / repairing agent-docs
 

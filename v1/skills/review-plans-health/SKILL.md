@@ -20,9 +20,11 @@ policy, and honor any dials passed in `$ARGUMENTS`.
    `~/agent-docs/v1/plan-template.md`.
 3. Read `docs/_meta/ownership.json` when judging whether a plan's
    `owning_docs` and migration targets are plausible.
-4. List `docs/plans/` and read every plan except `index.md` and
-   `template.md`. For large plan sets, sample first and then fan out by
-   status or subsystem.
+4. List `docs/plans/` and read every top-level plan except `index.md` and
+   `template.md`. Also read immediate run folders under
+   `docs/plans/orchestrator/`; start with each `hub.md`, then sample stream
+   or findings files only when the hub does not answer the health question.
+   For large plan sets, sample first and then fan out by status or subsystem.
 
 ## Health Lens
 
@@ -42,6 +44,13 @@ For each plan, check:
   flagged `okay_to_delete` that deserve a quick migration sanity check.
 - Risk: plans likely to mislead implementers because they contradict current
   architecture, code state, or active direction.
+
+For orchestration run folders, apply the same lens to the run as plan
+material. A healthy in-flight run has a coherent `hub.md` with observed state,
+open questions, blockers, next action, and current stream status. A closed run
+should name its durable migration targets and whether it is ready for
+`clear-plans`; if it lacks a hub, closeout, or migration state, report it as a
+cleanup risk rather than trying to infer status from scattered stream files.
 
 ## Report Format
 

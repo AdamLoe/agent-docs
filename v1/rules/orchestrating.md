@@ -52,20 +52,62 @@ do", now phrased once.
 
 ## Your actual job
 
-1. **Hold the map, not the territory.** Keep a hub plan doc with a phase
-   tracker, a decisions log, and an open-questions list. Route work; don't
-   do it. Your scarcest resource is your own context window — spend it on
-   sequencing and judgment, not on file reads and build output.
+1. **Hold the map, not the territory.** Keep the phase tracker, decisions
+   log, open questions, blockers, verification evidence, and next action in
+   the chat, in ordinary plan files already in play, or in an opt-in run-doc
+   hub. Route work; don't do it. Your scarcest resource is your own context
+   window — spend it on sequencing and judgment, not on file reads and build
+   output.
 2. **Verify outcomes, not steps.** Trust an agent's "build green / tests
    pass" when it pasted the command output; spot-check only the high-risk
    bits — and spot-checking means *reading* the pasted output, not
    re-running the gate yourself. A stream is not **done** until: files
    changed are listed, the gate command + its result are pasted, known
    deferrals are named, and **you have recorded the observed outcome in the
-   hub doc** (not the agent's optimism).
+   live coordination surface** (not the agent's optimism).
 3. **Keep notes a stranger could resume from.** Every decision, every
-   "why", every deferral goes in the hub doc — assume your context will be
-   wiped.
+   "why", every deferral goes in the live coordination surface — assume your
+   context will be wiped.
+
+## Opt-in run docs
+
+Default orchestration keeps state in the chat, subagent reports, and ordinary
+plan files already in play. A stateful orchestration run writes committed
+coordination history under `docs/plans/orchestrator/<run-slug>/`, but only
+when the user explicitly asks for run docs (for example "use run docs",
+"stateful orchestration", or "create an orchestration run folder") or when the
+orchestrator asks for and receives permission before creating the folder.
+
+If resume risk is high and the user has not asked for run docs, ask once with
+a concrete reason and the proposed run slug. If permission is declined,
+continue without the folder and accept the lower resumability; do not create a
+hidden or alternate state area.
+
+Standard layout:
+
+```text
+docs/plans/orchestrator/<run-slug>/
+  hub.md
+  streams/
+    <stream-id>.md
+  findings/
+    <topic-or-agent>.md   # optional
+```
+
+`hub.md` is the only required run lifecycle/status surface. The orchestrator
+owns it: phase/status tracker, decisions, open questions, blockers,
+verification evidence, closeout notes, and migration status. Stream files are
+compact subagent-owned notes with observed state, touched files, verification,
+and handoff notes. Findings files are optional read-only investigation notes
+when the run would otherwise overload the hub.
+
+Subagents may write only the stream or findings files named in their dispatch.
+The orchestrator keeps the hub consistent, records observed outcomes from
+agent reports, and owns closeout. Run-doc commits happen at normal
+orchestration checkpoints or closeout, not after every status update. Once the
+work ships, migrate durable facts and rationale into architecture/decisions;
+the committed run folder remains disposable plan material and can be cleaned
+up through the normal plan lifecycle.
 
 ## How to delegate
 
@@ -177,23 +219,26 @@ Fallback if infeasible:     (the documented alternative; flag it, don't fake)
 
 ## Workflow skeleton
 
-1. **Audit/recon** (one read-only agent) → findings doc on disk.
-2. **Hub doc**: phases, a streams table, a decisions log, and a
-   questions-for-lead list. The streams table is where you hold the map —
-   use these columns so it stays a record of *observed* state, not plans:
+1. **Audit/recon** (one read-only agent) → compact findings report, written
+   into the run folder only when opt-in run docs are enabled.
+2. **Coordination surface**: phases, a streams table, a decisions log, and a
+   questions-for-lead list in chat, ordinary plan files, or an opt-in
+   `hub.md`. The streams table is where you hold the map — use these columns
+   so it stays a record of *observed* state, not plans:
 
    ```
    | Stream | Area | Status | Last observed fact | Next action | Blockers |
    ```
 3. **Per-stream plan docs** — the strongest model for the meaty ones, or
-   fold small streams into the hub.
+   fold small streams into the live coordination surface.
 4. **Implement in waves** grouped by file-disjointness; background agents.
 5. **On each completion:** update the streams table + todos, spot-check the
    high-risk bit, decide the next wave. Keep it to a few tool calls.
 6. **Final consolidated gate** (build + all tests + the one end-to-end
    smoke for the app's scarce resource).
 7. **Doc-migrate** durable facts into architecture/decisions; mark plans
-   `shipped + okay_to_delete`. Hand the lead a review hub + questions.
+   `shipped + okay_to_delete`. Hand the lead closeout evidence and any
+   remaining questions.
 
 ## What NOT to do
 
@@ -202,8 +247,8 @@ Fallback if infeasible:     (the documented alternative; flag it, don't fake)
   own context, stop and dispatch an agent. That work burns the context that
   lets you run long. There is no "it's only a quick edit" exception — that
   rationalization is exactly how the drift starts; delegate even the small
-  ones. (Editing the hub doc, trackers, and your own plan notes is not
-  implementer mode — that *is* your job.)
+  ones. (Editing the live coordination surface, trackers, and your own plan
+  notes is not implementer mode — that *is* your job.)
 - **Don't gate every stream with the full suite.** Per-stream gates stay
   narrow (build + the new test); the full build, the whole suite, and the
   one end-to-end smoke run *once*, at the end. Re-gating each stream is the
