@@ -15,6 +15,7 @@ checkout path keeps the source from appearing owned by one tool.
 **Decision.** Claude and Codex both use copied user skill directories:
 `v1/copy-skills.sh` copies agent-docs skills into `~/.claude/skills/<name>`
 and `~/.agents/skills/<name>` and marks them with `.agent-docs-managed`.
+Claude plugin manifests are not a supported adapter path.
 
 **Why.** Tools discover skills differently, but the command bodies should not
 fork. Using the same copy model for both tools avoids adapter-specific

@@ -18,6 +18,7 @@ pure inventory utility; the shared contracts in
 
    ```sh
    for f in ~/.claude/skills/*/SKILL.md; do
+     [ -e "$f" ] || continue
      printf '%s\n' "$f"
      awk '/^description:/{sub(/^description: */,""); print; exit}' "$f"
    done

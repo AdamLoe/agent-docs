@@ -9,6 +9,7 @@
 | `v1/skills/*/SKILL.md` | Runnable workflow commands. |
 | `v1/skills/registry.md` | Skill inventory and mode/action metadata. |
 | `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
+| `v1/verify-agent-docs.sh` | Non-mutating drift gate for scaffold, manifest, ownership, registry, adapter, and stale-reference checks. |
 | `v1/rules/*.md` | Generic rules shared by every consuming repo. |
 | `v1/rules/skill-contracts.md` | Shared contracts for skill modes, bootstrap, shipping, registry, and model language. |
 | `v1/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
@@ -22,6 +23,10 @@ After adding, renaming, or deleting a skill, run
 `bash ~/agent-docs/v1/copy-skills.sh --check ~/agent-docs`, so Claude and
 Codex can discover the updated skill set from their copied user skill
 directories.
+
+Before shipping repo changes, run `bash ~/agent-docs/v1/verify-agent-docs.sh`
+from any working directory. The verifier owns this repo's non-mutating drift
+gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 
 - `/fresh-chat` starts ordinary work from the docs router.
 - `/agent-docs-doctor` validates scaffold, manifest, ownership, skill
@@ -66,3 +71,4 @@ Use the smallest command that owns the current job:
 
 - [`../../v1/agent-docs-guide.md`](../../v1/agent-docs-guide.md)
 - [`install-and-adapters.md`](install-and-adapters.md)
+- [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)

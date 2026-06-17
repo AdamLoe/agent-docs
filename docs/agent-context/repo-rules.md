@@ -6,7 +6,9 @@ This repo follows the generic repo rules in
 ## Local gates
 
 Use the `drift-gates` slot in [`../_meta/manifest.md`](../_meta/manifest.md).
-The installer resolution checks mutate `$HOME`, so run them deliberately.
+That slot calls `bash v1/verify-agent-docs.sh`, which resolves the repo root
+from its own location and runs the non-mutating agent-readiness checks. The
+installer resolution checks mutate `$HOME`, so run them deliberately.
 
 After editing `v1/skills/`, run:
 

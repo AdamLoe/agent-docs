@@ -5,6 +5,7 @@ Start here, then read only the smallest matching subtree.
 | Need | Read |
 |---|---|
 | System shape in one screen | [`overview.md`](overview.md) |
+| File and directory inventory | [`repository-layout.md`](repository-layout.md) |
 | Install paths, symlinks, Claude/Codex adapters | [`architecture/install-and-adapters.md`](architecture/install-and-adapters.md) |
 | Skills, rules, templates, and workflow command layout | [`architecture/workflow-kit.md`](architecture/workflow-kit.md) |
 | Why the kit uses neutral paths and adapters | [`decisions/agent-docs.md`](decisions/agent-docs.md) |

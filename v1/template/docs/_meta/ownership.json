@@ -1,6 +1,11 @@
 {
   "owners": [
     {
+      "surface": "repository-layout",
+      "paths": ["docs/repository-layout.md"],
+      "owns": ["repo path inventory", "top-level directory purposes"]
+    },
+    {
       "surface": "fill",
       "paths": ["fill"],
       "owns": ["fill"]

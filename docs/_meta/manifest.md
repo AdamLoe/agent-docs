@@ -12,6 +12,8 @@ code_root: v1/
 | Per-tool adapters, skill discovery, cross-tool contract, skill copy refresh | docs/architecture/install-and-adapters.md, v1/copy-skills.sh |
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, v1/agent-docs-guide.md |
 | Skill registry and shared skill contracts | v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
+| Repository layout inventory | docs/repository-layout.md |
+| Drift gates and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
 | Doc-authoring rules and adapter-file policy | v1/rules/authoring-rules.md |
 | Orchestration discipline and dials | v1/rules/orchestrating.md |
 | Plan lifecycle and plan skeleton | v1/plan-lifecycle.md, v1/plan-template.md |
@@ -21,57 +23,12 @@ code_root: v1/
 Run from the repository root:
 
 ```sh
-fail() { echo "GATE FAIL: $*" >&2; exit 1; }
-
-grep -RIn '[.]agent-docs/current\|[.]agent-docs/src' v1 README.md docs \
-  && fail "stale canonical path remains" || true
-
-grep -RIn 'new-project[-]prompt' v1 README.md docs/_meta docs/index.md docs/overview.md docs/architecture docs/decisions docs/agent-context | grep -viE 'deprecat|retired|replaced by|→ /rebuild' \
-  && fail "retired prompt still referenced as a live entry point" || true
-
-grep -RIn 'fresh-planning-chat' v1 README.md docs | grep -viE 'retired|v1/install[.]sh|docs/_meta/manifest[.]md' \
-  && fail "renamed planning skill referenced" || true
-
-grep -RIn 'grand-orchestrator\|fresh-orchestrator' v1 README.md docs | grep -v 'docs/_meta/manifest.md' \
-  && fail "retired orchestration skill referenced" || true
-
-grep -RIn 'docs/ownership[.]md' v1 README.md docs \
-  && fail "ownership prose doc referenced instead of _meta/ownership.json" || true
-
-for f in v1/skills/*/SKILL.md; do
-  skill=${f#v1/skills/}
-  skill=${skill%/SKILL.md}
-  sed -n '1,12p' "$f" | grep -qE "^name: $skill$" || fail "name mismatch in $f"
-  grep -q "| \`$skill\` |" v1/skills/registry.md || fail "registry missing $skill"
-done
-
-test -f v1/rules/skill-contracts.md || fail "skill contracts missing"
-
-grep -q 'review-\[none|low|medium|high|max\]' v1/rules/skill-contracts.md || fail "review dial vocabulary missing"
-grep -q 'cost-\[low|medium|high|max\]' v1/rules/skill-contracts.md || fail "cost dial vocabulary missing"
-
-for dial in cost-low cost-medium cost-high cost-max review-none review-high; do
-  grep -q "\b$dial\b" v1/rules/orchestrating.md || fail "orchestration dial '$dial' missing"
-done
-
-grep -q '~/.claude/skills/<name>' docs/architecture/install-and-adapters.md || fail "claude copy target undocumented"
-grep -q '~/.agents/skills/<name>' docs/architecture/install-and-adapters.md || fail "codex copy target undocumented"
-
-test -f docs/_meta/manifest.md && test -f docs/_meta/ownership.json || fail "dogfood _meta missing"
-
-for k in code_root change-to-doc drift-gates; do
-  grep -q "$k" docs/_meta/manifest.md || fail "manifest missing slot '$k'"
-done
-
-test -e v1/install.sh || test -e v1/setup-symlinks.sh || fail "install script missing"
-test -x v1/copy-skills.sh || fail "copy-skills script missing or not executable"
-bash v1/copy-skills.sh --check "$PWD" || fail "copied skill adapters are stale"
-echo "ALL STRING GATES PASS"
+bash v1/verify-agent-docs.sh
 ```
 
 ## drift-verification
 
-The string gates above are the default verification for this repo. Installer
+The verifier above is the default non-mutating gate for this repo. Installer
 resolution checks are deliberate manual checks because they mutate `$HOME`:
 
 ```sh

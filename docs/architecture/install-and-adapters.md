@@ -12,6 +12,8 @@ This repo's real checkout is `~/agent-docs`. Versioned kit files live under
 
 `~/agent-docs` stays the checkout root, not a symlink to `v1/`; the version
 segment remains explicit wherever a file path enters the kit.
+Claude plugin manifests are not a supported adapter path for this repo; the
+only managed Claude discovery path is copied personal skills.
 
 ## Installer
 
@@ -54,3 +56,4 @@ fine inside repo Markdown when they point to neighboring docs.
 
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
 - [`workflow-kit.md`](workflow-kit.md)
+- [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)

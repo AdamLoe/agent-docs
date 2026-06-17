@@ -11,6 +11,16 @@
       "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "skill copy refresh"]
     },
     {
+      "surface": "repository-layout",
+      "paths": ["docs/repository-layout.md"],
+      "owns": ["repo path inventory", "top-level directory purposes", "agent navigation map"]
+    },
+    {
+      "surface": "agent-readiness-verifier",
+      "paths": ["docs/_meta/manifest.md", "v1/verify-agent-docs.sh"],
+      "owns": ["drift gate entry point", "agent-readiness checks", "stale reference detection"]
+    },
+    {
       "surface": "workflow-lifecycle",
       "paths": ["docs/architecture/workflow-kit.md", "v1/agent-docs-guide.md"],
       "owns": ["fresh-chat workflow", "orchestrate workflow", "plan workflow", "ship-current-work", "wrap-up-current-chat", "rebuild-agent-docs"]

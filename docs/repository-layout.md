@@ -1,0 +1,31 @@
+# Repository layout
+
+Concise inventory for this repo. For install behavior and adapter contracts,
+use [`architecture/install-and-adapters.md`](architecture/install-and-adapters.md);
+for workflow surfaces, use
+[`architecture/workflow-kit.md`](architecture/workflow-kit.md).
+
+| Path | Purpose |
+|---|---|
+| `README.md` | User-facing install summary. |
+| `docs/` | Dogfood docs for this repo. |
+| `docs/_meta/manifest.md` | Repo bindings, change-to-doc map, drift gates, and decision domains. |
+| `docs/_meta/ownership.json` | Structured concept ownership data. |
+| `docs/architecture/` | Current architecture for install/adapters and workflow kit surfaces. |
+| `docs/decisions/` | Current rationale for agent-docs architecture choices. |
+| `docs/agent-context/` | Repo-local operating rules for agents working here. |
+| `docs/plans/` | Plan router and lifecycle status area. |
+| `v1/` | Current versioned agent-docs kit. |
+| `v1/skills/` | Reusable workflow skill bodies plus the shared registry. |
+| `v1/rules/` | Generic rules shared by every consuming repo. |
+| `v1/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
+| `v1/install.sh` | Installer for the neutral checkout and copied skill adapters. |
+| `v1/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
+| `v1/verify-agent-docs.sh` | Non-mutating drift gate for this repo. |
+
+## See also
+
+- [`index.md`](index.md)
+- [`overview.md`](overview.md)
+- [`architecture/workflow-kit.md`](architecture/workflow-kit.md)
+- [`../v1/rules/authoring-rules.md`](../v1/rules/authoring-rules.md)

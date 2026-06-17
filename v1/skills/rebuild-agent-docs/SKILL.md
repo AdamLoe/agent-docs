@@ -36,6 +36,7 @@ policy.
    them. The scaffold files are copied relative to the current docs path:
    - `<current docs path>/index.md`
    - `<current docs path>/overview.md`
+   - `<current docs path>/repository-layout.md`
    - `<current docs path>/architecture/index.md`
    - `<current docs path>/decisions/index.md`
    - `<current docs path>/agent-context/index.md`

@@ -23,8 +23,9 @@ asks you to fix failures, make the smallest repairs and finish through
 Validate:
 
 - Required scaffold files exist: `docs/index.md`, `docs/overview.md`,
-  `docs/_meta/manifest.md`, `docs/_meta/ownership.json`, and the four doc
-  roots `architecture/`, `decisions/`, `agent-context/`, `plans/`.
+  `docs/repository-layout.md`, `docs/_meta/manifest.md`,
+  `docs/_meta/ownership.json`, and the four doc roots `architecture/`,
+  `decisions/`, `agent-context/`, `plans/`.
 - Manifest slots exist: `repo_name`, `agent_docs_version`, `code_root`,
   `change-to-doc`, `drift-gates`, `drift-verification`, and
   `decisions-domains`.
