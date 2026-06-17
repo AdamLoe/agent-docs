@@ -14,7 +14,7 @@ it's architected, and why by reading `docs/`, never by replaying this chat's
 edits or plans.
 
 Scope is **this session only**. For a sweep of *all* plans on disk use
-`clear-plans`; for a full codebase-wide drift sweep use `fix-docs-drift-all`.
+`clear-plans`; for a full codebase-wide drift sweep use `fix-docs-drift`.
 
 This skill runs directly on this session's state — no intake questions. Read
 `~/agent-docs/v1/rules/skill-contracts.md` for the shared dials and model

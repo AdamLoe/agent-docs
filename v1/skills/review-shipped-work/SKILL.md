@@ -1,5 +1,5 @@
 ---
-name: review-work
+name: review-shipped-work
 description: Review completed or in-progress work against named plans, verify app state when practical, fix obvious misses, and commit fixes when green.
 ---
 

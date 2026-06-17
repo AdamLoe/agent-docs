@@ -80,6 +80,17 @@ validate.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md).
 
+## Command names favor short job labels
+
+**Decision.** Workflow commands use short job-oriented names and the skill
+registry groups them by job family.
+
+**Why.** Agents choose commands more reliably when the command surface is
+compact and grouped by intent instead of exposed as one long undifferentiated
+list.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
+
 ## Orchestrate coordinates specialists
 
 **Decision.** `/orchestrate` is a lifecycle controller that dispatches

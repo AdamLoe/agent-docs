@@ -1,5 +1,5 @@
 ---
-name: check-docs-consistency-some
+name: check-docs
 description: Check named docs for code drift and house-rule issues, then report findings.
 ---
 
@@ -7,17 +7,17 @@ You are running a **doc consistency check** over one or more named docs in
 `docs/`. This is the **read-only, report-only** flow of the three
 doc-maintenance skills:
 
-- **fix-docs-drift-all** — sweeps the **whole tree** and **fixes drift in
+- **fix-docs-drift** — sweeps the **whole tree** and **fixes drift in
   place + commits**. Heavyweight, mutating.
 - **this skill** — checks the **doc(s) you name** for consistency and
   **reports findings**. Lightweight, changes nothing.
-- **review-docs** — the **editorial** read: is this the right doc, in the
+- **review-docs-shape** — the **editorial** read: is this the right doc, in the
   right shape, heading the right way? Judgment, not grep.
 
 So this flow is mechanical, not editorial: does each named doc still match
 the code and the house authoring rules? You change **nothing** — no edits,
 no commits. If findings should be applied, that's a follow-up edit pass or
-the `fix-docs-drift-all` sweep. The codebase is authoritative for behaviour;
+the `fix-docs-drift` sweep. The codebase is authoritative for behaviour;
 the docs are authoritative for what's-where and why.
 
 ## Before you begin — load app context
@@ -46,7 +46,7 @@ For ownership questions, read `docs/_meta/ownership.json`.
 
 Check every named doc against exactly these two lenses, both anchored to the
 codebase's own standards. Structure/routing and LLM-navigation belong to
-**review-docs**.
+**review-docs-shape**.
 
 ### 1. Accuracy vs code — spot-check when it's cheap
 
@@ -112,14 +112,14 @@ One short report per doc — no edits, no commits:
 - **Clarity findings** — each as `location → issue`, naming the rule it trips
   (altitude / transcription / ownership / readability). State "none" if clean.
 - **Suggested next step** — e.g. "minor, fix inline", "run
-  `fix-docs-drift-all`", "needs an editorial `review-docs` pass", or
+  `fix-docs-drift`", "needs an editorial `review-docs-shape` pass", or
   "escalate the possible code bug at X".
 
 ## See also
 
-- **fix-docs-drift-all** skill — the heavyweight whole-tree sweep that fixes
+- **fix-docs-drift** skill — the heavyweight whole-tree sweep that fixes
   drift in place and commits.
-- **review-docs** skill — the editorial/direction review (is this the right
+- **review-docs-shape** skill — the editorial/direction review (is this the right
   doc, in the right shape?).
 - `~/agent-docs/v1/rules/authoring-rules.md` — the authoring rules
   this check grades against.

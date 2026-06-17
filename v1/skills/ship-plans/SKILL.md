@@ -1,5 +1,5 @@
 ---
-name: implement-plans
+name: ship-plans
 description: Implement named plan files end to end, including verification, docs migration, plan shipping, and commit.
 ---
 

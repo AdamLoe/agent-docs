@@ -40,9 +40,9 @@ Then branch on what the invocation gave you:
 
 **Exception — context-free skills.** A few skills operate on existing disk
 and git state rather than a user-described task: `clear-plans`,
-`fix-docs-drift-all`, `list-skills`, `agent-docs-doctor`,
-`review-plans-health`, `review-docs`, `ship-current-work`,
-`wrap-up-current-chat`, `review-agent-docs-skills`, `rebuild-agent-docs`,
+`fix-docs-drift`, `list-skills`, `doctor`,
+`review-plans-health`, `review-docs-shape`, `ship-current-work`,
+`wrap-up-current-chat`, `review-skills`, `rebuild-agent-docs`,
 `lodge-agent-docs-feedback`. These **skip both intake questions and run
 directly.** They honor dials passed in `$ARGUMENTS` where the dials affect
 their work; for pure utilities where no dial applies (`list-skills`,
@@ -53,6 +53,24 @@ given — but not the dial/task intake.) They still honor dials passed in
 
 Ownership questions use `docs/_meta/ownership.json` (query it; don't
 bulk-load it). There is no separate prose ownership guide in agent-docs v1.
+
+## Human Stops
+
+Stop for the user only when an answer changes what should be built, reviewed,
+or shipped and the decision cannot be resolved from code, docs, precedent, or
+the user's request. Every stop must include the specific decision needed, why
+it changes the work, the fewest concrete questions needed to continue, and a
+recommended default when one is defensible.
+
+Do not stop with a vague blocker such as "needs input" or "needs product
+decision." If you cannot form the concrete questions yet, keep investigating
+or run the appropriate planning/review pass until the question is clear.
+
+## Verification Fallbacks
+
+Run the relevant gates whenever practical. If a gate cannot run, report the
+exact command attempted, why it failed or was unavailable, what cheaper check
+you ran instead, and the residual risk. Do not treat a skipped gate as green.
 
 ## Dials
 

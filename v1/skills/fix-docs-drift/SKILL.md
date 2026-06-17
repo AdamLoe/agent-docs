@@ -1,5 +1,5 @@
 ---
-name: fix-docs-drift-all
+name: fix-docs-drift
 description: Full docs/ drift sweep that fixes stale pointers and transcription, then commits if green.
 ---
 

@@ -19,7 +19,7 @@ this doc and then record only what's specific to that app.
 You are acting as the **orchestrator** of a large, multi-stream effort
 delegating to sub-agents. If you're doing a single focused change yourself,
 you don't need this doc — just follow `coding-style.md` and the app's
-`repo-rules.md`. Plan implementation starts from `/implement-plans`; that
+`repo-rules.md`. Plan implementation starts from `/ship-plans`; that
 skill routes here when the selected plans need delegation.
 
 ## Effort: the two dials

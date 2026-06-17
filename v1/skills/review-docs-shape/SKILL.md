@@ -1,5 +1,5 @@
 ---
-name: review-docs
+name: review-docs-shape
 description: Editorial review of docs/ for fit, shape, and direction.
 ---
 
@@ -7,9 +7,9 @@ You are running an **editorial doc review** over a doc, a subtree, or the
 whole `docs/` tree. This is the **judgment** flow of the three doc-maintenance
 skills — it asks the questions grep can't:
 
-- **fix-docs-drift-all** — whole tree, **fixes drift in place + commits**.
+- **fix-docs-drift** — whole tree, **fixes drift in place + commits**.
   Mechanical, mutating.
-- **check-docs-consistency-some** — named docs, **checks accuracy-vs-code +
+- **check-docs** — named docs, **checks accuracy-vs-code +
   the house rules**, reports. Mechanical.
 - **this skill** — is this the **right** doc, in the **right shape**,
   **heading the right way**? Editorial, opinionated, report-only.
@@ -115,14 +115,14 @@ An opinionated editorial, not a checklist:
   "the architecture index routes Z wrong".
 - **Leave alone** — what's working, so it doesn't get churned.
 - **Next step** — usually "draft a plan for the structural changes" (offer to
-  write one into `docs/plans/`) and/or "run `fix-docs-drift-all` /
-  `check-docs-consistency-some` for the mechanical cleanup this surfaced".
+  write one into `docs/plans/`) and/or "run `fix-docs-drift` /
+  `check-docs` for the mechanical cleanup this surfaced".
 
 ## See also
 
-- **check-docs-consistency-some** skill — the mechanical accuracy +
+- **check-docs** skill — the mechanical accuracy +
   house-rules check on named docs.
-- **fix-docs-drift-all** skill — the whole-tree drift sweep that fixes in
+- **fix-docs-drift** skill — the whole-tree drift sweep that fixes in
   place and commits.
 - `~/agent-docs/v1/rules/authoring-rules.md` — the authoring
   standards.

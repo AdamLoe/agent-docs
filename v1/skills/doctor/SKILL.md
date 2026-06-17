@@ -1,5 +1,5 @@
 ---
-name: agent-docs-doctor
+name: doctor
 description: Validate an agent-docs tree for required scaffold files, manifest slots, ownership data, skill registry coverage, and stale v1 references.
 ---
 

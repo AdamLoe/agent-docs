@@ -29,7 +29,7 @@ from any working directory. The verifier owns this repo's non-mutating drift
 gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 
 - `/fresh-chat` starts ordinary work from the docs router.
-- `/agent-docs-doctor` validates scaffold, manifest, ownership, skill
+- `/doctor` validates scaffold, manifest, ownership, skill
   registry, and stale reference health.
 - `/orchestrate` asks for a change request, then coordinates the
   quick-fix or plan/review/implement/review lifecycle through specialist
@@ -37,12 +37,12 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 - `/plan` shapes app-state thoughts into implementer briefs, tracked plans,
   docs, or further discussion.
 - `/quick-fix` fixes a small problem directly and commits when green.
-- `/implement-plans` implements named plans through verification, docs
+- `/ship-plans` implements named plans through verification, docs
   migration, plan shipping, and commit.
-- `/review-work` reviews completed or in-progress work against named plans.
+- `/review-shipped-work` reviews completed or in-progress work against named plans.
+- `/review-plans` reviews named plans with a high-level or custom lens.
 - `/review-plans-health` reviews the health of `docs/plans/`.
-- `/review-plans-custom` reviews named plans with a custom user-provided lens.
-- `/review-agent-docs-skills` reviews this kit's skill suite for drift and
+- `/review-skills` reviews this kit's skill suite for drift and
   lifecycle gaps.
 - `/ship-current-work` finishes ordinary work and commits if gates pass.
 - `/rebuild-agent-docs` adopts or repairs a repo's docs tree.
@@ -61,11 +61,11 @@ Use the smallest command that owns the current job:
 | Fix one bounded issue now | `/quick-fix` |
 | Shape rough direction into implementer-ready material | `/plan` |
 | Coordinate a broad change across planning, implementation, and review | `/orchestrate` |
-| Implement existing plan files | `/implement-plans` |
-| Verify shipped or in-progress plan work | `/review-work` |
+| Implement existing plan files | `/ship-plans` |
+| Verify shipped or in-progress plan work | `/review-shipped-work` |
 | Finish the current dirty tree | `/ship-current-work` |
-| Check scaffolding and mechanical drift | `/agent-docs-doctor`, `/check-docs-consistency-some`, `/fix-docs-drift-all` |
-| Review doc or plan quality | `/review-docs`, `/review-plans-high-level`, `/review-plans-custom`, `/review-plans-health` |
+| Check scaffolding and mechanical drift | `/doctor`, `/check-docs`, `/fix-docs-drift` |
+| Review doc or plan quality | `/review-docs-shape`, `/review-plans`, `/review-plans-health` |
 
 ## See also
 

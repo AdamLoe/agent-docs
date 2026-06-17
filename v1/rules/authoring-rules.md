@@ -155,8 +155,8 @@ you're unsure which doc owns it, query the ownership data
 
 ## See also (generic — resolved relative to this kit)
 
-- The maintenance skills that route into these rules — `fix-docs-drift-all`,
-  `check-docs-consistency-some`, `review-docs` (each is a self-contained
+- The maintenance skills that route into these rules — `fix-docs-drift`,
+  `check-docs`, `review-docs-shape` (each is a self-contained
   skill under `~/.claude/skills/`; there is no separate prompt-body layer).
 - `./plan-lifecycle.md` — plan status metadata and migration rules.
 - `./agent-docs-guide.md` — why the system is shaped this way.

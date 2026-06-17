@@ -348,6 +348,15 @@ reject_any_match '[.]agent-docs/(current|src)' "stale canonical path remains"
 reject_unapproved_retired_name 'new-project[-]prompt' 'new-project-prompt'
 reject_unapproved_retired_name 'fresh-planning-chat' 'fresh-planning-chat'
 reject_unapproved_retired_name 'grand-orchestrator|fresh-orchestrator' 'retired orchestration skill'
+reject_unapproved_retired_name 'agent-docs-doctor' 'agent-docs-doctor'
+reject_unapproved_retired_name 'check-docs-consistency-some' 'check-docs-consistency-some'
+reject_unapproved_retired_name 'fix-docs-drift-all' 'fix-docs-drift-all'
+reject_unapproved_retired_name 'implement-plans' 'implement-plans'
+reject_unapproved_retired_name 'review-agent-docs-skills' 'review-agent-docs-skills'
+reject_unapproved_retired_name 'review-plans-custom' 'review-plans-custom'
+reject_unapproved_retired_name 'review-plans-high-level' 'review-plans-high-level'
+reject_unapproved_retired_name '(^|[^-])review-docs([^a-z-]|$)' 'review-docs'
+reject_unapproved_retired_name '(^|[^-])review-work([^a-z-]|$)' 'review-work'
 reject_any_match 'docs/ownership[.]md' "ownership prose doc referenced instead of docs/_meta/ownership.json"
 reject_any_match 'v1/[.]claude-plugin' "retired Claude plugin path referenced"
 [ ! -e "$repo_root/v1/.claude-plugin" ] ||

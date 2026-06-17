@@ -1,5 +1,5 @@
 ---
-name: review-agent-docs-skills
+name: review-skills
 description: Review the agent-docs skill set for drift, duplicate policy, adapter assumptions, and lifecycle gaps.
 ---
 

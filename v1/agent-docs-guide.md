@@ -94,7 +94,7 @@ every app moves together.
 The previous generation of this system had a fourth in-repo doc tree
 called `prompts/` (copy-paste templates for starting a chat or running a
 task). v1 removes it: those templates became **skills** in the kit
-(`/fresh-chat`, `/fix-docs-drift-all`, …), invoked directly, owning no
+(`/fresh-chat`, `/fix-docs-drift`, ...), invoked directly, owning no
 facts. There is no `prompts/` tree.
 
 ## The kinds of doc
@@ -219,19 +219,19 @@ not in the generic rules. The rules point at the slot. This turns
 commands that maintain the tree on two axes — scope (whole tree vs. named
 docs) and action (fix vs. check vs. review):
 
-- a **fix** sweep (`/fix-docs-drift-all`) that walks the whole tree,
+- a **fix** sweep (`/fix-docs-drift`) that walks the whole tree,
   verifies every `path → symbol` pointer still resolves, scans for
   forbidden transcription, and fixes drift in place;
-- a **check** pass (`/check-docs-consistency-some`) that grades named docs
+- a **check** pass (`/check-docs`) that grades named docs
   against the rules and reports without changing anything;
-- an **editorial review** (`/review-docs`) that asks the higher question —
+- an **editorial review** (`/review-docs-shape`) that asks the higher question —
   is this even the *right* doc, in the right shape?
 
-Plus the chat/lifecycle commands: `/fresh-chat`, `/agent-docs-doctor`,
-`/orchestrate`, `/plan`, `/quick-fix`, `/implement-plans`, `/review-work`,
-`/review-plans-high-level`, `/review-plans-health`, `/review-plans-custom`,
-`/review-agent-docs-skills`, `/ship-current-work`, `/wrap-up-current-chat`,
-`/clear-plans`, `/rebuild-agent-docs`, `/list-skills`, and
+Plus the chat/lifecycle commands: `/fresh-chat`, `/doctor`, `/orchestrate`,
+`/plan`, `/quick-fix`, `/ship-plans`, `/review-shipped-work`,
+`/review-plans`, `/review-plans-health`, `/review-skills`,
+`/ship-current-work`, `/wrap-up-current-chat`, `/clear-plans`,
+`/rebuild-agent-docs`, `/list-skills`, and
 `/lodge-agent-docs-feedback`. The principle — *the rules for maintaining the
 docs are themselves runnable* — is what keeps the system honest over time.
 
@@ -264,33 +264,46 @@ capture durable knowledge from the current chat that is not recoverable
 from docs, code, or git history. Use `/clear-plans` for repo-wide cleanup
 of plans that already shipped or were abandoned.
 
-Plan implementation starts with `/implement-plans`, which reads the selected
+Plan implementation starts with `/ship-plans`, which reads the selected
 plans, implements them through verification, migrates durable context into
 architecture/decisions, marks shipped plans, and commits when green. Large or
 multi-stream plan work delegates through the orchestration rules as needed.
 
-Use `/review-plans-high-level` before orchestration or implementation when
+Use `/review-plans` before orchestration or implementation when
 named plans need a high-level critique — wrong goal, missing premise,
-sequencing risk, scope cuts, or orchestration hazards — before work is handed
-to implementers. This is the plan-review phase `/orchestrate` dispatches.
+sequencing risk, scope cuts, orchestration hazards, or a custom review lens —
+before work is handed to implementers. This is the plan-review phase
+`/orchestrate` dispatches.
 
-Use `/review-work` after implementation when you need an independent read on
+Use `/review-shipped-work` after implementation when you need an independent read on
 whether named plans actually shipped, what remains, whether app state has been
 verified, and whether any obvious follow-up fixes should be applied.
 
 Use `/review-plans-health` when `docs/plans/` needs a hygiene pass for stale,
 duplicate, blocked, oversized, or poorly migrated plans before cleanup.
 
-Use `/review-plans-custom` for open-ended plan review prompts that change from
-run to run, such as generating alternate configuration options or exploring a
-specific tradeoff without creating a new dedicated skill.
-
-Use `/review-agent-docs-skills` to dogfood the workflow commands themselves:
+Use `/review-skills` to dogfood the workflow commands themselves:
 it checks skill registry drift, duplicate policy, adapter leakage, and
 lifecycle gaps.
 
-Use `/agent-docs-doctor` for a mechanical health check of the scaffold,
+Use `/doctor` for a mechanical health check of the scaffold,
 manifest slots, ownership JSON, skill registry, and stale references.
+
+## When not to use agent-docs
+
+This kit is probably more process than you need for a tiny throwaway script, a
+repo where agents rarely collaborate, docs written mainly for human narrative
+reading, or a project unwilling to keep plans temporary and migrated into
+architecture/decisions when work ships.
+
+## Future roadmap
+
+Two larger directions are intentionally not part of the current workflow:
+
+- Treat `_meta/ownership.json` as a richer routing API with aliases,
+  canonical owners, allowed referencers, and update triggers.
+- Make orchestrated work write cleaner plan-native state without creating a
+  sprawling temporary coordination area.
 
 ## Adopting / repairing agent-docs
 
@@ -320,8 +333,13 @@ startup and runs the same **Standard Intake Protocol**: read the manifest and
 the two router files, then stop. If the invocation already carries a task, it
 proceeds; if not, it asks exactly two questions — a dial picker and an
 open-ended "what do you want to do?" — and waits, without guessing the task.
-A few context-free skills (e.g. `/clear-plans`, `/fix-docs-drift-all`) operate
+A few context-free skills (e.g. `/clear-plans`, `/fix-docs-drift`) operate
 on disk state and skip the questions.
+
+Skills stop for the user only when a concrete unresolved decision changes what
+will be built, reviewed, or shipped. When verification cannot run, they report
+the attempted command, why it failed or was unavailable, the cheaper check run
+instead, and the remaining risk.
 
 Two shared dials tune behavior, defaulting to `medium`:
 

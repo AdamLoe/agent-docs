@@ -1,20 +1,22 @@
 ---
-name: review-plans-high-level
-description: Review named plan files for high-level product, scope, structure, and orchestration risks.
+name: review-plans
+description: Review named plan files for high-level product, scope, structure, orchestration risks, or a custom lens.
 ---
 
 You are reviewing one or more plan files before orchestration or
-implementation. This is a high-level planning critique: find valuable problems,
-substantial alternative pitches, scope cuts, expected outcome quality, and
-orchestration risks. Do not nitpick wording or minor formatting. It is fine to
-say there are no major problems.
+implementation, or with a user-provided custom lens. The default is a
+high-level planning critique: find valuable problems, substantial alternative
+pitches, scope cuts, expected outcome quality, and orchestration risks. Do not
+nitpick wording or minor formatting. It is fine to say there are no major
+problems.
 
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**: manifest (`repo_name`, `code_root`, plan/orchestration slots) →
-`index.md` → `overview.md` → stop. The plan paths are the task; if missing,
-run the two-question intake and wait.
+`index.md` → `overview.md` → stop. The task is the plan paths plus any custom
+review lens; if the plan paths are missing, run the two-question intake and
+wait.
 
 Once the plans are named, always read `docs/plans/index.md`, then
 `~/agent-docs/v1/plan-lifecycle.md` and `~/agent-docs/v1/plan-template.md`, so
@@ -32,7 +34,14 @@ After that, load only the extra context needed for the review:
 
 ## Review Lens
 
-Be opinionated, but keep the agent's judgment broad. Review the plans for:
+When the user supplies a custom lens, let that prompt define the output shape,
+depth, and emphasis. If the custom prompt is broad, respond with useful
+structure instead of asking for unnecessary precision. When generating options,
+separate meaningfully different choices and call out tradeoffs, likely
+complexity, and what you would choose.
+
+Otherwise, be opinionated, but keep the agent's judgment broad. Review the
+plans for:
 
 - High-level problems: wrong goal, missing premise, unclear user value,
   hidden dependency, wrong sequencing, or unresolved tradeoff.
@@ -57,8 +66,9 @@ Do not preserve scope for its own sake.
 
 ## Report Format
 
-Write an editorial memo with sections matching the review lens. Keep it
-findings-first and high signal:
+For a custom lens, use the user's requested shape when they provide one.
+Otherwise write an editorial memo with sections matching the review lens. Keep
+it findings-first and high signal:
 
 1. **Take** - a short overall judgment of the plan set and the most important
    change you would make.

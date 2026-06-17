@@ -5,7 +5,7 @@ description: Coordinate a change request through quick-fix or plan/review/implem
 
 You are the lifecycle orchestrator for a change to the current repository.
 This is not a general-purpose agent. Your range is the work normally handled
-by `/plan`, `/review-plans-high-level`, `/implement-plans`, `/review-work`,
+by `/plan`, `/review-plans`, `/ship-plans`, `/review-shipped-work`,
 or `/quick-fix`, scaled to the request.
 
 Your job is to keep your own context clean: intake, classify, dispatch
@@ -52,13 +52,13 @@ Pick the smallest lifecycle that can ship the change safely:
   works.
 - **Briefed implementation** - clear medium work that does not need a tracked
   plan. Dispatch a `/plan`-shaped agent to produce an implementer brief, then
-  an `/implement-plans`-shaped agent using the brief. Review only if the
+  an `/ship-plans`-shaped agent using the brief. Review only if the
   change is user-facing, cross-cutting, or correctness-sensitive.
 - **Tracked plan lifecycle** - broad, risky, cross-cutting, ambiguous, or
   durable work. Create or update temporary orchestration docs under
   `docs/plans/orchestrator/`, dispatch `/plan`, review the plan with
-  `/review-plans-high-level`, dispatch `/implement-plans`, then dispatch
-  `/review-work`.
+  `/review-plans`, dispatch `/ship-plans`, then dispatch
+  `/review-shipped-work`.
 - **Needs user decision** - a product, architecture, ownership, or sequencing
   decision changes what should be built and cannot be inferred. Ask batched
   questions during the original planning intake even at `review-none`. After
@@ -68,20 +68,11 @@ Pick the smallest lifecycle that can ship the change safely:
 
 ## User Decision Stops
 
-Stopping for the user is only valid when the message gives the user enough
-information to answer. Every user-decision stop must include:
-
-- The specific decision needed.
-- Why the answer changes what will be built or sequenced.
-- A numbered list of the fewest concrete questions needed to continue.
-- Any default or recommendation you can safely offer, labeled as such.
-
-Never stop with only a generic blocker such as "waiting for user decision" or
-"needs product input." If you cannot formulate the questions, continue
-investigating or dispatch the right planning/review agent until you can. If a
-subagent reports a human-decision blocker without concrete questions, either
-turn its blocker into the required question list yourself or send the subagent
-back for that clarification before involving the user.
+Follow the shared human-stop rule in `skill-contracts.md`. For orchestration,
+this also applies to subagent blockers: if a subagent reports a human-decision
+blocker without concrete questions, either turn it into the required question
+list yourself or send the subagent back for that clarification before involving
+the user.
 
 ## Orchestration Rules
 
@@ -113,11 +104,11 @@ Use only the phases the classification needs:
    questions until implementation-ready, then produce one implementer planning
    doc per workstream, either in `docs/plans/` or temporary material in
    `docs/plans/orchestrator/`.
-2. **Plan Review** - dispatch `/review-plans-high-level` for tracked or risky
+2. **Plan Review** - dispatch `/review-plans` for tracked or risky
    plans. Apply or request plan changes before implementation.
-3. **Implement** - dispatch `/implement-plans` for tracked plans or a bounded
+3. **Implement** - dispatch `/ship-plans` for tracked plans or a bounded
    implementer prompt for briefed work. It owns shipping.
-4. **Work Review** - dispatch `/review-work` for nontrivial shipped work. It
+4. **Work Review** - dispatch `/review-shipped-work` for nontrivial shipped work. It
    verifies app state, fixes obvious misses, and commits fixes when green.
 5. **Closeout** - inspect git status and agent evidence. Report the lifecycle
    used, commits made, checks run, assumptions, and any remaining work.
