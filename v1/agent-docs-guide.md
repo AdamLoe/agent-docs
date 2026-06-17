@@ -39,8 +39,9 @@ Four corollaries:
   log, not in a doc.
 - **Every fact has exactly one owner.** Other docs link to it; they never
   re-explain it.
-- **No auto-loaded context.** No `CLAUDE.md` / `AGENTS.md` dumping ground.
-  A fresh agent orients by reading a router on demand, then routing.
+- **No auto-loaded facts.** No `CLAUDE.md` / `AGENTS.md` dumping ground.
+  If a tool requires an auto-loaded file, keep it router-only and keep
+  architecture, decisions, and app-specific facts in `docs/`.
 
 ## The recoverability test (the single most important rule)
 
@@ -226,10 +227,113 @@ docs) and action (fix vs. check vs. review):
 - an **editorial review** (`/review-docs`) that asks the higher question —
   is this even the *right* doc, in the right shape?
 
-Plus the chat/lifecycle commands: `/fresh-chat`, `/fresh-orchestrator`,
-`/wrap-up-current-chat`, `/clear-plans`. The principle — *the rules for
-maintaining the docs are themselves runnable* — is what keeps the system
-honest over time.
+Plus the chat/lifecycle commands: `/fresh-chat`, `/agent-docs-doctor`,
+`/orchestrate`, `/plan`, `/quick-fix`, `/implement-plans`, `/review-work`,
+`/review-plans-high-level`, `/review-plans-health`, `/review-plans-custom`,
+`/review-agent-docs-skills`, `/ship-current-work`, `/wrap-up-current-chat`,
+`/clear-plans`, `/rebuild-agent-docs`, `/list-skills`, and
+`/lodge-agent-docs-feedback`. The principle — *the rules for maintaining the
+docs are themselves runnable* — is what keeps the system honest over time.
+
+## Work lifecycle
+
+Ordinary work starts with `/fresh-chat`, proceeds against the app's code
+and docs, and finishes with `/ship-current-work`. Shipping means inspecting
+the diff, finding owning docs through `docs/_meta/manifest.md` and
+`docs/_meta/ownership.json`, updating durable docs, running the manifest
+drift gates, migrating any touched plan context, staging by filename, and
+committing only when green.
+
+Planning starts with `/plan`: it reads the docs router, turns rough app-state
+thoughts into separated concerns, gives high-level feedback, asks batched
+questions until the important choices are settled, and writes one or more
+implementation-ready planning docs with ordering, boundaries, and
+verification.
+
+End-to-end change orchestration starts with `/orchestrate`: it asks for
+the desired change, decides whether the work is a quick fix, a briefed
+implementation, or a tracked plan lifecycle, and dispatches the specialist
+planning, review, implementation, and work-review agents needed to ship it.
+
+Small problem-driven fixes can start with `/quick-fix`: it skips plan
+machinery unless plans are touched, keeps the change bounded, updates durable
+docs if behaviour changes, and commits when green.
+
+`/wrap-up-current-chat` is not the normal finish command. Use it only to
+capture durable knowledge from the current chat that is not recoverable
+from docs, code, or git history. Use `/clear-plans` for repo-wide cleanup
+of plans that already shipped or were abandoned.
+
+Plan implementation starts with `/implement-plans`, which reads the selected
+plans, implements them through verification, migrates durable context into
+architecture/decisions, marks shipped plans, and commits when green. Large or
+multi-stream plan work delegates through the orchestration rules as needed.
+
+Use `/review-plans-high-level` before orchestration or implementation when
+named plans need a high-level critique — wrong goal, missing premise,
+sequencing risk, scope cuts, or orchestration hazards — before work is handed
+to implementers. This is the plan-review phase `/orchestrate` dispatches.
+
+Use `/review-work` after implementation when you need an independent read on
+whether named plans actually shipped, what remains, whether app state has been
+verified, and whether any obvious follow-up fixes should be applied.
+
+Use `/review-plans-health` when `docs/plans/` needs a hygiene pass for stale,
+duplicate, blocked, oversized, or poorly migrated plans before cleanup.
+
+Use `/review-plans-custom` for open-ended plan review prompts that change from
+run to run, such as generating alternate configuration options or exploring a
+specific tradeoff without creating a new dedicated skill.
+
+Use `/review-agent-docs-skills` to dogfood the workflow commands themselves:
+it checks skill registry drift, duplicate policy, adapter leakage, and
+lifecycle gaps.
+
+Use `/agent-docs-doctor` for a mechanical health check of the scaffold,
+manifest slots, ownership JSON, skill registry, and stale references.
+
+## Adopting / repairing agent-docs
+
+Use `/rebuild-agent-docs` when a repo is adopting this kit for the first
+time or repairing a drifted docs tree. It inventories the current docs,
+compares them to this guide, seeds missing files from
+`~/agent-docs/v1/template/`, migrates durable facts into the right owners,
+and ends with `/ship-current-work` semantics.
+
+`v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the
+reusable entry point.
+
+## No auto-loaded facts
+
+Auto-loaded files such as `CLAUDE.md`, `AGENTS.md`, or equivalents must not
+own architecture, decisions, or app-specific facts. They may exist only as
+router/adapters when a tool requires one: point to `docs/index.md`,
+`docs/overview.md`, and relevant skill entry points, then stop.
+
+`docs/` owns app facts. Skills and rules own workflow. Tool adapters own no
+facts.
+
+## Dials and intake
+
+Every skill reads [`rules/skill-contracts.md`](rules/skill-contracts.md) at
+startup and runs the same **Standard Intake Protocol**: read the manifest and
+the two router files, then stop. If the invocation already carries a task, it
+proceeds; if not, it asks exactly two questions — a dial picker and an
+open-ended "what do you want to do?" — and waits, without guessing the task.
+A few context-free skills (e.g. `/clear-plans`, `/fix-docs-drift-all`) operate
+on disk state and skip the questions.
+
+Two shared dials tune behavior, defaulting to `medium`:
+
+- **`review-[none|low|medium|high|max]`** — how much a skill stops for human
+  review and how hard its AI review works. Only `review-none` is hard-defined
+  (skip human checkpoints; never skip automated gates).
+- **`cost-[low|medium|high|max]`** — subagent fan-out and model spend.
+
+Model policy follows from the same file: **planning and review use the strong
+model; implementation, tweaks, and routine work use the mid tier**, which is
+the default workhorse. Whole-tree maintenance and broad reviews default a
+notch higher on `cost`, as the skill states.
 
 ## Adapting this to your app — a checklist
 
@@ -250,9 +354,12 @@ honest over time.
    shipped plan migrates into architecture/decisions.
 8. **Fill the change→doc table.** Even a short one in the manifest. It's
    what makes "done" include "docs updated."
-9. **No auto-loaded dumping ground.** Orientation happens by reading the
-   router on demand, not by stuffing everything into one always-loaded
-   file.
+9. **Keep `_meta/` visible.** Route manifest and ownership questions to
+   `docs/_meta/manifest.md` and `docs/_meta/ownership.json`; do not create a
+   separate prose ownership guide.
+10. **No auto-loaded fact dump.** Orientation happens by reading the router
+   on demand. If a tool requires `AGENTS.md`, `CLAUDE.md`, or equivalent,
+   keep it router-only.
 
 ## The one-paragraph version
 
@@ -273,4 +380,5 @@ of its own facts. Start small, route by task, load only what you need.
 - [`plan-lifecycle.md`](plan-lifecycle.md) — plan status metadata and the
   ship-time migration workflow.
 - [`plan-template.md`](plan-template.md) — the plan skeleton.
-- [`README.md`](README.md) — how the kit is packaged and activated.
+- [`../README.md`](../README.md) — how the kit is packaged and activated.
+- [`../docs/index.md`](../docs/index.md) — this repo's dogfood docs router.

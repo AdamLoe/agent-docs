@@ -91,16 +91,19 @@ read this first.
    `See also`** so a fresh agent always finds the maintenance rules.
 
 7. **Plans live in `docs/plans/` and carry status metadata.**
-   The lifecycle rules are owned by `docs/plans/index.md`; the
-   skeleton by `docs/plans/template.md`. **Migrate as much
-   context as possible into architecture/decisions before the plan is
-   closed** — the goal is for new chats to not need plan history to
+   The lifecycle rules are owned by the kit file
+   `~/agent-docs/v1/plan-lifecycle.md`; the skeleton by
+   `~/agent-docs/v1/plan-template.md`. A repo's `docs/plans/index.md`
+   is only a router and reminder, not a live inventory. **Migrate as
+   much context as possible into architecture/decisions before the plan
+   is closed** — the goal is for new chats to not need plan history to
    understand the current system.
 
-8. **No `CLAUDE.md`, no `AGENTS.md`, no auto-loaded global instructions
-   about app architecture.** All such context goes in `docs/`.
-   Fresh chats orient by routing from the entry-point prompt, not by
-   auto-loaded context.
+8. **No auto-loaded facts.** `CLAUDE.md`, `AGENTS.md`, and equivalent
+   auto-loaded files may exist only as a router-only adapter: they point
+   to `docs/index.md`, `docs/overview.md`, and the relevant skill entry
+   points. They must not carry architecture, decisions, or app-specific
+   facts. `docs/` owns facts; adapters own no facts.
 
 ## What changes trigger a doc update
 
@@ -140,8 +143,9 @@ you're unsure which doc owns it, query the ownership data
 - **"It's faster to put the launch command in this prompt too."**
   Prompts own no facts. Link to the canonical owner.
 - **"Let me drop a one-liner in an auto-loaded instructions file."**
-  There is no auto-loaded file. Put it in `agent-context/<doc>` if
-  procedural, `architecture/<doc>` if a fact, `decisions/<domain>` if a
+  No fact dump belongs there. If a tool requires an auto-loaded file,
+  keep it as a router-only adapter and put the fact in `agent-context/<doc>`
+  if procedural, `architecture/<doc>` if a fact, `decisions/<domain>` if a
   choice.
 - **"This decision is superseded but I'll keep the old text."** The git
   log is the context. Delete superseded decisions.

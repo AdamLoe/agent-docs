@@ -1,5 +1,6 @@
 ---
-description: Editorial/direction review of docs/ — is this the RIGHT doc, in the right shape, heading the right way? Judges coverage gaps, macro structure/organization, routing & fresh-chat navigability, altitude/framing, and doc-debt vs where the project is heading. Opinionated and report-only (recommends; offers to draft a plan for structural changes) — it does NOT verify code claims (use check-docs-consistency-some) or fix drift (use fix-docs-drift-all). Scope is a doc, a subtree, or the whole tree. Loads ownership from docs/_meta/ownership.json and authoring rules from ~/agent-docs/v1/rules/authoring-rules.md; waits for you to say what to review if nothing is passed.
+name: review-docs
+description: Editorial review of docs/ for fit, shape, and direction.
 ---
 
 You are running an **editorial doc review** over a doc, a subtree, or the
@@ -15,9 +16,15 @@ skills — it asks the questions grep can't:
 
 The other two ask "does the doc match the code and the rules?" This one asks
 "is this the doc we should have at all?" It is **report-only**: you form a
-point of view and recommend; you don't edit or commit. Structural moves (split
-/ merge / new doc / retire) are big enough to land in a plan — end by offering
-to draft one into `docs/plans/`.
+point of view and recommend; you don't edit or commit. Structural moves belong
+in a plan.
+
+This skill runs directly — no intake questions. Read
+`~/agent-docs/v1/rules/skill-contracts.md` for the shared dials and model
+policy, and honor any dials passed in `$ARGUMENTS`. Scale fan-out to scope:
+one doc is `cost-low` (review inline); a subtree is `cost-medium`; the whole
+tree defaults to `cost-high`, and `cost-max` only when scope needs to fan out
+harder still.
 
 **Be opinionated.** A hedged editorial review is useless. Say what's wrong
 with the direction and what you'd do instead.
@@ -35,8 +42,8 @@ Also read:
 
 - `docs/_meta/ownership.json` — to judge whether concepts sit with the right
   owner.
-- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring
-  standards the tree is meant to meet.
+- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring standards the
+  tree is meant to meet.
 
 ## Orient first
 
@@ -81,8 +88,7 @@ Before judging, load the shape so the opinion is grounded, not free-floating:
 ## Codebase pointers
 
 This review judges docs *as docs* — it does **not** re-verify every code
-claim (that's **check-docs-consistency-some**). But ground coverage claims in
-reality:
+claim. But ground coverage claims in reality:
 
 - System shape: `docs/overview.md`, `docs/repository-layout.md` (or
   equivalents in the repo).
@@ -121,7 +127,7 @@ An opinionated editorial, not a checklist:
 - `~/agent-docs/v1/rules/authoring-rules.md` — the authoring
   standards.
 
-What to review is below — a doc, a subtree (e.g. `architecture/`), or the
-whole tree. **If empty, ask what to review** before proceeding.
+What to review is below — a doc, a subtree, or empty. **If empty, default to
+the whole `docs/` tree** (`cost-high`, per above); do not stop to ask.
 
 $ARGUMENTS

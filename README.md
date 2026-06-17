@@ -6,57 +6,82 @@ adopt, with each repo supplying only its own facts in `docs/_meta/`.
 
 Repo: `github.com/AdamLoe/agent-docs`
 
-## Canonical install location — REQUIRED
+## Install — REQUIRED
 
-This repo **must live at `~/.claude/agent-docs/`.** That path is part of
-the contract, not a preference: every reference to the kit — inside the
-Claude skills, the Codex prompt shims, and **every consuming repo's doc
-stubs** — uses the absolute path `~/.claude/agent-docs/…`.
-
-Install:
+Clone the repo anywhere, then run the installer from the checkout:
 
 ```sh
-git clone https://github.com/AdamLoe/agent-docs.git ~/.claude/agent-docs
+git clone https://github.com/AdamLoe/agent-docs.git ~/agent-docs
+bash ~/agent-docs/v1/install.sh
 ```
 
-Do **not** clone it elsewhere and reference that other location. If the
-bytes must physically live elsewhere (a shared volume, a dotfiles repo),
-put them there and leave a **compatibility symlink at
-`~/.claude/agent-docs`** pointing to them — so the canonical path always
-resolves. *The canonical path never changes; only what sits behind it
-may.* That is the entire relocation story.
+`v1/install.sh` copies the agent-docs skills into the Claude and Codex user
+skill directories. It verifies that `~/agent-docs/v1/...` plus sample skills
+resolve through both tools.
+If the real checkout lives somewhere else, pass that path:
 
-## Reference convention — official
+```sh
+bash /path/to/agent-docs/v1/install.sh /path/to/agent-docs
+```
 
-Anything that points at the kit uses the **absolute** path
-`~/.claude/agent-docs/<version>/…`:
+Tool-owned paths are adapters only.
 
-- ✅ `~/agent-docs/v1/rules/authoring-rules.md`
-- ❌ relative (`../../rules/…`) — breaks when a skill is read through its
-  `~/.claude/skills/` symlink.
-- ❌ `${CLAUDE_PLUGIN_ROOT}/…` — only resolves if the kit is loaded as an
-  installed Claude *plugin*, not as the standard symlinked skills.
+## The three-layer model
 
-This is safe **because** the install location is fixed. See
-[`v1/README.md`](v1/README.md) § "How a skill links back" for the full
-rationale.
+The real checkout lives at:
+
+```text
+~/agent-docs/
+```
+
+Tools discover skills through their own adapter paths:
+
+- Claude Code reads copied skill entries from `~/.claude/skills/<name>`.
+- Codex reads copied user skills from `~/.agents/skills/<name>`. In this repo
+  setup, `v1/copy-skills.sh` refreshes both tool copies from
+  `~/agent-docs/v1/skills/<name>`.
+
+The kit remains the source of truth. Tool discovery dirs get refreshed copies;
+run `bash ~/agent-docs/v1/copy-skills.sh` after adding, renaming, or deleting
+skills, then run `bash ~/agent-docs/v1/copy-skills.sh --check` to confirm the
+copied adapters match the source.
+
+## Reference convention
+
+Anything that points at the kit uses the absolute path
+`~/agent-docs/<version>/...`:
+
+- Use `~/agent-docs/v1/rules/authoring-rules.md`.
+- Do not use relative paths like `../../rules/...` for kit references; a
+  skill may be read through a symlinked discovery path.
+- Do not use tool-specific roots such as `${CLAUDE_PLUGIN_ROOT}` for the
+  standard symlinked install.
+
+Relative links are still fine inside ordinary Markdown files when they
+link to neighboring files in the same repo.
 
 ## Layout & versioning
 
-```
-~/.claude/agent-docs/
-  README.md          ← this file (the install + reference law)
-  v1/                ← the kit: skills/, rules/, plan-lifecycle.md,
-                       plan-template.md, agent-docs-guide.md, README.md
-  v2/                ← a future revision: copy v1, evolve from there
+```text
+~/agent-docs/
+  README.md          <- this file, the install summary
+  docs/              <- architecture, decisions, agent-context, plans
+  v1/                <- the kit: skills/, rules/, plan-lifecycle.md,
+                       plan-template.md, agent-docs-guide.md
+  v2/                <- a future revision: copy v1, evolve from there
 ```
 
 A consuming repo pins its version via `agent_docs_version` in
 `docs/_meta/manifest.md`. Old repos stay on their version untouched; new
 repos adopt the latest.
 
-## Per-tool setup
+## More detail
 
-See [`v1/README.md`](v1/README.md) → "Getting it working" for the Claude
-Code (skill symlinks) and Codex (`AGENTS.md` + `~/.codex/prompts/` shims)
-adapters. Both reference this one kit; nothing is duplicated.
+See [`docs/index.md`](docs/index.md) for the dogfood docs router:
+
+- [`docs/architecture/install-and-adapters.md`](docs/architecture/install-and-adapters.md)
+  covers the symlink contract and per-tool adapters.
+- [`docs/architecture/workflow-kit.md`](docs/architecture/workflow-kit.md)
+  covers skills, rules, templates, and workflow commands.
+- [`docs/decisions/agent-docs.md`](docs/decisions/agent-docs.md)
+  records the durable decisions.

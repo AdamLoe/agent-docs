@@ -8,24 +8,19 @@ not a plan. Keep the scope small, fix the issue directly, verify it, migrate
 durable docs only if needed, and commit when green. Do not push unless
 explicitly told.
 
-If the problem is missing, bootstrap first, then ask the user what to fix and
-wait. Batch questions whenever possible.
-
 ## Bootstrap
 
-1. Read `docs/_meta/manifest.md` for `repo_name`, `code_root`,
-   `change-to-doc`, `drift-gates`, and `drift-verification`.
-2. Read `docs/index.md` and `docs/overview.md`.
-
-Stop there. If the problem is missing, ask the user what to fix and wait. Do
-not read the rule and source files below before the problem is known.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`) → `index.md` → `overview.md` → stop. The problem to fix
+is the task; if it is missing, run the two-question intake and wait.
 
 Once the problem is known:
 
-3. Read `~/agent-docs/v1/rules/coding-style.md` and
-   `~/agent-docs/v1/rules/repo-rules.md`.
-4. Load only the architecture, decisions, agent-context, and source files
-   needed to understand and fix the problem.
+- Read `~/agent-docs/v1/rules/coding-style.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- Load only the architecture, decisions, agent-context, and source files
+  needed to understand and fix the problem.
 
 Read `~/agent-docs/v1/rules/authoring-rules.md` before updating docs. Read
 `docs/plans/index.md` and `~/agent-docs/v1/plan-lifecycle.md` only if the fix
@@ -43,23 +38,23 @@ needs to touch plan files.
   be completed cleanly, leave the tree coherent, explain the blocker, and do
   not claim it is fixed.
 - Ask before changing public behavior or APIs only when the problem statement
-  does not already imply the desired behavior. If `skip-review` is present,
-  make the best defensible choice and note the assumption.
+  does not already imply the desired behavior. At `review-none`, make the best
+  defensible choice and note the assumption.
 
 ## Execution Policy
 
+Dials and model policy follow `skill-contracts.md`. Notes specific to a quick
+fix:
+
 - Default to direct implementation. Use sub-agents only when they will likely
-  save context, time, or model cost without slowing down a small fix.
-- If the user says `cheap-agents`, prefer cheaper agents for bounded
-  investigation and routine verification. If running on a stronger model and a
-  cheaper agent can safely handle a subtask, delegate.
-- If the user says `skip-review`, do not stop for human review unless truly
-  blocked. Record later-review notes in the final response.
+  save context, time, or model cost without slowing down a small fix; at
+  `cost-low`, delegate routine investigation/verification to a cheaper agent
+  when running on a stronger model.
 - Run the cheapest meaningful verification first. Use manifest gates when they
   are needed to justify the commit or when the fix touches surfaces covered by
   those gates.
 - For UI-facing fixes, do visual verification when practical. Ask for user
-  confirmation when useful unless `skip-review` is present.
+  confirmation when useful unless `review-none` is set.
 
 ## Shipping
 

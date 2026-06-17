@@ -8,53 +8,48 @@ job is to finish the named plans unless the user says otherwise: code changes,
 targeted verification, durable docs, plan status, and a local commit when
 green. Do not push unless explicitly told.
 
-If plan paths are missing, bootstrap first, then ask the user for the plan
-files and wait. Batch questions whenever possible.
-
 ## Bootstrap
 
-1. Read `docs/_meta/manifest.md` for `repo_name`, `code_root`,
-   `change-to-doc`, `drift-gates`, and `drift-verification`.
-2. Read `docs/index.md` and `docs/overview.md`.
-
-Stop there. If plan paths are missing, ask the user which plans to implement
-and what outcome they expect, then wait. Do not read the heavier files below
-before the plans are named — they only matter against the actual work.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`) → `index.md` → `overview.md` → stop. The plan paths are
+the task; if missing, run the two-question intake (ask which plans and the
+expected outcome) and wait.
 
 Once the plans are named:
 
-3. Read each named plan in full. Ignore whether it is `draft` or `active`;
-   explicit user selection is enough.
-4. Read `~/agent-docs/v1/plan-lifecycle.md` and
-   `~/agent-docs/v1/plan-template.md` for status and migration rules, and
-   `docs/plans/index.md` if you need sibling-plan context.
-5. Read `~/agent-docs/v1/rules/coding-style.md`,
-   `~/agent-docs/v1/rules/authoring-rules.md`, and
-   `~/agent-docs/v1/rules/repo-rules.md`.
-6. If the work is multi-stream or delegated, read
-   `~/agent-docs/v1/rules/orchestrating.md` and
-   `docs/agent-context/orchestrating.md` if it exists.
+- Read each named plan in full. Ignore whether it is `draft` or `active`;
+  explicit user selection is enough.
+- Read `~/agent-docs/v1/plan-lifecycle.md` and
+  `~/agent-docs/v1/plan-template.md` for status and migration rules, and
+  `docs/plans/index.md` if you need sibling-plan context.
+- Read `~/agent-docs/v1/rules/coding-style.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- If the work is multi-stream or delegated, read
+  `~/agent-docs/v1/rules/orchestrating.md` and
+  `docs/agent-context/orchestrating.md` if it exists.
 
 Then load only the architecture, decisions, agent-context, and source files
 needed to implement and verify the plans.
 
 ## Execution Policy
 
+Dials and model policy follow `skill-contracts.md`. Implementation specifics:
+
 - Work through all named plans unless the user narrows scope.
 - Default to a middle ground: use sub-agents when they materially reduce
   context, wall time, or cost without creating coordination risk; otherwise
-  implement directly.
-- If the user says `cheap-agents`, prefer cheaper agents for bounded
-  investigation, implementation, and routine verification. Keep strong agents
-  for high-risk architecture, correctness, or product judgment.
-- If the user says `skip-review`, do not stop for human review unless truly
-  blocked. Record anything the human should review later in a closeout note
-  in the final response or, if substantial, a small closeout doc the user can
-  inspect after the run.
+  implement directly. At `cost-low`, push bounded investigation,
+  implementation, and routine verification onto cheaper agents.
+- At `review-none`, do not stop for human review unless truly blocked. Record
+  anything the human should review later in a closeout note in the final
+  response or, if substantial, a small closeout doc the user can inspect after
+  the run.
 - Stop and ask when a plan is stale, contradictory, infeasible, or missing a
-  decision that changes what should be built. Batch those questions. If
-  `skip-review` is present, choose the best defensible path, document the
-  assumption, and keep moving unless the risk is severe.
+  decision that changes what should be built. Batch those questions. At
+  `review-none`, choose the best defensible path, document the assumption, and
+  keep moving unless the risk is severe.
 - Defer expensive tests as much as possible. Run the cheapest useful checks
   during implementation, and reserve manifest drift gates or broader tests for
   the final shipping pass unless the plan's core risk requires them earlier.

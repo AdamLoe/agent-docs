@@ -1,5 +1,6 @@
 ---
-description: Consistency-check one or more NAMED docs/ docs against the code and the house authoring rules — accuracy-vs-code (stale path→symbol pointers, wrong constant values, contradictions) and clarity/altitude — then report findings. Read-only: no edits, no commits. The lightweight, report-only cousin of fix-docs-drift-all (whole-tree, fixes in place). Mechanical, not editorial — for the big-picture "is this the right doc?" read use review-docs. Loads authoring rules from ~/agent-docs/v1/rules/authoring-rules.md and ownership from docs/_meta/ownership.json; waits for you to name the doc(s) if none are passed.
+name: check-docs-consistency-some
+description: Check named docs for code drift and house-rule issues, then report findings.
 ---
 
 You are running a **doc consistency check** over one or more named docs in
@@ -21,6 +22,11 @@ the docs are authoritative for what's-where and why.
 
 ## Before you begin — load app context
 
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**. The doc paths to check are the task; if none are named (see the
+end of this file), run the two-question intake and wait before the deeper
+reads below.
+
 Read `docs/_meta/manifest.md` and extract:
 
 - **`code_root`** — the directory that is the root of the app source tree
@@ -31,24 +37,21 @@ Read `docs/_meta/manifest.md` and extract:
 - **`drift-verification`** — the app-specific high-risk surfaces and
   verification steps; borrow from this when spot-checking accuracy claims.
 
-Also read `~/agent-docs/v1/rules/authoring-rules.md` — this is the
-house authoring standard all docs are graded against (the clarity lens below
-cites its rules by number).
+Also read `~/agent-docs/v1/rules/authoring-rules.md` — the house standard
+the clarity lens cites by number.
 
-For ownership questions, read `docs/_meta/ownership.json` — it maps concepts
-to their owning doc.
+For ownership questions, read `docs/_meta/ownership.json`.
 
 ## The two lenses
 
 Check every named doc against exactly these two lenses, both anchored to the
-codebase's own standards. (Structure/routing and LLM-navigation are *not*
-this flow's lenses — those are big-picture judgments that belong to
-**review-docs**. Note one here only if it's glaring; don't go hunting.)
+codebase's own standards. Structure/routing and LLM-navigation belong to
+**review-docs**.
 
 ### 1. Accuracy vs code — spot-check when it's cheap
 
 Code is the source of truth for behaviour. Verify the doc's claims against
-it, but stay frugal — spot-check the high-risk claims, don't boil the ocean:
+it, but stay frugal — spot-check the high-risk claims:
 
 - **Resolve `path → symbol` pointers and `Code anchors`.** Grep the named
   symbol at the named path (relative to `code_root`); **match by name, never
@@ -122,6 +125,7 @@ One short report per doc — no edits, no commits:
   this check grades against.
 
 The doc(s) to check are below — a path, several paths, or empty. **If empty,
-ask which doc(s) to check** before proceeding.
+run the two-question intake** (which doc(s) to check, plus dials) before
+proceeding.
 
 $ARGUMENTS

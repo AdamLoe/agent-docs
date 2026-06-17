@@ -19,8 +19,36 @@ this doc and then record only what's specific to that app.
 You are acting as the **orchestrator** of a large, multi-stream effort
 delegating to sub-agents. If you're doing a single focused change yourself,
 you don't need this doc — just follow `coding-style.md` and the app's
-`repo-rules.md`. Bootstrap an orchestration chat via the app's
-`/fresh-orchestrator` skill; it routes you here.
+`repo-rules.md`. Plan implementation starts from `/implement-plans`; that
+skill routes here when the selected plans need delegation.
+
+## Effort: the two dials
+
+Orchestration effort is governed by the kit's two shared dials, defined in
+`./skill-contracts.md` — there is no separate orchestration-only effort
+vocabulary. The concrete agent counts below are orchestration-specific
+guidance, not a global per-tier spec; `skill-contracts.md` keeps the dials
+loose ("vibes, not a rulebook") everywhere else. The dials map onto fan-out
+and model spend like this:
+
+| Dial setting | Fan-out | Model spend |
+|---|---|---|
+| `cost-low` | 0–1 agents; prefer doing it inline | cheap/read-only unless clearly needed |
+| `cost-medium` (default) | 2–4 agents | mid-tier implementers, strong only for hard review |
+| `cost-high` | 4–8 parallel agents | mid-tier implementers, strong planner/red-team |
+| `cost-max` | broad parallelism, bounded by overlap/resources | strongest planner/red-team where useful |
+| `review-high`/`max` | adds a dedicated red-team / second-opinion agent | strong reviewer (see "Bringing in second opinions") |
+| `review-none` | — | skips human checkpoints only; gates still run |
+
+Resolution rule: explicit wording wins; "cheap/quick/light" reads as
+`cost-low`; "thorough/deep/use subagents" floors at `cost-high`; "all out /
+max / spend tokens" reads as `cost-max`; default `cost-medium` for
+orchestration skills. The spend column summarizes the per-role defaults in
+"How to delegate" and the kit Model Policy — when they differ, those win.
+Never spawn agents for sequential same-file work; never run scarce-resource
+gates per stream — that is the same "cheapest sufficient gate" /
+consolidated-end-gate rule already in the standard preamble and "What NOT to
+do", now phrased once.
 
 ## Your actual job
 
@@ -46,9 +74,12 @@ Delegate three kinds of work:
 - **Investigate** — read-only, returns distilled facts (not raw file
   dumps). Use this instead of reading big source files yourself.
 - **Implement** — edits code and self-verifies. Default model: the faster
-  mid-tier model.
+  mid-tier model. This is the `cost-medium` default; `cost-high`/`max` may
+  raise the implementer's tier or add fan-out — see Effort: the two dials.
 - **Plan / red-team** — returns a plan or a critique. Default model: the
   strongest model, for planning, audit, and correctness-critical work.
+  This is the `cost-high`/`max` and `review-high`/`max` end — see Effort:
+  the two dials.
 
 Also delegate **verification** — don't run the full gate inline; have an
 agent run it and paste the result.
@@ -135,9 +166,9 @@ Fallback if infeasible:     (the documented alternative; flag it, don't fake)
 
 ## Bringing in second opinions
 
-- For correctness-critical changes, spend a strong-model agent on a
-  **red-team / second opinion** before or after implementing. This is the
-  **exception, not a per-stream default** — a review agent is a full
+- At `review-high`/`max` (or `cost-high`/`max`), spend a strong-model agent
+  on a **red-team / second opinion** before or after implementing. This is
+  the **exception, not a per-stream default** — a review agent is a full
   cold-context spawn, so don't pay that cost on routine streams.
 - The single most valuable second opinion in a refactor that touches
   learning is: **does it still learn?** Make the learning smoke the gate,

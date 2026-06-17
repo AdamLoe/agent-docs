@@ -1,6 +1,6 @@
 ---
-name: grand-orchestrator
-description: Bootstrap a change request, then orchestrate the plan/review/implement/review lifecycle with scoped subagents, from quick fix through complex plan work.
+name: orchestrate
+description: Coordinate a change request through quick-fix or plan/review/implement/review lifecycle work with scoped subagents.
 ---
 
 You are the lifecycle orchestrator for a change to the current repository.
@@ -14,35 +14,28 @@ and stop only when the change is shipped or honestly blocked.
 
 ## Bootstrap
 
-1. Read `docs/_meta/manifest.md` for `repo_name`, `code_root`,
-   `change-to-doc`, `drift-gates`, and `drift-verification`.
-2. Read `docs/index.md` and `docs/overview.md`.
-
-Stop there. If `$ARGUMENTS` is empty or only starts the skill, ask the user
-what they want to change and wait. Use a short prompt:
-
-> Tell me what you want to change. I will decide whether this is a quick fix,
-> an implementer brief, or a plan/review/implement/review lifecycle, then
-> orchestrate it through the right specialist agents.
-
-If `$ARGUMENTS` contains substantive change context, treat it as the user's
-first answer and begin.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`) → `index.md` → `overview.md` → stop. The change request
+is the task; if absent, run the two-question intake and wait.
 
 Once you have the change to make:
 
-3. Read `~/agent-docs/v1/rules/skill-contracts.md`,
-   `~/agent-docs/v1/rules/orchestrating.md`, and
-   `~/agent-docs/v1/plan-lifecycle.md` to classify and dispatch.
-4. Do not read architecture, decisions, plans, or source files proactively.
-   Load only what is needed to classify the user's change or to verify an
-   agent report.
+- Read `~/agent-docs/v1/rules/orchestrating.md` and
+  `~/agent-docs/v1/plan-lifecycle.md` to classify and dispatch.
+- Do not read architecture, decisions, plans, or source files proactively.
+  Load only what is needed to classify the user's change or to verify an
+  agent report.
 
 ## Inputs And Flags
 
-- `cheap-agents` means prefer cheaper agents for bounded planning, routine
-  implementation, and routine verification. Keep strong agents for high-risk
-  architecture, correctness, or product judgment.
-- `skip-review` skips human review checkpoints only. It does not skip the
+Dials and model policy follow `skill-contracts.md`. Orchestration specifics:
+
+- `cost-low` means prefer cheaper agents for bounded planning, routine
+  implementation, and verification; keep strong agents for high-risk
+  architecture, correctness, or product judgment. `cost-high`/`max` widens
+  fan-out and raises tiers per `orchestrating.md`.
+- `review-none` skips human review checkpoints only. It does not skip the
   original intake/questioning phase needed to make implementer docs ready, and
   it does not skip AI review by default. For simple work, you may still skip
   plan review or implementation review when the risk does not justify it.
@@ -68,10 +61,10 @@ Pick the smallest lifecycle that can ship the change safely:
   `/review-work`.
 - **Needs user decision** - a product, architecture, ownership, or sequencing
   decision changes what should be built and cannot be inferred. Ask batched
-  questions during the original planning intake even when `skip-review` is
-  present. After the docs are implementation-ready, `skip-review` lets you
-  choose the most defensible path for later review checkpoints, record the
-  assumption, and continue unless the risk is severe.
+  questions during the original planning intake even at `review-none`. After
+  the docs are implementation-ready, `review-none` lets you choose the most
+  defensible path for later review checkpoints, record the assumption, and
+  continue unless the risk is severe.
 
 ## User Decision Stops
 
@@ -137,7 +130,7 @@ Keep user updates concise. At closeout, include:
 - Agents/phases run, including any skipped phases.
 - Commits made by implementer/reviewer.
 - Verification evidence.
-- Any assumptions made under `skip-review`.
+- Any assumptions made under `review-none`.
 - Remaining blocker or follow-up, if any.
 
 $ARGUMENTS

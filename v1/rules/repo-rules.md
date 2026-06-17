@@ -55,9 +55,8 @@ often, without waiting to be asked:
 - No "Phase X" / "Slice N" / ticket-ID prefixes in source comments.
   Commit messages may reference them for archaeology but the codebase
   itself stays version-less.
-- Co-author tag if generated with help:
-  `Co-Authored-By: Claude <noreply@anthropic.com>` (include the model
-  name when it's known, e.g. `Claude Sonnet 4.6`).
+- Co-author tag if generated with help, using the tool's standard identity.
+  Include the model name only when the tool convention calls for it.
 
 ## Generated artifacts & what never to commit (universal)
 

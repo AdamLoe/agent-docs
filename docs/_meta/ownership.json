@@ -1,0 +1,39 @@
+{
+  "owners": [
+    {
+      "surface": "install-and-relocation",
+      "paths": ["README.md", "docs/architecture/install-and-adapters.md", "v1/install.sh"],
+      "owns": ["canonical self-reference path", "three-layer install model", "layout and versioning"]
+    },
+    {
+      "surface": "tool-adapters",
+      "paths": ["docs/architecture/install-and-adapters.md", "v1/copy-skills.sh"],
+      "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "skill copy refresh"]
+    },
+    {
+      "surface": "workflow-lifecycle",
+      "paths": ["docs/architecture/workflow-kit.md", "v1/agent-docs-guide.md"],
+      "owns": ["fresh-chat workflow", "orchestrate workflow", "plan workflow", "ship-current-work", "wrap-up-current-chat", "rebuild-agent-docs"]
+    },
+    {
+      "surface": "skill-contracts",
+      "paths": ["v1/skills/registry.md", "v1/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["skill registry", "skill modes", "shared skill bootstrap", "shared skill shipping", "generic model language"]
+    },
+    {
+      "surface": "authoring-rules",
+      "paths": ["v1/rules/authoring-rules.md"],
+      "owns": ["documentation authoring rules", "router-only adapter exception"]
+    },
+    {
+      "surface": "orchestration",
+      "paths": ["v1/rules/orchestrating.md"],
+      "owns": ["multi-stream orchestration", "orchestration dials", "sub-agent discipline"]
+    },
+    {
+      "surface": "plan-lifecycle",
+      "paths": ["v1/plan-lifecycle.md", "v1/plan-template.md", "docs/plans/"],
+      "owns": ["plan statuses", "plan templates", "plan cleanup semantics"]
+    }
+  ]
+}
