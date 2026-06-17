@@ -9,6 +9,7 @@ consuming repo supplies app-specific facts in its own `docs/_meta/`.
 ```text
 ~/agent-docs/                  # real checkout
   README.md                    # user-facing install summary
+  AGENTS.md, CLAUDE.md         # router-only auto-loaded files
   docs/                        # this repo's dogfood docs
   v1/
     skills/                    # reusable command bodies
@@ -20,6 +21,8 @@ consuming repo supplies app-specific facts in its own `docs/_meta/`.
 
 The repo is tool-neutral. Tool-owned paths are only adapters:
 
+- `AGENTS.md` and `CLAUDE.md` are root router files that point to
+  `docs/index.md` and `docs/overview.md`
 - `~/.claude/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by
   `v1/copy-skills.sh`
 - `~/.agents/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by

@@ -7,13 +7,17 @@ This repo's real checkout is `~/agent-docs`. Versioned kit files live under
 
 | Path | Target | Purpose |
 |---|---|---|
+| `AGENTS.md` | `docs/index.md`, `docs/overview.md` | Root router for agent tools that auto-load it. |
+| `CLAUDE.md` | `docs/index.md`, `docs/overview.md` | Root router for Claude. |
 | `~/.claude/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Claude personal skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
 | `~/.agents/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Codex native user skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
 
 `~/agent-docs` stays the checkout root, not a symlink to `v1/`; the version
 segment remains explicit wherever a file path enters the kit.
 Claude plugin manifests are not a supported adapter path for this repo; the
-only managed Claude discovery path is copied personal skills.
+only managed Claude discovery path is copied personal skills. Root auto-loaded
+files are router-only adapters and must not own architecture, decisions, or
+workflow facts.
 
 ## Installer
 

@@ -10,6 +10,7 @@ code_root: v1/
 |---|---|
 | Install, relocation, canonical self-reference path | README.md, docs/architecture/install-and-adapters.md, v1/install.sh |
 | Per-tool adapters, skill discovery, cross-tool contract, skill copy refresh | docs/architecture/install-and-adapters.md, v1/copy-skills.sh |
+| Router-only auto-loaded files | AGENTS.md, CLAUDE.md, README.md, docs/architecture/install-and-adapters.md |
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, v1/agent-docs-guide.md |
 | Skill registry and shared skill contracts | v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
@@ -48,6 +49,7 @@ readlink -e ~/.agents/skills/plan/SKILL.md
 |---|---|
 | Neutral canonical path and relocation model | docs/decisions/agent-docs.md |
 | Tool adapter behavior and discovery contracts | docs/decisions/agent-docs.md |
+| Router-only auto-loaded files | docs/decisions/agent-docs.md, docs/architecture/install-and-adapters.md |
 | Work lifecycle and rebuild flow | docs/decisions/agent-docs.md |
 | Skill registry and shared skill contracts | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md |
 | Authoring invariants | v1/rules/authoring-rules.md |

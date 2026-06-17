@@ -128,6 +128,8 @@ ownership="$repo_root/docs/_meta/ownership.json"
 require_file "docs/index.md"
 require_file "docs/overview.md"
 require_file "docs/repository-layout.md"
+require_file "AGENTS.md"
+require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
 require_file "v1/template/docs/index.md"
@@ -153,15 +155,38 @@ grep -Fq 'bash v1/verify-agent-docs.sh' "$manifest" ||
   fail "manifest drift-gates must call bash v1/verify-agent-docs.sh"
 
 require_doc_route "docs/index.md" "repository-layout.md" "docs"
+for router_file in AGENTS.md CLAUDE.md; do
+  grep -Fq 'docs/index.md' "$repo_root/$router_file" ||
+    fail "$router_file must route to docs/index.md"
+  grep -Fq 'docs/overview.md' "$repo_root/$router_file" ||
+    fail "$router_file must route to docs/overview.md"
+  grep -Fq 'router only' "$repo_root/$router_file" ||
+    fail "$router_file must state that it is router only"
+done
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Repository layout inventory" \
   "docs/repository-layout.md" \
   "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Router-only auto-loaded files" \
+  "AGENTS.md, CLAUDE.md, README.md, docs/architecture/install-and-adapters.md" \
+  "docs/_meta/manifest.md"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "repository-layout" \
   "docs/repository-layout.md" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "auto-loaded-router-files" \
+  "AGENTS.md" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "auto-loaded-router-files" \
+  "CLAUDE.md" \
   "docs/_meta/ownership.json"
 require_doc_route "v1/template/docs/index.md" "repository-layout.md" "template docs"
 require_manifest_change_to_doc \
@@ -268,7 +293,7 @@ grep -Fq '~/.agents/skills/<name>' "$adapter_doc" ||
   fail "codex copy target undocumented"
 
 candidate_files() {
-  find "$repo_root/README.md" "$repo_root/docs" "$repo_root/v1" \
+  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/v1" \
     \( -path "$repo_root/v1/verify-agent-docs.sh" -o -path "$repo_root/v1/.claude-plugin" \) -prune -o \
     -type f -print
 }

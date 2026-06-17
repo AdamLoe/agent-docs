@@ -11,6 +11,11 @@
       "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "skill copy refresh"]
     },
     {
+      "surface": "auto-loaded-router-files",
+      "paths": ["AGENTS.md", "CLAUDE.md", "README.md", "docs/architecture/install-and-adapters.md", "docs/decisions/agent-docs.md"],
+      "owns": ["root auto-loaded router files", "router-only adapter policy"]
+    },
+    {
       "surface": "repository-layout",
       "paths": ["docs/repository-layout.md"],
       "owns": ["repo path inventory", "top-level directory purposes", "agent navigation map"]

@@ -65,6 +65,8 @@ link to neighboring files in the same repo.
 ```text
 ~/agent-docs/
   README.md          <- this file, the install summary
+  AGENTS.md          <- router-only entry point for agent tools
+  CLAUDE.md          <- router-only entry point for Claude
   docs/              <- architecture, decisions, agent-context, plans
   v1/                <- the kit: skills/, rules/, plan-lifecycle.md,
                        plan-template.md, agent-docs-guide.md

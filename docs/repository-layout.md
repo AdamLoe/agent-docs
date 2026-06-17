@@ -8,6 +8,8 @@ for workflow surfaces, use
 | Path | Purpose |
 |---|---|
 | `README.md` | User-facing install summary. |
+| `AGENTS.md` | Router-only auto-loaded file for agent tools that read it. |
+| `CLAUDE.md` | Router-only auto-loaded file for Claude. |
 | `docs/` | Dogfood docs for this repo. |
 | `docs/_meta/manifest.md` | Repo bindings, change-to-doc map, drift gates, and decision domains. |
 | `docs/_meta/ownership.json` | Structured concept ownership data. |

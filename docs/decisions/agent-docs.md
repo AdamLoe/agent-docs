@@ -39,13 +39,13 @@ bodies before a future agent starts from the wrong instructions.
 
 ## Router-only auto-loaded files
 
-**Decision.** Auto-loaded files such as `AGENTS.md` or `CLAUDE.md` may exist
-only as routers. They must not own architecture, decisions, or app facts.
+**Decision.** Root `AGENTS.md` and `CLAUDE.md` exist only as routers to the
+docs entry points. They must not own architecture, decisions, or app facts.
 
 **Why.** Always-loaded fact dumps drift and crowd the context window. Routers
 keep startup cheap while preserving the normal docs tree as the owner.
 
-**Applies to.** [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md).
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md).
 
 ## Work ships through `/ship-current-work`
 
