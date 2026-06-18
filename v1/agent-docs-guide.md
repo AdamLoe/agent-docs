@@ -237,22 +237,30 @@ docs) and action (fix vs. check vs. review):
 - an **editorial review** (`/review-docs-shape`) that asks the higher question —
   is this even the *right* doc, in the right shape?
 
-Plus the chat/lifecycle commands: `/fresh-chat`, `/doctor`, `/orchestrate`,
-`/plan`, `/quick-fix`, `/ship-plans`, `/review-shipped-work`,
-`/review-plans`, `/review-plans-health`, `/review-skills`,
-`/ship-current-work`, `/wrap-up-current-chat`, `/clear-plans`,
-`/rebuild-agent-docs`, `/list-skills`, and
+Plus the chat/lifecycle commands: `/start-session`, `/fresh-chat`, `/doctor`,
+`/orchestrate`, `/plan`, `/quick-fix`, `/ship-plans`,
+`/review-shipped-work`, `/review-plans`, `/review-plans-health`,
+`/review-skills`, `/ship-current-work`, `/wrap-up-current-chat`,
+`/clear-plans`, `/rebuild-agent-docs`, `/list-skills`, and
 `/feedback-agent-docs`. The principle — *the rules for maintaining the
 docs are themselves runnable* — is what keeps the system honest over time.
 
 ## Work lifecycle
 
-Ordinary work starts with `/fresh-chat`, proceeds against the app's code
-and docs, and finishes with `/ship-current-work`. Shipping means inspecting
-the diff, finding owning docs through `docs/_meta/manifest.md` and
-`docs/_meta/ownership.json`, updating durable docs, running the manifest
-drift gates, migrating any touched plan context, staging by filename, and
-committing only when green.
+Use `/start-session` at the beginning of a day or new coding session when the
+first question is "what state is this repo in?" It checks local git state,
+plans, and orchestration run docs, then routes into the owning workflow skill:
+cleanup through `/clear-plans`, dirty coherent work through
+`/ship-current-work`, active plan work through `/ship-plans` or
+`/review-shipped-work`, and new tasks through `/plan`, `/quick-fix`, or
+`/orchestrate`.
+
+Ordinary work starts with `/fresh-chat` when the user already has a task for
+the docs router, proceeds against the app's code and docs, and finishes with
+`/ship-current-work`. Shipping means inspecting the diff, finding owning docs
+through `docs/_meta/manifest.md` and `docs/_meta/ownership.json`, updating
+durable docs, running the manifest drift gates, migrating any touched plan
+context, staging by filename, and committing only when green.
 
 Planning starts with `/plan`: it reads the docs router, turns rough app-state
 thoughts into separated concerns, gives high-level feedback, asks batched
@@ -277,7 +285,9 @@ docs if behaviour changes, and commits when green.
 `/wrap-up-current-chat` is not the normal finish command. Use it only to
 capture durable knowledge from the current chat that is not recoverable
 from docs, code, or git history. Use `/clear-plans` for repo-wide cleanup
-of plans that already shipped or were abandoned.
+of plans that already shipped or were abandoned. Cleanup deletes only clean
+tracked plan or run-doc material so the latest deleted content remains
+recoverable from local git history.
 
 Plan implementation starts with `/ship-plans`, which reads the selected
 plans, implements them through verification, migrates durable context into
@@ -346,8 +356,8 @@ startup and runs the same **Standard Intake Protocol**: read the manifest and
 the two router files, then stop. If the invocation already carries a task, it
 proceeds; if not, it asks exactly two questions — a dial picker and an
 open-ended "what do you want to do?" — and waits, without guessing the task.
-A few context-free skills (e.g. `/clear-plans`, `/fix-docs-drift`) operate
-on disk state and skip the questions.
+A few context-free skills (e.g. `/start-session`, `/clear-plans`,
+`/fix-docs-drift`) operate on disk state and skip the questions.
 
 Skills stop for the user only when a concrete unresolved decision changes what
 will be built, reviewed, or shipped. When verification cannot run, they report

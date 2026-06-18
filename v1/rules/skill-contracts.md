@@ -39,7 +39,7 @@ Then branch on what the invocation gave you:
   Do not read any heavier file until they answer.
 
 **Exception — context-free skills.** A few skills operate on existing disk
-and git state rather than a user-described task: `clear-plans`,
+and git state rather than a user-described task: `start-session`, `clear-plans`,
 `fix-docs-drift`, `list-skills`, `doctor`,
 `review-plans-health`, `review-docs-shape`, `ship-current-work`,
 `wrap-up-current-chat`, `review-skills`, `rebuild-agent-docs`,

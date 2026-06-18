@@ -24,10 +24,16 @@ For every plan file or run folder, sort it into one bucket:
 **1. `okay_to_delete: true` → delete it.**
 First do a 10-second sanity check: open the `owning_docs` or hub migration
 targets and confirm they actually carry the plan or run's key facts/decisions.
-If migration looks genuinely complete, delete the plan file or run folder
-(tracked files are recoverable through git) and record it under *deleted*. If
-migration looks **incomplete** despite the flag, do **not** delete — treat it
-as bucket 2 instead and note the mislabel.
+Before deleting, confirm the latest plan or run-doc content is recoverable in
+local git history: all candidate files must be tracked and have no staged,
+unstaged, renamed, deleted, or untracked changes. If any candidate file is
+dirty or untracked, do **not** delete it in this pass; report that the latest
+plan/run-doc version needs to be committed first, or route to
+`ship-current-work` when the dirty tree is coherent. If migration looks
+genuinely complete and the candidate is clean, delete the plan file or run
+folder (tracked files are recoverable through git) and record it under
+*deleted*. If migration looks **incomplete** despite the flag, do **not**
+delete — treat it as bucket 2 instead and note the mislabel.
 
 **2. `status: shipped` or `abandoned`, but `okay_to_delete: false` → the main job.**
 - Confirm the work really shipped/was-dropped: check the git log and the code the plan claims to have produced. If you can't confirm, leave it and report why (bucket 4).
@@ -46,6 +52,8 @@ as bucket 2 instead and note the mislabel.
 ## Don'ts
 
 - Don't delete anything you haven't confirmed is **both** shipped **and** fully migrated.
+- Don't delete plan or run-doc files whose latest version is not already in
+  local git history.
 - Don't delete a freshly-migrated plan in the same pass — flag it and let the user review before the next sweep removes it.
 - Don't invent decisions to record. If the rationale is already in `docs/decisions/`, just confirm and move on.
 - Don't migrate transient prose. The git history of the plan keeps it.

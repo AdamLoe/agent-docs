@@ -28,6 +28,13 @@ Before shipping repo changes, run `bash ~/agent-docs/v1/verify-agent-docs.sh`
 from any working directory. The verifier owns this repo's non-mutating drift
 gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 
+- `/start-session` checks local git state, active plans, shipped cleanup
+  candidates, and orchestration run docs at the start of a day or coding
+  session. It routes into the owning skill instead of duplicating workflow
+  logic: `clear-plans` for safe disposable plan material,
+  `ship-current-work` for dirty coherent work, `ship-plans` or
+  `review-shipped-work` for active plan work, and `plan`, `quick-fix`, or
+  `orchestrate` for a supplied next task.
 - `/fresh-chat` starts ordinary work from the docs router.
 - `/doctor` validates scaffold, manifest, ownership, skill
   registry, and stale reference health.
@@ -55,7 +62,8 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 - `/rebuild-agent-docs` adopts or repairs a repo's docs tree.
 - `/wrap-up-current-chat` captures chat-only durable context.
 - `/clear-plans` cleans shipped or abandoned plans and orchestration run
-  folders after migration.
+  folders after migration. It deletes only clean tracked plan/run-doc material
+  so the latest deleted content remains recoverable from local git history.
 - `/feedback-agent-docs` records a kit-level comment or request from a
   consuming repo into the upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
 
@@ -65,6 +73,7 @@ Use the smallest command that owns the current job:
 
 | Job | Command |
 |---|---|
+| Start a day/session by checking local git, plans, and cleanup candidates | `/start-session` |
 | Start a normal chat and wait for the task | `/fresh-chat` |
 | Fix one bounded issue now | `/quick-fix` |
 | Shape rough direction into implementer-ready material | `/plan` |

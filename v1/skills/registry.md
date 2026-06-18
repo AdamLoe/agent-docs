@@ -14,6 +14,7 @@ and mechanical work → mid). Both are defined in `v1/rules/skill-contracts.md`.
 
 | Skill | Mode | Action | Commits | Intake | Launch | Normal Input |
 |---|---|---|---|---|---|---|
+| `start-session` | bootstrap | inspect local repo and plan state, then route to the owning workflow skill | only through routed skills | direct | mid | optional task or dials |
 | `fresh-chat` | bootstrap | load docs router for ordinary work | no | two-question | any | user's first task |
 | `plan` | planning | shape app-state thoughts into briefs, plans, or discussion | only if it edits tracked docs/plans | two-question | strong | planning context |
 | `orchestrate` | lifecycle orchestration | orchestrate quick-fix through plan/review/implement/review lifecycle | yes, through implementer/reviewer shipping | two-question | strong | change request |

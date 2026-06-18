@@ -80,6 +80,34 @@ validate.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md).
 
+## Startup checks route to existing skills
+
+**Decision.** `/start-session` is the local beginning-of-day/session check for
+git state, plan state, and cleanup candidates, but it delegates mutation to
+the existing workflow skills.
+
+**Why.** Startup should make the next action obvious without creating a second
+implementation, cleanup, or orchestration path that can drift from the owning
+skills.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/start-session/SKILL.md`](../../v1/skills/start-session/SKILL.md), [`../../v1/skills/clear-plans/SKILL.md`](../../v1/skills/clear-plans/SKILL.md).
+
+**Tradeoffs.** A startup run may immediately hand off to a mutating skill, but
+the mutation still follows that skill's verification, doc migration, and commit
+contract.
+
+## Plan cleanup preserves local history
+
+**Decision.** `/clear-plans` deletes shipped or abandoned plan files and
+orchestration run docs only when the latest candidate content is clean and
+tracked in local git.
+
+**Why.** Plans are disposable coordination material after migration, but the
+deleted latest version should remain recoverable from git history rather than
+being lost from an uncommitted working tree.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/clear-plans/SKILL.md`](../../v1/skills/clear-plans/SKILL.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
+
 ## Command names favor short job labels
 
 **Decision.** Workflow commands use short job-oriented names and the skill

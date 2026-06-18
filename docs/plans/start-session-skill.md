@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         codex
 last_updated:  2026-06-18
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -129,8 +129,7 @@ Before marking shipped, migrate durable facts and rationale into:
 - `decisions/agent-docs.md` for the rationale behind a local startup
   coordinator and the git-history deletion guard.
 - `../v1/skills/registry.md` for the new skill inventory row.
-- `../v1/rules/skill-contracts.md` only if implementation reveals a shared
-  contract that applies beyond `start-session` and `clear-plans`.
+- `../v1/rules/skill-contracts.md` for the direct-intake exception list.
 
 ## See also
 
