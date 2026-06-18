@@ -6,7 +6,7 @@
 
 | Surface | Owns |
 |---|---|
-| `v1/skills/*/SKILL.md` | Runnable workflow commands. |
+| `v1/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
 | `v1/skills/registry.md` | Skill inventory and mode/action metadata. |
 | `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
 | `v1/verify-agent-docs.sh` | Non-mutating drift gate for scaffold, manifest, ownership, registry, adapter, and stale-reference checks. |

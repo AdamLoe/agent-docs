@@ -14,43 +14,27 @@ pure inventory utility; the shared contracts in
 
 ## How to gather
 
-1. **Global / personal skills** — read the personal discovery roots directly:
+Run the helper shipped beside this skill:
 
-   ```sh
-   for f in ~/.claude/skills/*/SKILL.md; do
-     [ -e "$f" ] || continue
-     printf '%s\n' "$f"
-     awk '/^description:/{sub(/^description: */,""); print; exit}' "$f"
-   done
-   for f in ~/.agents/skills/*/SKILL.md; do
-     [ -e "$f" ] || continue
-     printf '%s\n' "$f"
-     awk '/^description:/{sub(/^description: */,""); print; exit}' "$f"
-   done
-   ```
+```sh
+bash ~/.agents/skills/list-skills/list-skills.sh "$ARGUMENTS"
+```
 
-   Claude skills are copied into `~/.claude/skills/<name>` and Codex user
-   skills are copied into `~/.agents/skills/<name>` by `v1/copy-skills.sh`.
+When running from another adapter, use that copied skill path instead, e.g.
+`bash ~/.claude/skills/list-skills/list-skills.sh "$ARGUMENTS"`. The optional
+argument is a case-insensitive filter substring matched against skill names and
+descriptions.
 
-2. **Project skills** — same scan against the current repo, if present:
+The helper scans:
 
-   ```sh
-   for f in ./.claude/skills/*/SKILL.md; do
-     [ -e "$f" ] || continue
-     printf '%s\n' "$f"
-     awk '/^description:/{sub(/^description: */,""); print; exit}' "$f"
-   done
-   for f in ./.agents/skills/*/SKILL.md; do
-     [ -e "$f" ] || continue
-     printf '%s\n' "$f"
-     awk '/^description:/{sub(/^description: */,""); print; exit}' "$f"
-   done
-   ```
+- Global skills copied into `~/.agents/skills/<name>` and
+  `~/.claude/skills/<name>` by `v1/copy-skills.sh`.
+- Project skills in the current repo's `.agents/skills/<name>` and
+  `.claude/skills/<name>` directories, if present.
 
-3. **Built-in / plugin skills** — these are not files you can reliably glob.
-   If the session's available-skills list names skills not found by the scans
-   above, include them under a "Built-in / plugin" group, labelled
-   best-effort.
+**Built-in / plugin skills** are not files you can reliably glob.
+If the session's available-skills list names skills not found by the scans
+above, include them under a "Built-in / plugin" group, labelled best-effort.
 
 ## How to report
 
@@ -61,12 +45,10 @@ Group by origin, in this order: **Global (agent-docs)**, **Project**,
 - `/<name>` — <description>
 ```
 
-Keep descriptions to their first sentence if they are long. End with a
-one-line note on how the source of truth is organized: agent-docs global skills live in
-`~/agent-docs/v1/skills/`; Claude reads copied skills in `~/.claude/skills/`
-and Codex reads copied skills in `~/.agents/skills/`.
-Project skills live in the repo's `.agents/skills/`. Do not run any of the listed
-skills — only list them.
+The helper already formats file-discoverable skills this way and keeps
+descriptions to their first sentence if they are long. If you add a
+best-effort built-in/plugin group, keep the helper's source-of-truth note as
+the final line. Do not run any of the listed skills — only list them.
 
 Arguments (optional filter substring): $ARGUMENTS
 

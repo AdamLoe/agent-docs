@@ -18,7 +18,7 @@ for workflow surfaces, use
 | `docs/agent-context/` | Repo-local operating rules for agents working here. |
 | `docs/plans/` | Plan router and lifecycle status area. |
 | `v1/` | Current versioned agent-docs kit. |
-| `v1/skills/` | Reusable workflow skill bodies plus the shared registry. |
+| `v1/skills/` | Reusable workflow skill directories plus the shared registry. |
 | `v1/rules/` | Generic rules shared by every consuming repo. |
 | `v1/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
 | `v1/install.sh` | Installer for the neutral checkout and copied skill adapters. |
