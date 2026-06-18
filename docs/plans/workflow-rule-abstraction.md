@@ -156,6 +156,7 @@ Proposed skill interpretation:
 
 | Skill family | Orchestrator behavior |
 |---|---|
+| `start-session` | Inspect local git/plan/run-doc state, summarize in-flight work and cleanup candidates, then route to the owning workflow skill. |
 | `fresh-chat` | Bootstrap router context, then route the user's task to the right orchestrator skill or wait for the task. |
 | `plan` | Orchestrate planning workers and discussion loops; write or update planning docs only through a planning-worker-shaped phase unless the edit is purely coordination state. |
 | `orchestrate` | General lifecycle orchestrator for broad work; always subagent-first. |

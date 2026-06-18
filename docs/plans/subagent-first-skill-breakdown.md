@@ -101,6 +101,57 @@ These bundles are shorthand for the per-skill matrix below.
 
 ## Skill Breakdown
 
+### `start-session`
+
+Orchestrator overview: begin a coding day or new agent session by inspecting
+local repo state, plan/run-doc lifecycle state, cleanup candidates, and user
+supplied task context. It should summarize the current state and route into
+the smallest existing workflow skill that owns the next action. It should not
+inspect remotes, GitHub, issues, pull requests, or external services.
+
+Orchestrator reads:
+
+- Orchestrator core.
+- `docs/_meta/manifest.md` for `repo_name`, `code_root`, `change-to-doc`, and
+  `drift-gates`.
+- `docs/index.md`.
+- `docs/overview.md`.
+- `docs/plans/index.md`.
+- `v1/plan-lifecycle.md`.
+- Top-level plan files under `docs/plans/`, excluding `index.md` and
+  `template.md`.
+- `hub.md` for each immediate orchestration run folder under
+  `docs/plans/orchestrator/`.
+- `git status --short --branch`; use `git diff --name-only`,
+  `git diff --cached --name-only`, or recent local history only when status
+  or plan-material recoverability needs clarification.
+
+Worker phases:
+
+- Plan-maintenance worker when cleanup candidates need eligibility or
+  migration review.
+- Review worker when active/recently shipped work needs a state check before
+  choosing implementation or cleanup.
+- Verification worker only for narrow local state checks that are better
+  isolated from the orchestrator.
+- Usually no direct task worker; instead route to the owning skill:
+  `clear-plans`, `ship-current-work`, `ship-plans`,
+  `review-shipped-work`, `quick-fix`, `plan`, or `orchestrate`.
+
+Rules passed to workers:
+
+- Plan-maintenance worker bundle for shipped/abandoned plans and run folders.
+- Review worker bundle for active/recently shipped work triage.
+- Verification worker bundle for focused git/plan-state checks.
+
+Closeout evidence:
+
+- Local git state: clean, dirty coherent work, or dirty unclear work.
+- In-flight plans and orchestration runs.
+- Cleanup candidates and any plan-history risk.
+- Selected next skill and why.
+- Action taken, or the single question blocking a safe route.
+
 ### `fresh-chat`
 
 Orchestrator overview: bootstrap a new session, load only enough docs router
