@@ -9,236 +9,336 @@ owning_docs:
   - decisions/agent-docs.md
 ---
 
-# Workflow rule abstraction
+# Subagent-first workflow architecture
 
 ## Mission
 
-Make the workflow kit easier to evolve without making runtime agents navigate
-a maze of process docs. Shared rules should live in canonical kit files, while
-skills remain executable entry points with enough local context to run well.
-Delegated agents should receive exact rule-file routes from the dispatcher
-instead of copied rule prose or open-ended instructions to discover the
-workflow system.
+Rework the workflow kit around a deliberate separation between two classes of
+agent workers:
 
-Done means the kit has a clear rule organization, skills consistently state
-which rule files they instantiate, and delegation is represented as an
-execution mode separate from cost/review intensity.
+- **Orchestrators** receive user requests, route them through the right
+  lifecycle, choose phases, pass exact rule-file routes to workers, track
+  evidence, and communicate with the human.
+- **Subagents / workers** receive scoped role assignments and the exact rules
+  for that role, then do the planning, implementation, review, maintenance, or
+  verification work.
+
+The goal is to make the workflow simpler by making the top-level agent a
+workflow navigator instead of sometimes a navigator and sometimes the worker.
+The runtime path should be obvious: user-facing commands orchestrate; worker
+rules tell spawned agents how to do the actual task.
+
+Done means the kit documents this class split, user-facing skills consistently
+act as orchestrators, worker rule files exist for the major work roles, and
+subagent dispatches pass exact rule-file links rather than copied rule prose or
+open-ended discovery instructions.
 
 ## Scope
 
 In scope:
 
-- Decide which workflow rules stay in `v1/rules/skill-contracts.md` and which
-  move into domain or role-specific rule files.
-- Introduce an explicit delegation execution mode, e.g. `delegate-on`,
-  `delegate-off`, and skill default.
-- Define defaults per skill family: direct skills, planning skills,
-  implementation skills, orchestration skills, review skills, and cleanup
-  skills.
-- Define how dispatchers pass exact rule-file links to subagents.
-- Slim duplicated policy from skill bodies while preserving executable
-  skill-specific summaries.
-- Update workflow architecture and decisions docs after the new shape is
-  chosen.
+- Define the orchestrator/worker split as the central workflow model.
+- Treat user-facing skills as orchestrator entry points, even when the
+  resulting workflow launches only one worker.
+- Define worker-facing rule files for planning, implementation, review,
+  maintenance, and verification roles where needed.
+- Define how orchestrators select phases, spawn workers, pass rule routes,
+  track evidence, and report to the human.
+- Remove the previous "delegate-on/delegate-off" model from this plan; the
+  new default is subagent-first orchestration.
+- Keep `cost-*` and `review-*` as intensity dials inside the orchestrated
+  workflow, not as delegation switches.
+- Update workflow architecture, decisions, skill contracts, orchestration
+  rules, skill bodies, and registry metadata to reflect the new model.
 
 Out of scope:
 
-- Removing all procedure from skill bodies. Skills should still carry their
-  purpose, routing, output shape, and skill-specific judgment.
-- Creating separate command names for delegated vs inline execution.
-- Making every normal agent read every workflow rule.
-- Reworking app-specific manifest, ownership, drift-gate, or adapter behavior
-  except where needed to document the new rule routes.
+- Keeping a direct-worker mode as a first-class workflow goal.
+- Creating separate command names for orchestrated vs direct execution.
+- Making subagents discover the workflow rule graph themselves.
+- Forcing every task to become a large multi-agent run. Orchestration may
+  launch a single worker for small tasks.
+- Removing all local content from skills. Orchestrator skills still need
+  routing, phase selection, status handling, and report expectations.
 
-## Current Direction
+## Core Model
 
-Keep `v1/rules/skill-contracts.md` as the single universal contract for all
-skills. It should own only the behavior every skill needs at runtime:
-standard intake, human stops, verification fallback, review/cost dials, model
-policy, modes, shared shipping shape, registry expectations, and the
-delegation execution-mode vocabulary.
+The workflow kit should stop trying to make one agent instruction set serve
+two unrelated jobs.
 
-Use smaller rule files for workflow domains or roles that only some skills
-need. Candidate split:
+An **orchestrator** is responsible for workflow control:
 
-- `v1/rules/repo-rules.md` continues to own universal git and destructive
-  command discipline.
-- `v1/rules/authoring-rules.md` continues to own doc maintenance and
+- intake and request classification
+- choosing the lifecycle path
+- selecting the worker role for each phase
+- passing exact rule-file routes to each worker
+- deciding when work can run in parallel vs serial
+- maintaining the live coordination surface
+- recording observed evidence from worker reports
+- asking the human only for decisions that change the work
+- closing out with commits, gates, assumptions, and remaining blockers
+
+A **worker/subagent** is responsible for role execution:
+
+- reading the exact rules named by the orchestrator
+- loading task-specific code/docs/context
+- doing the assigned planning, implementation, review, maintenance, or
+  verification work
+- deciding detailed touched files from local investigation
+- running the expected checks for the assignment
+- reporting concise evidence back to the orchestrator
+
+This split should simplify docs because orchestrator docs no longer need to
+teach an agent how to implement code, and worker docs no longer need to teach
+an agent how to run the whole lifecycle.
+
+## Rule Organization
+
+Keep `v1/rules/skill-contracts.md` as the universal contract for all
+agent-docs skills, but reshape it around the subagent-first model. It should
+own only the behavior every user-facing skill needs at startup: standard
+intake, human stops, verification fallback, review/cost dials, model policy,
+modes, registry expectations, and the fact that user-facing skills are
+orchestrator entry points.
+
+Use role-specific worker rule files for task execution:
+
+- `v1/rules/orchestrating.md` owns top-level orchestration: lifecycle routing,
+  worker dispatch, state tracking, evidence accounting, run-doc policy, and
+  human communication.
+- `v1/rules/planning-rules.md` should tell planning workers how to turn rough
+  intent into implementer-ready plans, briefs, or discussion outputs.
+- `v1/rules/implementation-rules.md` should tell implementation workers how to
+  execute scoped work, update docs, verify, report touched files, and commit
+  when their role owns shipping.
+- `v1/rules/review-rules.md` should tell review workers how to inspect plans
+  or shipped work, lead with findings, make optional obvious fixes only when
+  authorized, and report residual risk.
+- `v1/rules/maintenance-rules.md` or `v1/rules/plan-maintenance.md` should own
+  cleanup and maintenance operations such as plan hygiene, shipped-plan
+  migration checks, and deletion/flagging behavior.
+- `v1/rules/repo-rules.md` continues to own universal git/destructive-command
+  discipline.
+- `v1/rules/authoring-rules.md` continues to own documentation maintenance and
   architecture/decision writing rules.
-- `v1/rules/orchestrating.md` owns behavior only for `delegate-on`
-  orchestration: state tracking, subagent dispatch, result accounting,
-  run-doc policy, and human communication.
-- `v1/plan-lifecycle.md` owns plan metadata, state transitions, and the
-  disposable-plan model.
-- A new `v1/rules/plan-maintenance.md` may own cleanup operations now embedded
-  in `clear-plans`, `review-plans-health`, and plan-shipping paths.
-- A new `v1/rules/implementation-rules.md` may own shared implementer
-  expectations currently repeated across `quick-fix`, `ship-plans`,
-  `ship-current-work`, and `review-shipped-work`.
-- A new `v1/rules/planning-rules.md` or `review-rules.md` should be added only
-  if duplication is obvious after the first extraction.
+- `v1/plan-lifecycle.md` continues to own plan metadata, state transitions,
+  and the disposable-plan model.
 
-## Delegation Mode
+The exact file names should be decided during implementation, but the
+important rule is that worker docs are visibly worker-facing and orchestrator
+docs are visibly orchestrator-facing.
 
-Delegation should be a boolean execution mode, not a cost tier.
+## User-Facing Skills
 
-Proposed vocabulary:
+User-facing skills should be orchestrator commands. Their bodies should focus
+on:
 
-- `delegate-default` — use the skill's normal behavior.
-- `delegate-on` — act as a dispatcher/orchestrator over subagents.
-- `delegate-off` — act directly as the worker.
+- what request type they own
+- what lifecycle phases are valid
+- which worker role to spawn for each phase
+- which rule files to pass to each worker
+- how to track worker reports
+- when to ask the human
+- what closeout evidence to return
 
-`cost-*` continues to tune spend inside the selected execution mode. For
-example, `delegate-on cost-low` means use cheap or tightly scoped subagents,
-not "avoid subagents." `delegate-off cost-high` means work inline with more
-reasoning/review budget, not "spawn agents."
+They should not contain detailed implementation, review, or cleanup procedure
+except as a concise dispatch summary.
 
-Initial defaults:
+Proposed skill interpretation:
 
-| Skill family | Delegation default |
+| Skill family | Orchestrator behavior |
 |---|---|
-| `quick-fix`, `ship-current-work`, `clear-plans`, `wrap-up-current-chat` | `delegate-off` |
-| `plan` | `delegate-off` unless the planning surface is broad enough to need separate investigation or design streams |
-| `ship-plans` | `delegate-on` for nontrivial or multi-stream plans; `delegate-off` for small single-stream plans |
-| `orchestrate` | `delegate-on` |
-| Broad review skills | `delegate-on` when the review naturally splits by area; otherwise `delegate-off` |
-| Narrow report-only checks | `delegate-off` |
+| `fresh-chat` | Bootstrap router context, then route the user's task to the right orchestrator skill or wait for the task. |
+| `plan` | Orchestrate planning workers and discussion loops; write or update planning docs only through a planning-worker-shaped phase unless the edit is purely coordination state. |
+| `orchestrate` | General lifecycle orchestrator for broad work; always subagent-first. |
+| `quick-fix` | Orchestrate a single bounded implementation worker plus optional review/verification worker. |
+| `ship-plans` | Orchestrate implementation workers over named plans, with planning/review workers where the plan is broad or risky. |
+| `ship-current-work` | Orchestrate finalization of the current diff: inspection, docs migration, gates, and commit through worker phases. |
+| Review skills | Orchestrate review workers over named plans/docs/work; optionally dispatch fix workers when authorized. |
+| Maintenance skills | Orchestrate maintenance workers over disk/git state; often one worker is enough. |
 
-Explicit user wording wins when it is clear: "use subagents", "delegate",
-"orchestrate this", or "do it through agents" selects `delegate-on`; "do it
-yourself", "inline", or "no subagents" selects `delegate-off`.
+This intentionally removes "should this agent delegate?" as a central
+question. The question becomes "which worker role should this orchestrator
+spawn, and how much fan-out is appropriate?"
 
-## Subagent Rule Routing
+## Dispatch Contract
 
-Dispatchers should pass exact rule-file routes, not copied rule prose and not
-open-ended discovery instructions. A subagent prompt should say which role it
-is playing and exactly which files to read before acting.
+Orchestrators should pass exact rule-file links to workers. They should not
+copy full rules into prompts, and they should not tell workers to discover the
+workflow system.
 
-Example implementer route:
+Each dispatch should include:
 
 ```text
-You are implementing this plan.
-
-Read:
-- ~/agent-docs/v1/rules/skill-contracts.md
-- ~/agent-docs/v1/rules/implementation-rules.md
-- ~/agent-docs/v1/rules/repo-rules.md
-- ~/agent-docs/v1/rules/authoring-rules.md
-- docs/_meta/manifest.md
-
-Use the named plan as scope. Report touched files, checks run, docs updated,
-commit made, and blockers.
+Role:
+Task:
+Input docs/plans/context:
+Read these exact rules:
+- <rule file>
+- <rule file>
+Expected output:
+Expected checks/evidence:
+Report back with:
 ```
 
-The dispatcher should not usually decide exact file ownership fences. The
-planning or implementation agent has better local context for likely files,
-actual touched files, and detailed scope. The dispatcher tracks collision risk
-at the stream or surface level and adds strict file fences only when parallel
-agents are likely to compete for the same area.
+The orchestrator should usually avoid detailed file ownership fences unless
+parallel workers are likely to collide. Planning and implementation workers
+are better positioned to identify likely files, actual touched files, and
+detailed local scope after reading the task context.
+
+Worker reports should always include:
+
+- concise outcome
+- files/docs touched or inspected
+- checks run and result
+- durable facts or decisions that need migration
+- blockers, assumptions, and residual risk
+- commit hash when the worker committed
+
+## Cost And Review Dials
+
+`cost-*` and `review-*` remain useful, but they should not decide whether
+subagents are used. They tune the orchestrated workflow:
+
+- `cost-low` means fewer workers, cheaper models, less fan-out, and tighter
+  phase selection.
+- `cost-medium` means normal worker use with bounded fan-out.
+- `cost-high` / `cost-max` means broader investigation, more parallel workers,
+  stronger planning/review, and more second opinions where valuable.
+- `review-none` skips human-review checkpoints only; it does not skip needed
+  worker review, verification, or the original questioning needed to make the
+  work clear.
+- `review-high` / `review-max` adds stronger review workers and red-team
+  passes when risk justifies them.
 
 ## Workstreams
 
-### 1. Rule Taxonomy
+### 1. Model Decision
 
-Outcome: a small, explicit rule map for universal, role-specific, domain, and
-app-bound workflow facts.
-
-Tasks:
-
-- Audit current skill bodies for duplicated policy around shipping, plan
-  cleanup, plan implementation, review, and orchestration.
-- Decide which candidate new rule files are warranted now.
-- Document the rule ownership model in `docs/architecture/workflow-kit.md`.
-
-### 2. Delegation Contract
-
-Outcome: delegation is a first-class execution mode in the shared contract.
+Outcome: the repo records the orchestrator/worker split as the intended
+workflow model.
 
 Tasks:
 
-- Add delegation vocabulary and defaults to `v1/rules/skill-contracts.md`.
-- Clarify that `cost-*` and `review-*` tune behavior inside the chosen
-  execution mode.
-- Update skill bodies whose defaults differ from the shared default.
-- Update `v1/skills/registry.md` if registry metadata should expose
-  delegation defaults.
+- Update `docs/decisions/agent-docs.md` with the rationale for
+  subagent-first orchestration and the rejection of a direct/delegated boolean
+  as the primary model.
+- Update `docs/architecture/workflow-kit.md` to describe user-facing skills as
+  orchestrator entry points and role rule files as worker-facing instructions.
+- Decide whether any direct path remains as an emergency/local fallback, and
+  document it as an exception rather than a normal mode.
 
-### 3. Rule Extraction Pilot
+### 2. Shared Contract Rewrite
 
-Outcome: one concrete extraction proves the abstraction improves clarity
-without increasing runtime navigation cost.
-
-Preferred pilot: plan maintenance.
+Outcome: `skill-contracts.md` reflects the new workflow contract.
 
 Tasks:
 
-- Move cleanup bucket policy from `v1/skills/clear-plans/SKILL.md` into a
-  canonical rule file if the extraction reads better.
-- Update `clear-plans`, `review-plans-health`, and any plan-shipping skills to
-  reference the canonical cleanup/maintenance rule.
-- Keep each skill's local procedure short and executable.
+- Remove or avoid `delegate-on` / `delegate-off` vocabulary.
+- State that user-facing mutating/planning/review skills orchestrate worker
+  phases.
+- Keep intake, human stops, verification fallbacks, dials, model policy, and
+  modes concise.
+- Clarify that `cost-*` controls fan-out/model spend and `review-*` controls
+  human and worker review intensity.
 
-### 4. Skill Slimming Pass
+### 3. Worker Rule Files
 
-Outcome: skills reference canonical rules consistently while retaining local
-identity and output expectations.
-
-Tasks:
-
-- Replace duplicated rule prose with exact rule routes plus concise
-  skill-specific summaries.
-- Preserve the skill-specific classification logic in `plan`, `orchestrate`,
-  `ship-plans`, and review skills.
-- Ensure subagent-capable skills say whether they dispatch rule-file links to
-  subagents or run inline.
-
-### 5. Verification And Drift Guards
-
-Outcome: the new structure has enough checks that rule drift does not quietly
-return.
+Outcome: workers have obvious role-specific rules to read.
 
 Tasks:
 
-- Extend `v1/verify-agent-docs.sh` only where cheap static checks are useful:
-  missing rule files, stale referenced paths, registry mismatches, or invalid
-  delegation metadata.
-- Avoid brittle prose linting unless a specific recurring failure appears.
-- Run copied-skill freshness checks after skill edits.
+- Create or reshape planning-worker rules.
+- Create implementation-worker rules.
+- Create review-worker rules.
+- Create maintenance-worker or plan-maintenance rules.
+- Keep worker rules executable and role-focused, not a full copy of the
+  orchestrator lifecycle.
+- Ensure each worker rule states what evidence it must report back to the
+  orchestrator.
+
+### 4. Orchestrator Rules
+
+Outcome: orchestration rules teach routing, dispatch, phase control, and human
+communication rather than implementation details.
+
+Tasks:
+
+- Rewrite `v1/rules/orchestrating.md` around orchestrator responsibilities.
+- Remove assumptions that orchestration applies only to large multi-stream
+  work.
+- Define single-worker orchestration as valid for small tasks.
+- Define standard dispatch packet fields and expected worker report shape.
+- Keep run-doc behavior for long-running or resume-risk work.
+
+### 5. Skill Suite Migration
+
+Outcome: user-facing skills consistently behave as orchestrator entry points.
+
+Tasks:
+
+- Update `plan`, `quick-fix`, `ship-plans`, `ship-current-work`,
+  `review-*`, `clear-plans`, `fix-docs-drift`, and other affected skills to
+  dispatch worker roles instead of doing all work inline.
+- Preserve skill-specific routing and classification logic.
+- Ensure each skill names the exact worker rule files it passes for each
+  phase.
+- Update `v1/skills/registry.md` if a new metadata column is useful, e.g.
+  `Worker roles` or `Execution`.
+
+### 6. Verification And Adapter Freshness
+
+Outcome: the new structure is mechanically checked where practical.
+
+Tasks:
+
+- Extend `v1/verify-agent-docs.sh` for cheap static checks such as missing
+  referenced rule files, stale skill registry rows, or worker-rule references
+  that point nowhere.
+- Avoid brittle prose linting unless a repeated failure needs a guard.
+- Run `bash v1/copy-skills.sh ~/agent-docs` and
+  `bash v1/copy-skills.sh --check ~/agent-docs` after skill edits.
 
 ## Exit Gate
 
-- `v1/rules/skill-contracts.md` documents delegation mode separately from
-  cost/review dials.
-- Any new rule files are referenced by the skills that use them and by
-  `docs/architecture/workflow-kit.md`.
-- Skills still have executable local summaries and do not require agents to
-  discover a rule graph.
-- Subagent-dispatching skills pass exact rule-file routes in their dispatch
-  shape.
+- `docs/architecture/workflow-kit.md` describes the orchestrator/worker
+  architecture.
+- `docs/decisions/agent-docs.md` records why the kit moved to subagent-first
+  orchestration.
+- `v1/rules/skill-contracts.md` no longer frames delegation as an optional
+  mode.
+- `v1/rules/orchestrating.md` is clearly orchestrator-facing.
+- Worker-facing rules exist for the major work roles selected during
+  implementation.
+- User-facing skills pass exact rule-file routes to workers.
+- Skills retain enough local routing context to be executable.
 - `bash v1/verify-agent-docs.sh` passes.
 - If skills change, `bash v1/copy-skills.sh ~/agent-docs` and
-  `bash v1/copy-skills.sh --check ~/agent-docs` pass or any manual adapter
-  limitation is reported.
+  `bash v1/copy-skills.sh --check ~/agent-docs` pass or any adapter limitation
+  is reported.
 
 ## Discipline Rules
 
-- Optimize canonical rule files for skill authors and orchestrators first;
-  runtime subagents should receive exact routes.
-- Extract only policy that is reused or likely to drift. Do not split rules
-  merely to make files small.
-- Keep `skill-contracts.md` as the universal fast path. Do not turn it into a
-  generic table of contents.
-- Treat `orchestrate` as inherently `delegate-on`, but do not force all work
-  through orchestration.
+- Do not preserve inline/direct execution as an equal peer to orchestration.
+- Do not make orchestrators decide detailed touched files unless collision
+  risk requires it.
+- Do not make workers discover the rule graph; dispatchers provide exact rule
+  files.
+- Keep orchestrator docs about workflow control.
+- Keep worker docs about doing assigned work.
+- Extract rules because they clarify the two-class model, not merely because a
+  file is long.
 
 ## Migration notes (filled in at ship time)
 
 Before setting `status: shipped`, migrate durable facts into:
 
-- `architecture/workflow-kit.md` — rule file layout, skill responsibility,
-  delegation-mode behavior, and adapter/verifier impact.
-- `decisions/agent-docs.md` — rationale for delegation as a separate execution
-  mode and for exact rule-file routing instead of pasted rule prose.
+- `architecture/workflow-kit.md` — orchestrator/worker model, rule file
+  layout, skill responsibility, dispatch contracts, and verifier/adapter
+  impact.
+- `decisions/agent-docs.md` — rationale for subagent-first orchestration,
+  exact rule-file routing, and the rejection of direct/delegated mode as a
+  first-class split.
 - `_meta/ownership.json` — only if a new concept needs an explicit owner.
 
 ## See also
