@@ -43,11 +43,11 @@ and git state rather than a user-described task: `clear-plans`,
 `fix-docs-drift`, `list-skills`, `doctor`,
 `review-plans-health`, `review-docs-shape`, `ship-current-work`,
 `wrap-up-current-chat`, `review-skills`, `rebuild-agent-docs`,
-`lodge-agent-docs-feedback`. These **skip both intake questions and run
+`feedback-agent-docs`. These **skip both intake questions and run
 directly.** They honor dials passed in `$ARGUMENTS` where the dials affect
 their work; for pure utilities where no dial applies (`list-skills`,
-`lodge-agent-docs-feedback`), the dials are simply inert.
-(`lodge-agent-docs-feedback` still asks for the feedback content if none was
+`feedback-agent-docs`), the dials are simply inert.
+(`feedback-agent-docs` still asks for the feedback content if none was
 given — but not the dial/task intake.) They still honor dials passed in
 `$ARGUMENTS`, but they never prompt for them.
 

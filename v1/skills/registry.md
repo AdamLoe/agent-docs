@@ -42,7 +42,7 @@ and mechanical work → mid). Both are defined in `v1/rules/skill-contracts.md`.
 | `fix-docs-drift` | mutating | repair docs drift across the tree | yes | direct | mid | optional scope/dials |
 | `doctor` | report-only by default | validate scaffold, manifest, ownership, registry, and stale references | only if user asks to fix failures | direct | mid | optional scope |
 | `list-skills` | report-only | list discoverable skills | no | direct | mid | optional filter |
-| `lodge-agent-docs-feedback` | capture | record kit feedback into the upstream inbox | no (writes the kit inbox, not the repo) | direct | mid | optional feedback content |
+| `feedback-agent-docs` | capture | record kit feedback into the upstream inbox | no (writes the kit inbox, not the repo) | direct | mid | optional feedback content |
 
 Suite-wide policy lives in `v1/rules/skill-contracts.md`; repo/git policy
 lives in `v1/rules/repo-rules.md`.

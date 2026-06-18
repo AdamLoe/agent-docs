@@ -1,6 +1,6 @@
 ---
-name: lodge-agent-docs-feedback
-description: Lodge a comment or request about the agent-docs kit (a rule, skill, doc structure, or generic doc) into the kit's upstream feedback inbox.
+name: feedback-agent-docs
+description: Record a comment or request about the agent-docs kit (a rule, skill, doc structure, or generic doc) into the kit's upstream feedback inbox.
 ---
 
 You are working in some consuming repo and noticed something about the

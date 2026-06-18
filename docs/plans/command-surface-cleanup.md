@@ -47,7 +47,7 @@ Out of scope:
   `clear-plans`, `rebuild-agent-docs`, `wrap-up-current-chat`.
 - Review and maintain: `review-shipped-work`, `review-plans`,
   `review-plans-health`, `review-docs-shape`, `review-skills`, `check-docs`,
-  `fix-docs-drift`, `doctor`, `list-skills`, `lodge-agent-docs-feedback`.
+  `fix-docs-drift`, `doctor`, `list-skills`, `feedback-agent-docs`.
 
 The general plan-review command owns both the standard high-level critique and
 custom review lenses.

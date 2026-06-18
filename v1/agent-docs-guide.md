@@ -242,7 +242,7 @@ Plus the chat/lifecycle commands: `/fresh-chat`, `/doctor`, `/orchestrate`,
 `/review-plans`, `/review-plans-health`, `/review-skills`,
 `/ship-current-work`, `/wrap-up-current-chat`, `/clear-plans`,
 `/rebuild-agent-docs`, `/list-skills`, and
-`/lodge-agent-docs-feedback`. The principle — *the rules for maintaining the
+`/feedback-agent-docs`. The principle — *the rules for maintaining the
 docs are themselves runnable* — is what keeps the system honest over time.
 
 ## Work lifecycle

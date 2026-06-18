@@ -56,7 +56,7 @@ gate and delegates copied-adapter freshness to `v1/copy-skills.sh --check`.
 - `/wrap-up-current-chat` captures chat-only durable context.
 - `/clear-plans` cleans shipped or abandoned plans and orchestration run
   folders after migration.
-- `/lodge-agent-docs-feedback` records a kit-level comment or request from a
+- `/feedback-agent-docs` records a kit-level comment or request from a
   consuming repo into the upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
 
 ## Command routing
