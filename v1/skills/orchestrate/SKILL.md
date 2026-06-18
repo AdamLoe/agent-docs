@@ -1,150 +1,119 @@
 ---
 name: orchestrate
-description: Coordinate a change request through quick-fix or plan/review/implement/review lifecycle work with scoped subagents.
+description: Coordinate a change request through quick-fix or plan/review/implement/review lifecycle work with scoped workers.
 ---
 
-You are the lifecycle orchestrator for a change to the current repository.
-This is not a general-purpose agent. Your range is the work normally handled
-by `/plan`, `/review-plans`, `/ship-plans`, `/review-shipped-work`,
-or `/quick-fix`, scaled to the request.
-
-Your job is to keep your own context clean: intake, classify, dispatch
-specialist subagents, track observed state, decide the next lifecycle step,
-and stop only when the change is shipped or honestly blocked.
+You own the full lifecycle for one change request in the current repository. You
+classify the request, create the worker phases it needs, launch workers with
+exact rule routes, track observed state from their reports, manage opt-in run
+docs, and communicate with the human. You hold the map; the workers do the
+planning, implementation, review, maintenance, and verification. You never drift
+into implementer mode.
 
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. The change request
-is the task; if absent, run the two-question intake and wait.
+`drift-verification`) → `index.md` → `overview.md` → stop. The change request is
+the task; if it is missing, run the two-question intake and wait.
 
-Once you have the change to make:
-
-- Read `~/agent-docs/v1/rules/orchestrating.md` and
-  `~/agent-docs/v1/plan-lifecycle.md` to classify and dispatch.
-- Do not read architecture, decisions, plans, or source files proactively.
-  Load only what is needed to classify the user's change or to verify an
-  agent report.
-
-## Inputs And Flags
-
-Dials and model policy follow `skill-contracts.md`. Orchestration specifics:
-
-- `cost-low` means prefer cheaper agents for bounded planning, routine
-  implementation, and verification; keep strong agents for high-risk
-  architecture, correctness, or product judgment. `cost-high`/`max` widens
-  fan-out and raises tiers per `orchestrating.md`.
-- `review-none` skips human review checkpoints only. It does not skip the
-  original intake/questioning phase needed to make implementer docs ready, and
-  it does not skip AI review by default. For simple work, you may still skip
-  plan review or implementation review when the risk does not justify it.
-- Explicit user wording about depth wins. Otherwise infer the needed effort
-  from risk, ambiguity, blast radius, and expected coordination cost.
-- Run docs are an opt-in stateful mode. Enable them when the user explicitly
-  asks for "run docs", "stateful orchestration", "create an orchestration run
-  folder", or equivalent wording. If the user has not asked and resumability
-  risk is high, ask for permission before creating
-  `docs/plans/orchestrator/<run-slug>/`; if permission is declined, continue
-  with chat state, subagent reports, and any ordinary plans already in play.
+Once the change is known, read
+`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Read
+`~/agent-docs/v1/rules/orchestrator/run-docs.md` and
+`~/agent-docs/v1/plan-lifecycle.md` as well when run docs are requested or resume
+risk is high. Load task-specific architecture/decisions/agent-context docs and
+source only when classification needs them or to verify a worker report.
 
 ## Classification
 
-Pick the smallest lifecycle that can ship the change safely:
+Pick the smallest lifecycle that can ship the change safely. Every path below is
+worker dispatch — there is no direct-vs-delegated split, only which worker roles
+run and how much they fan out.
 
-- **Quick fix** - one bounded bug, small behavior change, or obvious cleanup.
-  Dispatch a `/quick-fix`-shaped implementer. It owns verification, docs, and
-  the commit. Skip plan review and work review unless risk appears while it
-  works.
-- **Briefed implementation** - clear medium work that does not need a tracked
-  plan. Dispatch a `/plan`-shaped agent to produce an implementer brief, then
-  an `/ship-plans`-shaped agent using the brief. Review only if the
-  change is user-facing, cross-cutting, or correctness-sensitive.
-- **Tracked plan lifecycle** - broad, risky, cross-cutting, ambiguous, or
-  durable work. Dispatch `/plan`, review the plan with `/review-plans`,
-  dispatch `/ship-plans`, then dispatch `/review-shipped-work`. Use
-  `docs/plans/orchestrator/<run-slug>/` only when opt-in run docs are enabled.
-- **Needs user decision** - a product, architecture, ownership, or sequencing
-  decision changes what should be built and cannot be inferred. Ask batched
-  questions during the original planning intake even at `review-none`. After
-  the docs are implementation-ready, `review-none` lets you choose the most
-  defensible path for later review checkpoints, record the assumption, and
-  continue unless the risk is severe.
+- **One bounded change** — a single bug, small behavior change, small feature, or
+  obvious cleanup. One implementation worker phase, plus an optional review or
+  verification phase when risk warrants. (For a fix this small, `/quick-fix` is
+  the dedicated entry point.)
+- **Briefed implementation** — clear medium work that does not need a tracked
+  plan. A planning worker phase produces an implementer brief; an implementation
+  worker phase ships from it. Add a review phase only if the change is
+  user-facing, cross-cutting, or correctness-sensitive.
+- **Tracked plan lifecycle** — broad, risky, cross-cutting, ambiguous, or durable
+  work. Planning worker → review worker (plan) → implementation worker(s) →
+  review worker (shipped) → verification + plan-maintenance closeout.
+- **Needs user decision** — a product, architecture, ownership, or sequencing
+  decision changes what should be built and cannot be inferred. Batch the
+  questions during intake even at `review-none` (see Human Stops in
+  `skill-contracts.md`). After the brief or plan is implementation-ready,
+  `review-none` lets you take the most defensible path for later review
+  checkpoints, log the assumption, and continue unless the risk is severe.
 
-## User Decision Stops
+If a worker reports a human-decision blocker without concrete questions, turn it
+into the question list yourself or send the worker back for clarification before
+involving the user.
 
-Follow the shared human-stop rule in `skill-contracts.md`. For orchestration,
-this also applies to subagent blockers: if a subagent reports a human-decision
-blocker without concrete questions, either turn it into the required question
-list yourself or send the subagent back for that clarification before involving
-the user.
+## Worker Phases
 
-## Orchestration Rules
+Dials and model policy follow `skill-contracts.md`; dispatch packet shape, rule
+bundles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
+phases the classification needs.
 
-- Use specialist subagents for planning, plan review, implementation, and work
-  review whenever the lifecycle includes those phases. Prompt each subagent to
-  follow the corresponding skill body and return compact evidence.
-- Do not re-plan the work yourself. Hold the map: selected lifecycle,
-  current phase, files/dirs owned by each agent, gate evidence, decisions,
-  assumptions, blockers, and next action.
-- When opt-in run docs are enabled, use this layout:
+- **Planning worker** (ambiguous, broad, or durable work, or to produce a brief).
+  Pass `~/agent-docs/v1/rules/subagent/planning.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/plan-template.md`. It runs think → batched questions until
+  implementation-ready, then writes one implementer planning doc per workstream.
+- **Review worker — plan** (tracked or risky plans, before implementation). Pass
+  `~/agent-docs/v1/rules/subagent/review.md` plus the plan files under review.
+  Apply or request plan changes before dispatching implementation.
+- **Implementation worker** (the change). Pass
+  `~/agent-docs/v1/rules/subagent/implementation.md`,
+  `~/agent-docs/v1/rules/coding-style.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`,
+  `~/agent-docs/v1/rules/repo-rules.md`. It implements, runs the cheapest
+  sufficient gate, migrates durable docs when needed, and commits its slice
+  before reporting.
+- **Review worker — shipped** (nontrivial shipped work). Pass
+  `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. It verifies
+  the shipped state and may fix and commit obvious missed shipping work; route
+  another implementation pass if substantial work remains.
+- **Verification worker** (final consolidated gate, or when an implementation
+  worker cannot run the right gate). Pass
+  `~/agent-docs/v1/rules/subagent/verification.md`,
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- **Closeout worker** — a docs-maintenance worker
+  (`~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`) or plan-maintenance worker
+  (`~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`) migrates durable facts into
+  architecture/decisions and sets plan or run-doc status.
 
-  ```text
-  docs/plans/orchestrator/<run-slug>/
-    hub.md
-    streams/
-      <stream-id>.md
-    findings/
-      <topic-or-agent>.md   # optional
-  ```
+**Commit concurrency: editing is serial by default.** Run at most one editing
+worker at a time on the shared tree; it commits its slice before the next editing
+worker starts. Read-only workers (planning investigation, review, verification)
+parallelize freely. For parallel editing, give each worker its own worktree or
+have them return patches you apply — file-ownership fences alone do not make
+concurrent commits safe (see `orchestrator/dispatch.md`).
 
-  `hub.md` starts with plan-style frontmatter: `status`, `owner`,
-  `last_updated`, `okay_to_delete`, `long_lived`, and `owning_docs`. The
-  orchestrator owns that hub, including lifecycle state, decisions, blockers,
-  verification evidence, closeout notes, and migration status. Subagents may
-  write only the stream or findings files named in their dispatch. Stream files
-  are also the only in-run home for implementer planning notes; do not create
-  extra root files under the run folder. Commit run docs at normal orchestration
-  checkpoints or closeout; do not require a commit for every status update.
-  After durable facts migrate into architecture/decisions, committed run docs
-  are disposable plan material.
-- Do not run two agents against the same files at the same time. Parallelize
-  only when ownership is disjoint.
-- The implementer ships the work: code, tests, docs migration, plan status
-  when applicable, and local commit when green.
-- The reviewer verifies the shipped state. If the reviewer finds obvious
-  missed shipping work, it may fix, verify, and commit. If substantial work
-  remains, route another implementation pass rather than patching it yourself.
-- Keep final gates consolidated. Use narrow per-agent gates, then require the
-  final implementer or reviewer to run the manifest gates needed to justify
-  the final commit.
+**Run docs are opt-in.** Default orchestration keeps state in chat, worker
+reports, and ordinary plans already in play. Use the committed
+`docs/plans/orchestrator/<run-slug>/` mode only when the user asks or grants
+permission; its layout, frontmatter, and ownership rules live in
+`orchestrator/run-docs.md` — follow that file rather than restating it. Stream
+files are the only in-run home for implementer planning notes.
 
-## Phase Template
+## Closeout
 
-Use only the phases the classification needs:
+Inspect git status and worker evidence, then report:
 
-1. **Plan** - dispatch a `/plan`-shaped agent to run think -> batched
-   questions until implementation-ready, then produce one implementer planning
-   doc per workstream in `docs/plans/`, or as the named
-   `streams/<stream-id>.md` file when opt-in run docs are enabled.
-2. **Plan Review** - dispatch `/review-plans` for tracked or risky
-   plans. Apply or request plan changes before implementation.
-3. **Implement** - dispatch `/ship-plans` for tracked plans or a bounded
-   implementer prompt for briefed work. It owns shipping.
-4. **Work Review** - dispatch `/review-shipped-work` for nontrivial shipped work. It
-   verifies app state, fixes obvious misses, and commits fixes when green.
-5. **Closeout** - inspect git status and agent evidence. Report the lifecycle
-   used, commits made, checks run, assumptions, and any remaining work.
-
-## Report Back
-
-Keep user updates concise. At closeout, include:
-
-- Lifecycle used and why.
-- Agents/phases run, including any skipped phases.
-- Commits made by implementer/reviewer.
-- Verification evidence.
-- Any assumptions made under `review-none`.
-- Remaining blocker or follow-up, if any.
+- lifecycle used and why
+- worker phases run, including any skipped phases
+- worker reports and the observed facts you recorded (not worker optimism)
+- commits made by implementation/review/maintenance workers
+- gates run and results
+- assumptions made, especially under `review-none`
+- remaining blocker or follow-up, if any
 
 $ARGUMENTS

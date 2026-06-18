@@ -3,129 +3,72 @@ name: check-docs
 description: Check named docs for code drift and house-rule issues, then report findings.
 ---
 
-You are running a **doc consistency check** over one or more named docs in
-`docs/`. This is the **read-only, report-only** flow of the three
-doc-maintenance skills:
+You are the orchestrator for a **read-only mechanical drift check** over one or
+more named docs in `docs/`. You coordinate the check by dispatching one or more
+docs-maintenance workers — one per doc or doc cluster — with a drift lens, then
+aggregate their concise reports. This is **report-only**: you edit nothing and
+commit nothing. If findings should be applied, that is a follow-up edit pass or
+the `fix-docs-drift` whole-tree sweep.
 
-- **fix-docs-drift** — sweeps the **whole tree** and **fixes drift in
-  place + commits**. Heavyweight, mutating.
-- **this skill** — checks the **doc(s) you name** for consistency and
-  **reports findings**. Lightweight, changes nothing.
-- **review-docs-shape** — the **editorial** read: is this the right doc, in the
-  right shape, heading the right way? Judgment, not grep.
+This is the mechanical lane of the three doc-maintenance skills: it asks whether
+each named doc still matches the code and the house authoring rules. The
+editorial "is this the right doc, in the right shape?" question belongs to
+`review-docs-shape`; the heavyweight tree-wide fix-and-commit sweep belongs to
+`fix-docs-drift`. The codebase is authoritative for behavior; the docs are
+authoritative for what's-where and why.
 
-So this flow is mechanical, not editorial: does each named doc still match
-the code and the house authoring rules? You change **nothing** — no edits,
-no commits. If findings should be applied, that's a follow-up edit pass or
-the `fix-docs-drift` sweep. The codebase is authoritative for behaviour;
-the docs are authoritative for what's-where and why.
-
-## Before you begin — load app context
+## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**. The doc paths to check are the task; if none are named (see the
-end of this file), run the two-question intake and wait before the deeper
-reads below.
+Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`) → `index.md` → `overview.md` → stop. The doc paths to check
+are the task; if none are named, run the two-question intake (which doc(s) to
+check, plus dials) and wait before the deeper reads.
 
-Read `docs/_meta/manifest.md` and extract:
+Once the doc paths are known, read
+`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` to plan worker fan-out and
+dispatch. Read `docs/_meta/ownership.json` when a finding turns on ownership, and
+read the named doc paths only enough to scope the work into per-doc or per-subtree
+worker slices — the workers do the reading-across.
 
-- **`code_root`** — the directory that is the root of the app source tree
-  (all code paths in docs are relative to it).
-- **`drift-gates`** — the named CI tests / scripts that enforce counts and
-  cross-language contracts; use these when assessing whether a literal count
-  is gated.
-- **`drift-verification`** — the app-specific high-risk surfaces and
-  verification steps; borrow from this when spot-checking accuracy claims.
+## Worker Phases
 
-Also read `~/agent-docs/v1/rules/authoring-rules.md` — the house standard
-the clarity lens cites by number.
+Dials and model policy follow `skill-contracts.md`; dispatch shape follows
+`orchestrator/dispatch.md`. Drift checks are read-only, so worker slices
+parallelize freely — one doc-maintenance worker per doc, or one per doc cluster
+when several docs share a subtree.
 
-For ownership questions, read `docs/_meta/ownership.json`.
+- **Docs-maintenance worker** per doc/cluster, with a **drift lens** and
+  **read-only** dispatch. Pass the Docs-maintenance worker bundle:
+  `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`. Tell it to check accuracy vs code
+  (resolve `path → symbol` pointers and code anchors by name not line, check
+  literal constants, flag contradictions and possible code bugs) and clarity vs
+  the authoring rules (altitude, what-IS framing, no transcription or ungated
+  counts, ownership), and to **report findings without editing or committing**.
+  Point it at the `drift-verification` slot for app-specific high-risk surfaces.
+- **Verification worker** only when a named drift gate is cheap and directly
+  relevant to a literal count or contract the docs assert. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`, naming the exact gate to run. Skip it
+  when no gate bears directly on the check.
 
-## The two lenses
+A single named doc still goes through a docs-maintenance worker — the
+cross-file read and the house-rule judgment are the dispatch boundary in
+`orchestrator/lifecycle.md`, not an inline exception.
 
-Check every named doc against exactly these two lenses, both anchored to the
-codebase's own standards. Structure/routing and LLM-navigation belong to
-**review-docs-shape**.
+## Closeout
 
-### 1. Accuracy vs code — spot-check when it's cheap
+Aggregate from worker reports — no edits, no commits:
 
-Code is the source of truth for behaviour. Verify the doc's claims against
-it, but stay frugal — spot-check the high-risk claims:
-
-- **Resolve `path → symbol` pointers and `Code anchors`.** Grep the named
-  symbol at the named path (relative to `code_root`); **match by name, never
-  by line** (docs record none). Renamed/moved → stale pointer finding. Gone
-  → flag it.
-  - Rust: `grep -nE 'fn|struct|enum|const|impl|mod|trait' <path>`
-  - Python: `grep -nE 'def |class |^[A-Z_]+ =' <path>`
-  - TS: `grep -nE 'function|class|interface|const|export' <path>`
-- **Check literal constant values in prose** against their declaration.
-- **Flag contradictions** between doc and code — and where the **doc may be
-  the intended spec and the code looks like the bug**, surface that explicitly
-  rather than siding with either.
-
-For app-specific high-risk surfaces and their verification steps, borrow from
-the **`drift-verification`** slot in `docs/_meta/manifest.md` — but
-**report instead of fixing**.
-
-### 2. Clarity & altitude — grade against the authoring rules
-
-The rubric is the authoring rules at
-`~/agent-docs/v1/rules/authoring-rules.md`. Flag where the doc
-violates them:
-
-- **Altitude** (rule 4): a subsystem doc is ~1–2k tokens — map + invariants
-  + gotchas + why. Flag bloat, and flag a doc that has grown past ~2k tokens
-  and should split.
-- **What IS, not what changed** (rule 2): no "slice N introduced…" / "as of
-  v1.X…" / version-flavoured framing in architecture docs.
-- **No transcription, no ungated counts** (rules 3, 3a): flag full DDL,
-  struct/enum field dumps, multi-line code/pseudocode, exhaustive
-  enumerations of columns/fields/routes/variants, and any literal count not
-  backed by a named CI test or drift gate (see `drift-gates` in
-  `docs/_meta/manifest.md`).
-- **Ownership** (rule 1): the doc defines only the concepts it owns (check
-  against `docs/_meta/ownership.json`); flag a non-owner growing substantive
-  content it should link instead.
-- **The generic read** (beyond the house rules): does the opening orient the
-  reader to scope? Is terminology consistent? Any dead, confusing, or
-  self-contradictory passage? Would a fresh agent arrive with a question and
-  leave with the answer?
-
-## How to run it
-
-- **One doc** → check it inline.
-- **Several docs** → check each with a fresh-context sub-agent (one per doc
-  keeps the reads independent), then collate the reports.
-- Read the whole doc for the clarity lens; spot-check the accuracy lens where
-  it's cheap.
-
-## Report format
-
-One short report per doc — no edits, no commits:
-
-- **Verdict** — one line (e.g. "consistent", "accurate but bloated", "two
-  stale pointers").
-- **Accuracy findings** — each as `location → issue` (stale pointer, wrong
-  value, contradicts code, possible code bug). State "none" if clean.
-- **Clarity findings** — each as `location → issue`, naming the rule it trips
-  (altitude / transcription / ownership / readability). State "none" if clean.
-- **Suggested next step** — e.g. "minor, fix inline", "run
-  `fix-docs-drift`", "needs an editorial `review-docs-shape` pass", or
-  "escalate the possible code bug at X".
-
-## See also
-
-- **fix-docs-drift** skill — the heavyweight whole-tree sweep that fixes
-  drift in place and commits.
-- **review-docs-shape** skill — the editorial/direction review (is this the right
-  doc, in the right shape?).
-- `~/agent-docs/v1/rules/authoring-rules.md` — the authoring rules
-  this check grades against.
-
-The doc(s) to check are below — a path, several paths, or empty. **If empty,
-run the two-question intake** (which doc(s) to check, plus dials) before
-proceeding.
+- one short report per checked doc
+- drift findings (stale pointer, wrong value, contradicts code, possible code
+  bug) as `location → issue`, or "none"
+- house-rule findings (altitude / transcription / ownership / readability) as
+  `location → issue`, or "none"
+- recommended next action — e.g. "minor, fix inline", "run `fix-docs-drift`",
+  "needs an editorial `review-docs-shape` pass", or "escalate the possible code
+  bug at X"
 
 $ARGUMENTS

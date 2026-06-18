@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         unassigned
 last_updated:  2026-06-18
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -10,6 +10,16 @@ owning_docs:
 ---
 
 # Subagent-first workflow architecture
+
+> **Shipped.** The orchestrator/worker split landed: `v1/rules/orchestrator/`
+> (lifecycle, dispatch, run-docs) and `v1/rules/subagent/` (planning,
+> implementation, review, docs-maintenance, plan-maintenance, verification)
+> exist; `v1/rules/orchestrating.md` was removed; `v1/rules/skill-contracts.md`,
+> the registry, and every skill body were reframed as orchestrator entry points.
+> Durable model + dispatch contract migrated to
+> [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md); rationale
+> to [`../decisions/agent-docs.md`](../decisions/agent-docs.md). Verifier extended
+> for the new paths and retired tokens. Disposable.
 
 ## Mission
 
@@ -48,10 +58,16 @@ In scope:
   `v1/rules/subagent/` folders.
 - Define how orchestrators select phases, spawn workers, pass rule routes,
   track evidence, and report to the human.
+- Keep the docs subagent-first and optimized for the high-power workflow:
+  concise dispatch, clean worker context, and minimal repeated discussion of
+  whether subagents are being used.
 - Remove the previous "delegate-on/delegate-off" model from this plan; the
   new default is subagent-first orchestration.
 - Keep `cost-*` and `review-*` as intensity dials inside the orchestrated
   workflow, not as delegation switches.
+- Remove no-intake and direct-execution categories from the workflow model.
+  Small utilities should still be orchestrator entry points with one small
+  worker phase, not a separate execution class.
 - Update workflow architecture, decisions, skill contracts, orchestration
   rules, skill bodies, and registry metadata to reflect the new model.
 
@@ -59,6 +75,9 @@ Out of scope:
 
 - Keeping a direct-worker mode as a first-class workflow goal.
 - Creating separate command names for orchestrated vs direct execution.
+- Spending durable rule context on repeated direct-vs-subagent comparisons.
+  The docs should teach the subagent-first workflow without preserving direct
+  execution as a supported path.
 - Making subagents discover the workflow rule graph themselves.
 - Keeping orchestration and worker instructions mixed in the same rule file
   when they can be separated cleanly.
@@ -71,6 +90,11 @@ Out of scope:
 
 The workflow kit should stop trying to make one agent instruction set serve
 two unrelated jobs.
+
+Important decision: **subagent-first is the documented workflow, not an endless
+runtime debate.** The docs should optimize for reducing useless context and
+keeping worker prompts clean. They should not repeatedly explain "subagents or
+no subagents"; they should teach orchestrators how to dispatch workers.
 
 An **orchestrator** is responsible for workflow control:
 
@@ -92,11 +116,70 @@ A **worker/subagent** is responsible for role execution:
   verification work
 - deciding detailed touched files from local investigation
 - running the expected checks for the assignment
+- committing its own changes before reporting when the assignment edits files
 - reporting concise evidence back to the orchestrator
 
 This split should simplify docs because orchestrator docs no longer need to
 teach an agent how to implement code, and worker docs no longer need to teach
 an agent how to run the whole lifecycle.
+
+Reading is not the same as worker dispatch. Orchestrators may read and
+summarize coordination state directly — indexes, the manifest, the registry,
+plan metadata, git status — because that is routing work, not task execution.
+
+Stated as a test, dispatch a worker when the step does any of:
+
+- reads or reasons across more than a couple of files,
+- makes a judgment call the human would want defended,
+- mutates the repo, or
+- runs a verification gate.
+
+If none of these hold, the orchestrator does the step inline. This boundary is
+uniform across every skill; it is not a per-skill "direct" class. It is why
+`start-session` summarizes plan and git state inline while still dispatching
+workers for cleanup review or verification.
+
+A pure utility can therefore complete with no worker at all. `list-skills`
+reading the registry, or `feedback-agent-docs` appending one record, are inline
+routing/IO under the test above, not a hidden "direct" class. Do not invent a
+one-line worker only to satisfy the orchestrator/worker shape: the shape exists
+for fan-out and isolation, and when neither applies the inline path is the
+orchestrator behaving correctly, not an exception to it.
+
+Runtimes are expected to support worker dispatch. Claude Code, Codex, and
+similar adapters own the mechanics of spawning workers. If an adapter or
+execution environment cannot dispatch a required worker, the skill should
+report a clear error and stop instead of falling back to inline execution.
+
+The workflow is commit-heavy by design. Workers that edit repo files should
+commit their own completed slice before reporting. Later workers may amend the
+state with follow-up commits, revert a bad worker commit, or make corrective
+commits. The orchestrator records commit hashes and verifies the final observed
+state; the user can squash local history later if desired.
+
+Editing is serial by default because concurrent commits race the git index. The
+orchestrator runs at most one editing worker at a time on the shared working
+tree, and that worker commits its slice before the next editing worker starts.
+Read-only workers (planning investigation, review, verification) can still run
+in parallel at any time. When parallel editing is worth the cost, give each
+editing worker its own git worktree and integrate the results afterward; for
+maximum fan-out, the orchestrator can instead have workers return patches and
+apply and commit them itself. File-ownership fences alone do not make
+concurrent commits safe.
+
+## Placement Tests
+
+Put each rule at the lowest durable layer that owns it:
+
+| Content type | Owner |
+|---|---|
+| Every skill must do it before knowing the task | `v1/rules/skill-contracts.md` |
+| Workflow control, phase choice, dispatch, evidence, and human stops | `v1/rules/orchestrator/` |
+| How to perform one assigned worker role | `v1/rules/subagent/` |
+| One command's routing surface, local context needs, and closeout shape | `v1/skills/<name>/SKILL.md` |
+| Current durable system shape | `docs/architecture/workflow-kit.md` |
+| Why the model was chosen | `docs/decisions/agent-docs.md` |
+| Per-skill migration matrix while this work is active | `docs/plans/subagent-first-skill-breakdown.md` |
 
 ## Rule Organization
 
@@ -126,7 +209,7 @@ v1/rules/
     docs-maintenance.md       # doc drift/shape/repair worker rules
     plan-maintenance.md       # plan hygiene, migration, cleanup worker rules
     verification.md           # gate/check worker rules
-    capture.md                # out-of-repo capture worker rules, if needed
+    capture.md                # only if multiple capture flows need it
 ```
 
 The exact filenames can change during implementation, but the directory split
@@ -157,7 +240,7 @@ Proposed skill interpretation:
 | Skill family | Orchestrator behavior |
 |---|---|
 | `start-session` | Inspect local git/plan/run-doc state, summarize in-flight work and cleanup candidates, then route to the owning workflow skill. |
-| `fresh-chat` | Bootstrap router context, then route the user's task to the right orchestrator skill or wait for the task. |
+| `fresh-chat` | Bootstrap router context, then route the user's task to the right orchestrator skill or launch a small context worker. |
 | `plan` | Orchestrate planning workers and discussion loops; write or update planning docs only through a planning-worker-shaped phase unless the edit is purely coordination state. |
 | `orchestrate` | General lifecycle orchestrator for broad work; always subagent-first. |
 | `quick-fix` | Orchestrate a single bounded implementation worker plus optional review/verification worker. |
@@ -165,6 +248,7 @@ Proposed skill interpretation:
 | `ship-current-work` | Orchestrate finalization of the current diff: inspection, docs migration, gates, and commit through worker phases. |
 | Review skills | Orchestrate review workers over named plans/docs/work; optionally dispatch fix workers when authorized. |
 | Maintenance skills | Orchestrate maintenance workers over disk/git state; often one worker is enough. |
+| Small utilities | `list-skills` and `feedback-agent-docs` remain small, but still use the orchestrator/worker shape with one narrow worker phase. |
 
 This intentionally removes "should this agent delegate?" as a central
 question. The question becomes "which worker role should this orchestrator
@@ -174,7 +258,9 @@ The companion breakdown
 [`subagent-first-skill-breakdown.md`](subagent-first-skill-breakdown.md) owns
 the per-skill migration detail: each skill's orchestration overview,
 orchestrator reads, likely worker phases, rule files passed to workers, and
-closeout evidence.
+closeout evidence. It is temporary migration scaffolding, not a permanent
+canonical operating manual; after shipping, durable facts should live in the
+rules, skill bodies, registry, architecture docs, and decisions docs.
 
 ## Dispatch Contract
 
@@ -199,7 +285,9 @@ Report back with:
 The orchestrator should usually avoid detailed file ownership fences unless
 parallel workers are likely to collide. Planning and implementation workers
 are better positioned to identify likely files, actual touched files, and
-detailed local scope after reading the task context.
+detailed local scope after reading the task context. Fences address read and
+analysis overlap, not commit safety; concurrent editing uses the serial-commit
+or worktree rule from the Core Model.
 
 Worker reports should always include:
 
@@ -208,7 +296,7 @@ Worker reports should always include:
 - checks run and result
 - durable facts or decisions that need migration
 - blockers, assumptions, and residual risk
-- commit hash when the worker committed
+- commit hash for edited work, or a clear no-change report for read-only work
 
 ## Cost And Review Dials
 
@@ -240,8 +328,12 @@ Tasks:
   as the primary model.
 - Update `docs/architecture/workflow-kit.md` to describe user-facing skills as
   orchestrator entry points and role rule files as worker-facing instructions.
-- Decide whether any direct path remains as an emergency/local fallback, and
-  document it as an exception rather than a normal mode.
+- State that missing worker-dispatch support is an error, not a reason to run
+  the task inline.
+- Record the commit-heavy policy: editing workers commit their own slices,
+  follow-up workers can repair or revert through additional commits, editing is
+  serial by default, and parallel editing uses worktree isolation or
+  orchestrator-applied patches.
 
 ### 2. Shared Contract Rewrite
 
@@ -252,6 +344,16 @@ Tasks:
 - Remove or avoid `delegate-on` / `delegate-off` vocabulary.
 - State that user-facing mutating/planning/review skills orchestrate worker
   phases.
+- Remove the no-intake/direct-execution split from the shared skill taxonomy.
+  Skills may infer obvious context from disk, but that is ordinary intake
+  behavior, not a separate command class.
+- Preserve the *behavior* the current `direct` / "context-free skills"
+  exception encodes even as the label goes away: skills that operate on
+  existing disk/git state still skip the two intake questions and run without
+  blocking. Dropping the taxonomy term must not turn these skills into ones
+  that now stop to ask. The shared contract should state non-blocking intake
+  as the default for state-driven skills, expressed as ordinary intake rather
+  than a named class.
 - Keep intake, human stops, verification fallbacks, dials, model policy, and
   modes concise.
 - Clarify that `cost-*` controls fan-out/model spend and `review-*` controls
@@ -270,7 +372,10 @@ Tasks:
   orchestrator-facing files, keeping a compatibility pointer if useful.
 - Decide whether `v1/plan-lifecycle.md` stays at the kit root or gains a
   worker-facing companion under `v1/rules/subagent/`.
-- Update docs and verifier checks for the new paths.
+- Update docs and verifier checks for the new paths. `v1/verify-agent-docs.sh`
+  currently greps `v1/rules/orchestrating.md` for the `cost-*`/`review-*` dial
+  tokens, so moving that file means repointing those grep anchors at wherever
+  the dial vocabulary lands.
 
 ### 4. Worker Rule Files
 
@@ -284,8 +389,9 @@ Tasks:
 - Create `v1/rules/subagent/docs-maintenance.md`.
 - Create `v1/rules/subagent/plan-maintenance.md`.
 - Create `v1/rules/subagent/verification.md`.
-- Create `v1/rules/subagent/capture.md` only if capture workflows need a
-  reusable worker contract.
+- Defer `v1/rules/subagent/capture.md` unless implementation finds more than
+  one capture workflow that needs the same reusable contract; otherwise route
+  `feedback-agent-docs` through a narrow shared maintenance worker.
 - Keep worker rules executable and role-focused, not a full copy of the
   orchestrator lifecycle.
 - Ensure each worker rule states what evidence it must report back to the
@@ -307,6 +413,11 @@ Tasks:
   work.
 - Define single-worker orchestration as valid for small tasks.
 - Define standard dispatch packet fields and expected worker report shape.
+- Define the dispatch failure behavior: clear error and stop when a worker
+  cannot be spawned.
+- Define commit concurrency: editing is serial by default, and parallel editing
+  uses worktree isolation or orchestrator-applied patches so commits do not
+  race the git index.
 - Keep run-doc behavior for long-running or resume-risk work.
 
 ### 6. Skill Suite Migration
@@ -324,8 +435,10 @@ Tasks:
 - Use
   [`subagent-first-skill-breakdown.md`](subagent-first-skill-breakdown.md) as
   the required starting point for per-skill migration.
-- Update `v1/skills/registry.md` if a new metadata column is useful, e.g.
-  `Worker roles` or `Execution`.
+- Update `v1/skills/registry.md`: add a `Worker roles` column, drop the
+  `Intake` column's `direct` taxonomy, and reconcile the `Commits` column with
+  the commit-heavy worker policy. Do not add a direct-vs-delegated `Execution`
+  column.
 
 ### 7. Verification And Adapter Freshness
 
@@ -356,6 +469,8 @@ Tasks:
 - [subagent-first-skill-breakdown.md](subagent-first-skill-breakdown.md)
   covers every current skill in `v1/skills/registry.md`.
 - Skills retain enough local routing context to be executable.
+- Editing workers commit their own completed slices, and worker reports include
+  commit hashes or an explicit no-change result.
 - `bash v1/verify-agent-docs.sh` passes.
 - If skills change, `bash v1/copy-skills.sh ~/agent-docs` and
   `bash v1/copy-skills.sh --check ~/agent-docs` pass or any adapter limitation
@@ -364,6 +479,12 @@ Tasks:
 ## Discipline Rules
 
 - Do not preserve inline/direct execution as an equal peer to orchestration.
+- Do not keep no-intake as a registry or skill class. A skill can use obvious
+  disk state as task context, but it still follows the same orchestrator/worker
+  contract.
+- Do not add migration phases that defer the model change indefinitely. Plan
+  the work tightly enough for implementation, then migrate the suite in one
+  coordinated pass.
 - Do not make orchestrators decide detailed touched files unless collision
   risk requires it.
 - Do not make workers discover the rule graph; dispatchers provide exact rule
@@ -384,7 +505,8 @@ Before setting `status: shipped`, migrate durable facts into:
   verifier/adapter impact.
 - `decisions/agent-docs.md` — rationale for subagent-first orchestration,
   exact rule-file routing, and the rejection of direct/delegated mode as a
-  first-class split.
+  first-class split. State this rationale once here; the drafts repeat it
+  across many sections, but the durable doc should not.
 - `_meta/ownership.json` — only if a new concept needs an explicit owner.
 
 ## See also

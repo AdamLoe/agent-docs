@@ -9,5 +9,5 @@
 ## See also
 
 - [`../overview.md`](../overview.md)
-- [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md)
+- [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/)
 - [`../../v1/rules/repo-rules.md`](../../v1/rules/repo-rules.md)

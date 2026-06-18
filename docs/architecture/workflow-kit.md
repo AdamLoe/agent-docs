@@ -2,6 +2,36 @@
 
 `v1/` is the current kit version.
 
+## Orchestrator/worker model
+
+The kit is **subagent-first**. Every user-facing skill is an *orchestrator entry
+point*: it classifies the request, chooses lifecycle phases, dispatches *workers*
+with exact rule-file routes, tracks observed evidence, and reports to the human.
+Workers do the planning, implementation, review, maintenance, or verification and
+report concise evidence back. There is no first-class "direct execution" class;
+an orchestrator only does a step inline when it is pure routing/IO under the
+reads-vs-dispatch test (read across ≤ a couple of files, no defensible judgment
+call, no mutation, no gate). Worker dispatch is expected of the runtime; an
+adapter that cannot spawn a worker is an error to report, not a reason to inline.
+
+Rules live at the layer that owns them:
+
+- **Universal** (`v1/rules/*.md`) — what every skill needs regardless of role.
+- **Orchestrator** (`v1/rules/orchestrator/`) — workflow control, phase choice,
+  the dispatch packet and worker-report shape, the rule bundles, commit
+  concurrency, and opt-in run docs. The dispatch packet and bundle table are
+  canonical in `dispatch.md`.
+- **Subagent** (`v1/rules/subagent/`) — how to perform one assigned role.
+- **Skill body** (`v1/skills/<name>/SKILL.md`) — one command's routing surface,
+  local context needs, worker phases, the exact rule files it passes, and its
+  closeout shape.
+
+The workflow is commit-heavy: editing workers commit their own slice before
+reporting, follow-up workers repair or revert with further commits, editing is
+serial per working tree, and parallel editing uses worktree isolation or
+orchestrator-applied patches. The orchestrator records commit hashes and verifies
+the final observed state.
+
 ## Main surfaces
 
 | Surface | Owns |
@@ -10,8 +40,10 @@
 | `v1/skills/registry.md` | Skill inventory and mode/action metadata. |
 | `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
 | `v1/verify-agent-docs.sh` | Non-mutating drift gate for scaffold, manifest, ownership, registry, adapter, and stale-reference checks. |
-| `v1/rules/*.md` | Generic rules shared by every consuming repo. |
-| `v1/rules/skill-contracts.md` | Shared contracts for skill modes, bootstrap, shipping, registry, and model language. |
+| `v1/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md` (skill startup), `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
+| `v1/rules/skill-contracts.md` | Shared contracts for skill startup intake, the subagent-first expectation, shipping, registry, dials, and model language. |
+| `v1/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md` (classification, phases, dials), `dispatch.md` (packet shape, worker report, rule bundles, commit concurrency), `run-docs.md` (opt-in run folders). |
+| `v1/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
 | `v1/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
 | `v1/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
 | `v1/plan-lifecycle.md`, `v1/plan-template.md` | Plan metadata and plan skeleton. |
@@ -90,5 +122,6 @@ Use the smallest command that owns the current job:
 - [`install-and-adapters.md`](install-and-adapters.md)
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
 - [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md)
-- [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md)
+- [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/)
+- [`../../v1/rules/subagent/`](../../v1/rules/subagent/)
 - [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)

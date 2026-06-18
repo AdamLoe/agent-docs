@@ -42,8 +42,8 @@
     },
     {
       "surface": "orchestration",
-      "paths": ["v1/rules/orchestrating.md", "v1/skills/orchestrate/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
-      "owns": ["multi-stream orchestration", "orchestration dials", "sub-agent discipline", "orchestration run docs"]
+      "paths": ["v1/rules/orchestrator/", "v1/rules/subagent/", "v1/skills/orchestrate/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "owns": ["orchestrator/worker split", "orchestration dials", "worker dispatch contract", "worker-role rules", "orchestration run docs"]
     },
     {
       "surface": "plan-lifecycle",

@@ -1,97 +1,69 @@
 ---
 name: review-plans
-description: Review named plan files for high-level product, scope, structure, orchestration risks, or a custom lens.
+description: Coordinate high-level review of named plan files for product shape, scope, sequencing, ownership, dependencies, orchestration risk, or a custom lens.
 ---
 
-You are reviewing one or more plan files before orchestration or
-implementation, or with a user-provided custom lens. The default is a
-high-level planning critique: find valuable problems, substantial alternative
-pitches, scope cuts, expected outcome quality, and orchestration risks. Do not
-nitpick wording or minor formatting. It is fine to say there are no major
-problems.
+You are the orchestrator for high-level plan review before implementation. You
+route the critique through one or more review workers — you do not become the
+inline reviewer. The review worker checks product shape, scope, sequencing,
+ownership, dependencies, and orchestration risks (or whatever a user-supplied
+custom lens names). Report-only by default; apply plan edits only if the user
+asks.
 
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**: manifest (`repo_name`, `code_root`, plan/orchestration slots) →
-`index.md` → `overview.md` → stop. The task is the plan paths plus any custom
-review lens; if the plan paths are missing, run the two-question intake and
-wait.
+`index.md` → `overview.md` → stop. The task is the named plan paths plus any
+custom review lens; if no plan paths or lens are given, run the two-question
+intake and wait.
 
-Once the plans are named, always read `docs/plans/index.md`, then
-`~/agent-docs/v1/plan-lifecycle.md` and `~/agent-docs/v1/plan-template.md`, so
-the critique understands this repo's plan conventions.
+Once the plans are named, read `docs/plans/index.md`,
+`~/agent-docs/v1/plan-lifecycle.md`, and `~/agent-docs/v1/plan-template.md` so
+the review understands this repo's plan conventions, then each named plan. Read
+`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Load
+referenced architecture/decisions docs only when a review stream needs them.
 
-After that, load only the extra context needed for the review:
+## Review Policy
 
-- Read each named plan file in full.
-- Read referenced architecture or decision docs when they are part of the
-  investigation. Trust docs as broadly honest project context unless the plan
-  itself makes a high-risk claim that needs verification.
-- Inspect code only when it is crucial to judging the plan, such as a claimed
-  major performance improvement, core algorithm change, migration risk, or
-  feasibility hinge. Keep code checks narrow and explain what you verified.
+- Default lens is a high-level planning critique: high-level problems,
+  substantial alternative pitches, scope cuts, expected outcome quality,
+  pre-orchestration issues, and orchestration risks. No wording nitpicks; "no
+  major problems" is a valid finding.
+- When the user supplies a custom lens, that lens defines the worker's output
+  shape, depth, and emphasis. Pass it through to the review worker intact rather
+  than overriding it with the default lens.
+- Report-only by default. Apply plan edits only when the user asks — and keep
+  them at planning altitude (goals, scope, sequencing, open questions, handoff
+  boundaries, orchestration notes), never detailed implementation recipes unless
+  the user asks.
 
-## Review Lens
+## Worker Phases
 
-When the user supplies a custom lens, let that prompt define the output shape,
-depth, and emphasis. If the custom prompt is broad, respond with useful
-structure instead of asking for unnecessary precision. When generating options,
-separate meaningfully different choices and call out tradeoffs, likely
-complexity, and what you would choose.
+Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
+concurrency follow `orchestrator/dispatch.md`. Broad reviews default to
+`cost-high`. Review workers are read-only, so fan them out in parallel — one per
+named plan or one per coherent plan cluster.
 
-Otherwise, be opinionated, but keep the agent's judgment broad. Review the
-plans for:
+- **Review worker** (the critique), one per named plan or coherent cluster. Pass
+  the Review worker bundle: `~/agent-docs/v1/rules/subagent/review.md` plus the
+  plan(s) under review, with the plan-review lens (or the user's custom lens).
+  Each worker leads with findings ordered by severity and states whether its
+  plans are implementation-ready.
+- **Planning worker** only when the user asked to apply review output as revised
+  plan text. Pass the Planning worker bundle:
+  `~/agent-docs/v1/rules/subagent/planning.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/plan-template.md`. It
+  edits the named plans at planning altitude and commits before reporting.
 
-- High-level problems: wrong goal, missing premise, unclear user value,
-  hidden dependency, wrong sequencing, or unresolved tradeoff.
-- New substantial pitches: meaningfully different approaches that may produce
-  a better outcome or lower risk.
-- Cuts: features, phases, files, or whole plans that could be removed,
-  merged, deferred, or simplified with a large payoff.
-- Expected outcome quality: for UI/product work, how good the result is likely
-  to look or feel for its audience; for technical work, how strong the
-  resulting system quality, maintainability, performance, or reliability is
-  likely to be.
-- Pre-orchestration issues: decisions, boundaries, contracts, dependencies, or
-  unknowns that must be resolved before handing work to implementers.
-- Orchestration risks: agent ownership overlap, parallelism conflicts,
-  unclear handoffs, missing verification gates, order-dependent work, or
-  places where implementers are likely to diverge.
-- Plan doc structure: changes to splitting, merging, ordering, headings, or
-  handoff shape that would materially improve the plan.
+## Closeout
 
-Suggest deleting, merging, or shrinking plans when that is the clearest path.
-Do not preserve scope for its own sake.
+Record from worker reports:
 
-## Report Format
-
-For a custom lens, use the user's requested shape when they provide one.
-Otherwise write an editorial memo with sections matching the review lens. Keep
-it findings-first and high signal:
-
-1. **Take** - a short overall judgment of the plan set and the most important
-   change you would make.
-2. **High-Level Problems**
-3. **Substantial Pitches**
-4. **Cuts / Simplifications**
-5. **Expected Outcome Quality**
-6. **Issues To Resolve Before Orchestration**
-7. **Orchestration Risks**
-8. **Plan Structure Improvements**
-9. **Leave Alone** - what is already strong enough and should not be churned.
-
-Use prose and plan names rather than line-by-line commentary unless a precise
-location is necessary. If a section has no valuable findings, say so briefly.
-
-## Editing Mode
-
-Default to report-only. If the user asks you to apply your recommendations,
-edit the relevant plan files directly. Preserve the high-level planning
-altitude: update goals, scope, sequencing, open questions, handoff boundaries,
-and orchestration notes; do not turn the plans into detailed implementation
-recipes unless the user asks.
-
-Plan files to review:
+- findings first, ordered by severity, attributed to the plans they concern
+- open questions the user must resolve
+- whether each plan (or the set) is implementation-ready
+- suggested plan edits, or applied edits and their commit hash if authorized
 
 $ARGUMENTS

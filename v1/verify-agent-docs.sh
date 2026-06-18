@@ -280,10 +280,42 @@ grep -Fq 'review-[none|low|medium|high|max]' "$repo_root/v1/rules/skill-contract
 grep -Fq 'cost-[low|medium|high|max]' "$repo_root/v1/rules/skill-contracts.md" ||
   fail "cost dial vocabulary missing"
 
-require_file "v1/rules/orchestrating.md"
+require_dir "v1/rules/orchestrator"
+require_dir "v1/rules/subagent"
+for orch_rule in lifecycle dispatch run-docs; do
+  require_file "v1/rules/orchestrator/$orch_rule.md"
+done
+for worker_rule in planning implementation review docs-maintenance plan-maintenance verification; do
+  require_file "v1/rules/subagent/$worker_rule.md"
+done
+[ ! -e "$repo_root/v1/rules/orchestrating.md" ] ||
+  fail "retired v1/rules/orchestrating.md still exists; split it into v1/rules/orchestrator/"
 for dial in cost-low cost-medium cost-high cost-max review-none review-high; do
-  grep -Fq "$dial" "$repo_root/v1/rules/orchestrating.md" ||
+  grep -Fq "$dial" "$repo_root/v1/rules/orchestrator/lifecycle.md" ||
     fail "orchestration dial '$dial' missing"
+done
+
+# Every v1/rules path referenced in a skill body must resolve to a real file
+# or directory, so dispatch routes never point nowhere.
+while IFS= read -r skill_file; do
+  while IFS= read -r ref_path; do
+    [ -n "$ref_path" ] || continue
+    normalized_ref=${ref_path#\~/agent-docs/}
+    normalized_ref=${normalized_ref%/}
+    [ -e "$repo_root/$normalized_ref" ] ||
+      fail "skill ${skill_file#$repo_root/} references missing rule path: $ref_path"
+  done < <(grep -oE 'v1/rules/[A-Za-z0-9/_.-]+' "$skill_file" | sort -u)
+done < <(find "$repo_root"/v1/skills -name SKILL.md)
+
+# The retired execution-model vocabulary must not return to skill bodies or the
+# registry. (Decision docs and disposable plans may still name these terms to
+# explain why they were dropped, so this check is scoped to the skill suite.)
+for retired_token in delegate-on delegate-off no-intake direct-execution; do
+  while IFS= read -r skill_surface; do
+    match=$(grep -IEn -m 1 "$retired_token" "$skill_surface" || true)
+    [ -z "$match" ] ||
+      fail "retired execution-model token '$retired_token' in ${skill_surface#$repo_root/}:$match"
+  done < <(find "$repo_root"/v1/skills -name SKILL.md; printf '%s\n' "$repo_root/v1/skills/registry.md")
 done
 
 adapter_doc="$repo_root/docs/architecture/install-and-adapters.md"

@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         unassigned
 last_updated:  2026-06-18
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -11,16 +11,38 @@ owning_docs:
 
 # Subagent-first skill breakdown
 
+> **Shipped.** Each skill's orchestration overview, orchestrator reads, worker
+> phases, exact rule routes, and closeout shape were migrated into its
+> `v1/skills/<name>/SKILL.md`; the cross-skill pattern and rule bundles into
+> [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md) and
+> `v1/rules/orchestrator/dispatch.md`; the registry gained a `Worker roles`
+> column and dropped the `direct` intake taxonomy (now `asks`/`no-prompt`). The
+> "every skill appears in this breakdown" verifier check was never added, so
+> there is nothing to remove. Disposable.
+
 ## Mission
 
 Define how each current skill should behave after the workflow kit moves to a
 subagent-first model. This is the detailed companion to
-[`workflow-rule-abstraction.md`](workflow-rule-abstraction.md).
+[`subagent-first-workflow-architecture.md`](subagent-first-workflow-architecture.md).
 
 Each user-facing skill becomes an orchestrator entry point. Its job is to
 bootstrap, classify, choose worker phases, pass exact rule-file routes, track
 worker evidence, and report to the human. The actual task work happens in
 subagents using rules under `v1/rules/subagent/`.
+
+This breakdown is temporary migration scaffolding. Once the model ships, its
+durable content should be migrated into the rule files, skill bodies, registry,
+architecture docs, and decisions docs, then the plan should be disposable under
+the normal plan lifecycle.
+
+The docs should stay subagent-first and avoid spending context on repeated
+"subagents or no subagents" discussion. There is no direct-execution or
+no-intake command class. Small utilities still run through an orchestrator
+entry point, but a pure utility may complete inline with no worker when the
+work is only routing reads or a single IO step — see the dispatch test in
+[`subagent-first-workflow-architecture.md`](subagent-first-workflow-architecture.md).
+Do not invent a one-line worker only to satisfy the shape.
 
 ## Rule Folder Targets
 
@@ -39,7 +61,7 @@ v1/rules/subagent/
   docs-maintenance.md
   plan-maintenance.md
   verification.md
-  capture.md
+  capture.md               # only if multiple capture flows need it
 ```
 
 Universal rules stay at `v1/rules/`:
@@ -58,30 +80,24 @@ unless implementation decides to add a compatibility pointer from
 ## Dispatch Baseline
 
 Every orchestrator dispatch should name exact rule files. Workers should not
-discover the workflow tree.
+discover the workflow tree. If the runtime cannot spawn the required worker,
+the orchestrator reports a clear error and stops instead of doing the work
+inline.
 
-Base dispatch shape:
+The dispatch packet fields and the standard worker-report fields are defined
+once, canonically, in the Dispatch Contract section of
+[`subagent-first-workflow-architecture.md`](subagent-first-workflow-architecture.md).
+This breakdown does not restate them, so the two plans cannot drift while both
+are live; the per-skill sections below only name which rules each role receives
+and what closeout evidence the skill returns.
 
-```text
-Role:
-Task:
-Input docs/plans/context:
-Read these exact rules:
-- ~/agent-docs/v1/rules/subagent/<role>.md
-- <any universal rule required for this role>
-Expected output:
-Expected checks/evidence:
-Report back with:
-```
-
-Standard worker report:
-
-- outcome
-- files/docs touched or inspected
-- checks run and result
-- durable facts/decisions needing migration
-- blockers, assumptions, residual risk
-- commit hash, when the worker committed
+Editing workers should commit their completed slice before reporting. Follow-up
+workers may repair or revert earlier commits with additional commits. Editing
+is serial by default because concurrent commits race the git index; parallel
+editing uses worktree isolation or orchestrator-applied patches (see the
+commit-concurrency rule in `subagent-first-workflow-architecture.md`). The orchestrator
+records commit hashes and verifies the final observed state; local history is
+allowed to be commit-heavy because the user can squash later.
 
 ## Common Rule Bundles
 
@@ -97,7 +113,6 @@ These bundles are shorthand for the per-skill matrix below.
 | Docs-maintenance worker | `v1/rules/subagent/docs-maintenance.md`, `v1/rules/authoring-rules.md` |
 | Plan-maintenance worker | `v1/rules/subagent/plan-maintenance.md`, `v1/plan-lifecycle.md`, `v1/rules/authoring-rules.md` |
 | Verification worker | `v1/rules/subagent/verification.md`, `v1/rules/repo-rules.md` |
-| Capture worker | `v1/rules/subagent/capture.md` |
 
 ## Skill Breakdown
 
@@ -134,7 +149,7 @@ Worker phases:
   choosing implementation or cleanup.
 - Verification worker only for narrow local state checks that are better
   isolated from the orchestrator.
-- Usually no direct task worker; instead route to the owning skill:
+- Usually no task worker; instead route to the owning skill:
   `clear-plans`, `ship-current-work`, `ship-plans`,
   `review-shipped-work`, `quick-fix`, `plan`, or `orchestrate`.
 
@@ -306,7 +321,8 @@ Closeout evidence:
 Orchestrator overview: implement named plans by launching one or more
 implementation workers, using the plans as the coordination source. It decides
 parallelism by workstream/plan boundaries and consolidates final verification
-and plan closeout.
+and plan closeout. Parallel implementation workers run in isolated worktrees,
+or serialize their commits, so concurrent commits do not race the git index.
 
 Orchestrator reads:
 
@@ -766,57 +782,77 @@ Closeout evidence:
 - Docs changed.
 - Plan status changes, if any.
 - Checks run.
-- Commit hash if changes were committed.
+- Commit hash for edited work, or explicit no-change result.
 
 ### `list-skills`
 
-Orchestrator overview: coordinate skill inventory reporting. This can be a
-single inventory/verification worker because the task is read-only and
-mechanical.
+Orchestrator overview: report the skill inventory grouped by source/category.
+Reading the registry and skill frontmatter is orchestrator routing work, so the
+orchestrator does it inline, the same way `start-session` reads and summarizes
+plan state. This follows the uniform reads-vs-dispatch boundary; it is not a
+"direct-execution" exception. Dispatch a worker only for the parts that cross
+that boundary.
 
 Orchestrator reads:
 
+- Orchestrator core.
 - `v1/skills/registry.md`.
 - `v1/skills/*/SKILL.md` frontmatter.
-- Adapter skill directories only if the user asks about installed copies.
+- User request/filter.
 
 Worker phases:
 
-- Verification worker for inventory consistency.
+- Verification worker only if the user wants a registry/frontmatter consistency
+  gate rather than a plain listing.
+- Adapter freshness worker only if the user asks about installed copies.
 
 Rules passed to workers:
 
-- Verification worker bundle, with a narrow "inventory only" task.
+- Verification worker bundle, scoped to skill inventory, when a consistency
+  gate is requested.
 
 Closeout evidence:
 
 - Skill list grouped by source/category.
 - Registry mismatches or missing skill dirs if discovered.
+- No-change result unless the user asked for repairs through another skill.
 
 ### `feedback-agent-docs`
 
-Orchestrator overview: coordinate capture of kit-level feedback into the
-upstream inbox. This is a capture workflow, not a repo-edit workflow.
+Orchestrator overview: coordinate a narrow capture workflow that appends one
+structured feedback record outside the current repo. Appending one record is a
+single IO step, so under the dispatch test it can run inline; spawn a
+docs-maintenance worker only when payload validation or the append path needs
+isolated judgment. Either way, do not force a reusable `capture.md` rule unless
+more capture workflows need the same contract.
 
 Orchestrator reads:
 
+- Orchestrator core.
 - Skill-local routing rules for feedback vs repo changes.
 - Existing feedback content from the user.
 - Feedback inbox path.
 
 Worker phases:
 
-- Capture worker to validate the feedback payload and append JSONL.
+- Usually none: the orchestrator validates and appends the single record
+  inline.
+- Docs-maintenance worker only when payload validation or the append path
+  needs isolated judgment.
+- Verification worker only if the append path or schema needs a separate
+  check.
 
 Rules passed to workers:
 
-- Capture worker bundle.
+- Docs-maintenance worker bundle, or `v1/rules/subagent/capture.md` only if the
+  implementation creates a reusable capture worker for multiple workflows.
 
 Closeout evidence:
 
 - Feedback category/surface.
 - Inbox record appended.
-- No repo commit made.
+- Commit hash if the worker changes repo files; otherwise explicit
+  no-repo-change result for the out-of-repo append.
 
 ### `review-docs-shape`, `check-docs`, and `fix-docs-drift` Relationship
 
@@ -845,42 +881,81 @@ policy overlaps.
 
 ## Registry Impact
 
-`v1/skills/registry.md` likely needs one new metadata column once the model is
-implemented:
+`v1/skills/registry.md` today carries `Skill | Mode | Action | Commits |
+Intake | Launch | Normal Input`. The model implies these changes:
 
-| Candidate column | Meaning |
-|---|---|
-| `Worker roles` | The subagent roles a skill normally dispatches, e.g. `planning`, `implementation`, `review`, `verification`. |
+- Add a `Worker roles` column naming the subagent roles a skill normally
+  dispatches, e.g. `planning`, `implementation`, `review`, `verification`.
+- Drop the `direct`-vs-`two-question` taxonomy from the `Intake` column.
+  Intake becomes uniform orchestrator behavior: a skill asks only the questions
+  it still needs, and using obvious disk/git state or passed arguments is
+  ordinary intake, not a separate command class. Replace the column's values
+  with a non-blocking flag (e.g. `asks` vs `no-prompt`) so the registry still
+  records which skills stop for the two intake questions and which run straight
+  off disk/git state — that behavioral signal must survive the rename, or the
+  state-driven skills regress into prompting. If no useful distinction remains
+  after the reframe, drop the column entirely rather than leaving it with one
+  near-constant value.
+- Reconcile the `Commits` column with the commit-heavy worker policy. Commits
+  happen through editing workers, so the column reflects whether the workflow
+  produces commits, not whether the top-level agent commits inline.
+- Leave `Mode`, `Launch`, and `Normal Input` as-is unless implementation finds
+  a concrete reason to change them.
 
-Avoid an `Execution` column that says `direct` vs `delegated`; that recreates
-the old model. The registry should make orchestration explicit by naming the
-worker roles each skill coordinates.
+Do not add an `Execution` column that says `direct` vs `delegated`; that
+recreates the old model. Make orchestration explicit by naming the worker roles
+each skill coordinates instead.
 
 ## Verification Expectations
 
-Static checks worth adding to `v1/verify-agent-docs.sh`:
+Static checks worth adding to `v1/verify-agent-docs.sh`. Keep them mechanical;
+the existing `reject_unapproved_retired_name` helper is the model for
+token-based checks:
 
 - Every rule file referenced in skill bodies exists.
 - Every current skill in `v1/skills/registry.md` appears in this breakdown
-  until the plan ships.
+  until the plan ships. This gate depends on a `docs/plans/` file that
+  `clear-plans` deletes at ship time, so it is self-removing: the migration
+  must drop this check in the same change that retires the plan, or the
+  verifier fails the moment the plan file is gone. Record the removal in the
+  Migration notes below.
 - Registry skill names match `v1/skills/<name>/SKILL.md` frontmatter.
-- No user-facing skill references retired `delegate-on` / `delegate-off`
-  vocabulary after migration.
+- No skill body or registry row contains the retired tokens `delegate-on`,
+  `delegate-off`, `no-intake`, or `direct-execution` after migration.
 - Copied skill adapters are fresh after skill edits.
+
+These are review-time expectations, not script gates, because they are not
+mechanically greppable:
+
+- Editing workers commit before reporting, and worker report shapes ask for a
+  commit hash or an explicit no-change result.
+- Skill bodies do not reintroduce direct execution as a command class in prose
+  beyond the retired tokens caught above.
 
 ## Migration notes (filled in at ship time)
 
 Before setting `status: shipped`, migrate durable facts into:
 
-- `architecture/workflow-kit.md` — per-skill orchestration shape and worker
-  role routing.
+- Each `v1/skills/<name>/SKILL.md` — that skill's orchestration overview,
+  orchestrator reads, worker phases, rule routes, and closeout shape. This is
+  where the bulk of this breakdown lands, matching the placement test in
+  `subagent-first-workflow-architecture.md` that one command's routing surface and
+  closeout shape belong in its skill body.
+- `architecture/workflow-kit.md` — only the cross-skill pattern: the
+  orchestrator/worker model, the common rule bundles, and the dispatch
+  contract. Not a per-skill copy.
 - `decisions/agent-docs.md` — rationale for keeping user-facing skill names
-  while changing their internal execution model.
+  while changing their internal execution model. State the "no direct
+  execution" rationale once here, not transcribed from every section above.
 - `_meta/ownership.json` — only if a new concept needs an explicit owner.
+
+Also remove the "every skill appears in this breakdown" check from
+`v1/verify-agent-docs.sh` in the same change, since deleting this plan would
+otherwise fail the verifier.
 
 ## See also
 
-- [`workflow-rule-abstraction.md`](workflow-rule-abstraction.md)
+- [`subagent-first-workflow-architecture.md`](subagent-first-workflow-architecture.md)
 - [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md)
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
 - [`../../v1/skills/registry.md`](../../v1/skills/registry.md)

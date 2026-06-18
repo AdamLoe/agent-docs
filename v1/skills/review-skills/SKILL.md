@@ -3,53 +3,74 @@ name: review-skills
 description: Review the agent-docs skill set for drift, duplicate policy, adapter assumptions, and lifecycle gaps.
 ---
 
-You are reviewing the agent-docs skill set itself. This is a report-only
-maintenance review over `v1/skills/`, the shared skill registry, and the kit
-guide/rules that describe the skills. Do not edit or commit unless the user
-explicitly asks you to apply fixes.
-
-This skill runs directly — no intake questions. It honors any dials passed in
-`$ARGUMENTS` per `v1/rules/skill-contracts.md` (read below as a review target).
+You are the orchestrator for a review of the agent-docs skill suite itself. You
+coordinate review of the skill bodies, the registry, and the rule docs that
+describe them — looking for drift, duplicated policy, adapter assumptions, and
+lifecycle gaps. This is report-only: you route review and maintenance workers and
+record their findings; you do not edit or commit unless the user explicitly asks
+to apply fixes.
 
 ## Bootstrap
 
-1. Read `v1/skills/registry.md`.
-2. Read `v1/agent-docs-guide.md`, especially the maintenance and work
-   lifecycle sections.
-3. Read `v1/rules/skill-contracts.md`, `v1/rules/repo-rules.md`, and
-   `v1/rules/orchestrating.md`.
-4. Inventory `v1/skills/*/SKILL.md` and compare each directory name,
-   frontmatter `name:`, description, and registry row.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**. This skill is state-driven: it runs directly off the on-disk skill
+suite, so **skip the two-question intake** and do not stop to ask for a task. It
+still honors dials passed in `$ARGUMENTS`; broad-sweep default is `cost-high`.
 
-## Review Lens
+Then read, inline, the coordination state this review spans:
 
-Check for:
+- `~/agent-docs/v1/skills/registry.md` — the skill inventory.
+- `~/agent-docs/v1/agent-docs-guide.md` — especially maintenance and lifecycle.
+- `~/agent-docs/v1/rules/skill-contracts.md` and `~/agent-docs/v1/rules/repo-rules.md`.
+- `~/agent-docs/v1/rules/orchestrator/` and `~/agent-docs/v1/rules/subagent/` —
+  the orchestrator and worker-role rules the skills route to.
+- Representative `~/agent-docs/v1/skills/*/SKILL.md` bodies, selected by risk
+  (recently changed, mode-ambiguous, or carrying their own policy), plus
+  `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to check skills against the
+  documented orchestrator model.
 
-- Registry drift: missing skills, stale names, incorrect mode/action/commit
-  metadata, or guide text that lists an old command.
-- Duplicate policy: repeated bootstrap, shipping, commit, model-tier, or docs
-  ownership instructions that should move into a shared rule.
-- Mode contradictions: a report-only skill that says to edit, a mutating skill
-  that does not say how to verify, or a commit-capable skill that lacks the
-  green-tree requirement.
-- Adapter leakage: tool-specific roots, hardcoded vendor model names, or
-  assumptions about one agent platform that should be generic.
-- Lifecycle gaps: missing entry points for common work, confusing overlap
-  between skills, or stale handoffs such as a renamed command.
-- Argument behavior: missing `$ARGUMENTS`, vague missing-input handling, or a
-  skill that should ask before proceeding but does not.
+Reading and summarizing this coordination state is inline routing work. Dispatch
+a worker once a phase reads across the skill bodies, makes a defensible judgment
+call, or (when authorized) mutates the tree.
 
-## Report Format
+## Worker Phases
 
-Write a concise findings-first memo:
+Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
+concurrency follow `orchestrator/dispatch.md`.
 
-1. **Verdict** - whether the skill set is coherent enough to trust.
-2. **Findings** - ordered by impact, each as `area -> issue -> fix`.
-3. **Duplicate Policy To Extract** - repeated rules that should move to
-   `v1/rules/skill-contracts.md` or another shared rule.
-4. **Registry / Guide Drift** - concrete mismatches.
-5. **Leave Alone** - skills or separations that are working and should not be
-   churned.
-6. **Next Step** - whether to apply small fixes, draft a plan, or leave it.
+- **Review worker** for registry/skill consistency: directory name vs.
+  frontmatter `name:` vs. registry row, mode/action/commit metadata, missing or
+  stale skills, lifecycle gaps and confusing overlap, `$ARGUMENTS` and
+  missing-input behavior. Pass the Review worker bundle:
+  `~/agent-docs/v1/rules/subagent/review.md` plus `~/agent-docs/v1/skills/registry.md`
+  and the skill bodies under review.
+- **Docs-maintenance worker** for rule-doc shape and duplicated policy: bootstrap,
+  shipping, commit, model-tier, or ownership instructions repeated across skills
+  that should move into a shared rule, and rule-doc house-rule compliance. Pass
+  `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
+  `~/agent-docs/v1/rules/authoring-rules.md`.
+- **Verification worker** only when the user authorizes applying fixes and a
+  static check (e.g. registry/skill cross-check) is better isolated. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+
+Default is read-only review. If the user asks to apply fixes, the review or
+docs-maintenance worker makes only the obvious non-debatable corrections, verifies,
+and commits its slice before reporting; substantial changes pivot to `/plan`.
+
+## Closeout
+
+Record from worker reports, findings first:
+
+- registry drift — missing skills, stale names, wrong mode/action/commit metadata,
+  guide text that lists an old command.
+- duplicate policy that should be extracted into a shared rule.
+- missing verification or commit semantics — report-only skill that edits, or a
+  mutating skill that omits how it verifies.
+- adapter / discovery risks — tool-specific roots, hardcoded vendor model names,
+  one-platform assumptions, or skills the registry/guide cannot surface.
+- proposed or applied fixes, with commit hashes for any applied, and whether the
+  suite is coherent enough to trust or needs a follow-up plan.
 
 $ARGUMENTS

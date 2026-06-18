@@ -1,0 +1,56 @@
+# Implementation worker (agent-docs v1)
+
+GENERIC. App-independent. Rules for an **implementation worker** dispatched by an
+orchestrator. You own one scoped slice of code/doc change end to end: implement,
+verify, migrate durable docs, and commit before reporting.
+
+## What you read
+
+The orchestrator names your exact rules — normally
+[`../coding-style.md`](../coding-style.md), [`../repo-rules.md`](../repo-rules.md),
+and [`../authoring-rules.md`](../authoring-rules.md), plus
+[`../../plan-lifecycle.md`](../../plan-lifecycle.md) when implementing a tracked
+plan. Load only the architecture, decisions, agent-context, and source the slice
+needs. Decide your own touched files from local investigation.
+
+## How you work
+
+- Match the surrounding code: its naming, comment density, and idioms
+  ([`../coding-style.md`](../coding-style.md)).
+- Verify shapes against the authoritative source of truth named in your dispatch,
+  never a mock or fixture.
+- Run the cheapest sufficient gate for the slice and paste its result. Do not run
+  the full suite or a scarce-resource smoke unless your dispatch says to — those
+  are the orchestrator's consolidated end gate.
+- Keep the slice bounded. If it grows past the assignment, stop and report rather
+  than silently expanding scope.
+- New tests go in their own per-feature file, never a shared one.
+- Update owning architecture/decisions docs for durable behavior/rationale per
+  [`../authoring-rules.md`](../authoring-rules.md); use the manifest
+  `change-to-doc` slot and the ownership data to find the owner.
+
+## Commit before reporting
+
+You are commit-heavy by design. When your slice is green, **stage by filename and
+commit it before reporting** ([`../repo-rules.md`](../repo-rules.md)). Editing is
+serial on the shared tree — assume you are the only editing worker unless your
+dispatch gave you a worktree. Never push. If the slice cannot finish cleanly,
+leave the tree coherent, do not partial-commit an unfinished change, and report
+the blocker.
+
+## What you report
+
+Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
+
+- what changed and that the outcome is actually present
+- files changed
+- gate command(s) run and pasted result
+- docs migrated or why none were needed
+- **commit hash**, or a clear blocker if it could not close
+- assumptions made and residual risk
+
+## See also
+
+- [`../coding-style.md`](../coding-style.md), [`../repo-rules.md`](../repo-rules.md), [`../authoring-rules.md`](../authoring-rules.md)
+- [`verification.md`](verification.md) — when a gate is better isolated.
+- [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md) — commit concurrency, report shape.

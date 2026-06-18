@@ -3,82 +3,82 @@ name: ship-plans
 description: Implement named plan files end to end, including verification, docs migration, plan shipping, and commit.
 ---
 
-You are implementing one or more plan files in the current repository. Your
-job is to finish the named plans unless the user says otherwise: code changes,
-targeted verification, durable docs, plan status, and a local commit when
-green. Do not push unless explicitly told.
+You are the orchestrator for implementing one or more named plans in the current
+repository. The plans are your coordination source: you launch implementation
+workers against them, decide parallelism by workstream/plan boundaries, and
+consolidate final verification and plan closeout. You do not become an inline
+implementation skill.
 
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`) → `index.md` → `overview.md` → stop. The plan paths are
-the task; if missing, run the two-question intake (ask which plans and the
+the task; if none are given, run the two-question intake (ask which plans and the
 expected outcome) and wait.
 
-Once the plans are named:
+Once the plans are named, read:
 
-- Read each named plan in full. Ignore whether it is `draft` or `active`;
-  explicit user selection is enough.
-- Read `~/agent-docs/v1/plan-lifecycle.md` and
-  `~/agent-docs/v1/plan-template.md` for status and migration rules, and
-  `docs/plans/index.md` if you need sibling-plan context.
-- Read `~/agent-docs/v1/rules/coding-style.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`.
-- If the work is multi-stream or delegated, read
-  `~/agent-docs/v1/rules/orchestrating.md` and
+- Each named plan in full. Ignore whether it is `draft` or `active`; explicit
+  user selection is enough.
+- `~/agent-docs/v1/plan-lifecycle.md` and `docs/plans/index.md` for status,
+  migration, and sibling-plan context.
+- `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch, plus
   `docs/agent-context/orchestrating.md` if it exists.
+- `~/agent-docs/v1/rules/orchestrator/run-docs.md` when multiple streams or run
+  docs are in play.
 
-Then load only the architecture, decisions, agent-context, and source files
-needed to implement and verify the plans.
+Load task-specific architecture/decisions/agent-context docs and source only as
+the worker phases need them.
 
-## Execution Policy
+## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`. Implementation specifics:
+Dials and model policy follow `skill-contracts.md`; dispatch shape, rule
+bundles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
+phases the plans need.
 
-- Work through all named plans unless the user narrows scope.
-- Default to a middle ground: use sub-agents when they materially reduce
-  context, wall time, or cost without creating coordination risk; otherwise
-  implement directly. At `cost-low`, push bounded investigation,
-  implementation, and routine verification onto cheaper agents.
-- At `review-none`, do not stop for human review unless truly blocked. Record
-  anything the human should review later in a closeout note in the final
-  response or, if substantial, a small closeout doc the user can inspect after
-  the run.
-- Stop and ask when a plan is stale, contradictory, infeasible, or missing a
-  decision that changes what should be built. Batch those questions. At
-  `review-none`, choose the best defensible path, document the assumption, and
-  keep moving unless the risk is severe.
-- Defer expensive tests as much as possible. Run the cheapest useful checks
-  during implementation, and reserve manifest drift gates or broader tests for
-  the final shipping pass unless the plan's core risk requires them earlier.
-- For UI-facing work, perform visual verification when the app and tooling make
-  it practical. Screenshots or browser checks are part of shipping when visual
-  quality is central to the plan.
+- **Planning worker** only when a named plan is not implementation-ready (stale,
+  contradictory, or under-specified). Pass `~/agent-docs/v1/rules/subagent/planning.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/plan-template.md`. It
+  repairs the plan into something an implementer can ship from.
+- **Implementation workers**, one per plan or workstream. Pass
+  `~/agent-docs/v1/rules/subagent/implementation.md`,
+  `~/agent-docs/v1/rules/coding-style.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`,
+  `~/agent-docs/v1/rules/repo-rules.md`, plus
+  `~/agent-docs/v1/plan-lifecycle.md`. Each implements its slice, runs the
+  cheapest sufficient gate, migrates durable docs as needed, and commits before
+  reporting.
+- **Review worker** for broad, risky, or correctness-sensitive shipped work. Pass
+  `~/agent-docs/v1/rules/subagent/review.md` plus the named plan paths and the
+  changed source. For UI-facing work, ask for visual verification when practical.
+- **Verification worker** for the final consolidated gates (manifest
+  `drift-gates` plus any scarce-resource smoke), run once. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- **Plan-maintenance worker** to migrate durable plan context into the owning
+  architecture/decisions docs and then set plan status. Pass
+  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/rules/authoring-rules.md`.
 
-## Shipping Requirements
+Parallelize by plan/workstream disjointness; editing is serial on the shared
+tree. When parallel implementation workers are worth the cost, give each its own
+git worktree or serialize their commits so concurrent commits do not race the git
+index.
 
-At the end of each completed plan or related batch:
+## Closeout
 
-1. Inspect the diff and verify the implementation matches the plan outcome,
-   not just the first obvious task.
-2. Run targeted tests plus the manifest gates needed to justify the commit.
-3. Migrate durable plan context into the owning architecture and decisions
-   docs, following the authoring rules. Use `change-to-doc`,
-   `owning_docs`, and `docs/_meta/ownership.json` if needed.
-4. Touch plan files only at the end: update `last_updated`, set
-   `status: shipped` only when the work and doc migration are complete, and
-   set `okay_to_delete: true` only when useful context has been migrated.
-   Leave blocked or partial plans active/draft and explain why.
-5. Stage by filename and commit when green. Prefer one commit per plan when
-   implemented sequentially; combine commits when plans were implemented as a
-   single parallel batch or share one coherent change.
+Record from worker reports:
 
-If a plan cannot fully ship, commit only a coherent green checkpoint when that
-helps the user, keep the plan unshipped, and explain the blocker and next
-step. Never mark a plan shipped on optimism.
+- plans implemented, or those left blocked and why
+- plan status updates (`status`, `last_updated`, `okay_to_delete`)
+- docs migration targets used
+- commits made
+- gates run and result
 
-Plans to implement:
+Never mark a plan shipped on optimism. If a plan cannot fully ship, keep it
+unshipped, commit only a coherent green checkpoint when that helps the user, and
+report the blocker and next step.
 
 $ARGUMENTS

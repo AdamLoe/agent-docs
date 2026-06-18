@@ -28,4 +28,4 @@ opinionated and iterative, not purely deferential and not purely Socratic.
 ## See also
 
 - [`orchestrating.md`](orchestrating.md)
-- [`../../v1/rules/orchestrating.md`](../../v1/rules/orchestrating.md)
+- [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/)

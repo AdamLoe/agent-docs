@@ -3,42 +3,72 @@ name: ship-current-work
 description: Finish ordinary work by inspecting the diff, updating owned docs, running the manifest drift gates, and committing if green.
 ---
 
-You are shipping the current work in the current repository. This is the
-normal completion path for ordinary changes.
+You are the orchestrator for finishing the current dirty tree in this
+repository. You coordinate finalization — inspection, docs migration,
+verification, and commit — by dispatching workers; you do not inspect every diff
+hunk or run gates inline.
 
-This skill runs directly on the current diff — no intake questions. Read
-`~/agent-docs/v1/rules/skill-contracts.md` for the shared Shipping shape,
-dials, and model policy, and honor any dials passed in `$ARGUMENTS`.
+## Bootstrap
 
-Read the repo rules before you finish anything that could affect history or
-state:
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`, `decisions-domains`) → `index.md` → `overview.md` → stop.
 
-- `~/agent-docs/v1/rules/authoring-rules.md`
-- `~/agent-docs/v1/rules/repo-rules.md`
+This skill is **state-driven**: it runs directly off the current git state, with
+no two-question intake. Read `docs/_meta/ownership.json` and the current
+`git status --short`, `git diff --stat`, and `git diff --name-only` inline —
+that is coordination routing, not worker dispatch. Honor any dials passed in
+`$ARGUMENTS`. If the tree is clean, say so and stop.
 
-Then follow the repo's manifest and ownership data:
+Once you know what changed, read
+`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose worker phases and
+dispatch. Resolve owning docs from `change-to-doc` plus `ownership.json`.
 
-1. Read `docs/_meta/manifest.md`.
-2. Read `docs/_meta/ownership.json`.
-3. Use the manifest slots by these exact keys: `code_root`,
-   `change-to-doc`, `drift-gates`, `drift-verification`,
-   `decisions-domains`.
-4. Resolve owning docs from `change-to-doc` plus `ownership.json`.
+## Worker Phases
 
-Finish in place, with the smallest change set that makes the current work
-real and durable:
+Dials and model policy follow `skill-contracts.md`; dispatch shape, bundles, and
+commit concurrency follow `orchestrator/dispatch.md`. Editing workers are serial
+on the shared tree. Use only the phases the diff needs.
 
-- Inspect `git status --short`, `git diff --stat`, and `git diff --name-only`.
-- Update the owning architecture docs in place.
-- Update decisions docs only for durable rationale.
-- If a plan was touched or completed, migrate the durable context first,
-  then update `status`, `last_updated`, and `okay_to_delete` truthfully.
-  Do not delete plans here.
-- Run the narrow gates from the manifest `drift-gates` slot.
-- Stage by filename.
-- Commit if the tree is green.
-- Never push unless explicitly told to do so.
+- **Review worker** (inspect the diff). Pass
+  `~/agent-docs/v1/rules/subagent/review.md` plus the changed source and the
+  manifest/ownership facts. It confirms the requested outcome is present and
+  flags missing docs or tests.
+- **Docs-maintenance worker** when the change carries durable facts or rationale.
+  Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
+  `~/agent-docs/v1/rules/authoring-rules.md`. It updates owning
+  architecture/decisions docs in place.
+- **Plan-maintenance worker** only when a plan was touched or completed. Pass
+  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`, and
+  `~/agent-docs/v1/rules/authoring-rules.md`. It migrates durable plan context
+  first, then sets `status`, `last_updated`, and `okay_to_delete` truthfully. Do
+  not delete plans here.
+- **Verification worker** to run the targeted gate plus the manifest
+  `drift-gates`. Pass `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- **Implementation worker** only when the review surfaces obvious missing work
+  that must be fixed before shipping. Pass
+  `~/agent-docs/v1/rules/subagent/implementation.md`,
+  `~/agent-docs/v1/rules/coding-style.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. It implements, gates, and commits its
+  slice. Substantial new work is out of scope — flag it for `/plan` or
+  `/quick-fix` instead.
 
-If a manifest slot is thin or a repo-local convention is unclear, follow the
-existing skills' usage patterns, make the best conservative call, and flag the
-uncertainty in your report.
+Editing workers stage by filename and commit their own slice before reporting;
+record the hashes and verify the final green state. Never push unless explicitly
+told.
+
+## Closeout
+
+Record from worker reports:
+
+- diff inspected and the requested outcome confirmed present
+- docs/plan migration done, or why none was needed
+- gates run and result
+- commit hash(es)
+- any residual risk or follow-up that remains
+
+$ARGUMENTS

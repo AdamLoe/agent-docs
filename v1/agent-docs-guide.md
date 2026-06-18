@@ -81,7 +81,7 @@ that change at different rates and have different owners:
 
 | Layer | Lives in | Owns |
 |---|---|---|
-| **Generic kit** (`agent-docs/v1/`) | this kit, versioned, shared across apps | the authoring rules, the coding/repo/orchestrating rules, the chat & maintenance **skills**, this guide, the plan-lifecycle rules, the plan template |
+| **Generic kit** (`agent-docs/v1/`) | this kit, versioned, shared across apps | the authoring/coding/repo rules, the orchestrator and subagent rule folders, the chat & maintenance **skills**, this guide, the plan-lifecycle rules, the plan template |
 | **Per-app docs** (`docs/`) | each repo | the app's architecture, decisions, agent-context, plans, and a `_meta/manifest.md` that fills the kit's slots |
 
 The rules in the kit are written to be app-agnostic. Wherever a rule needs

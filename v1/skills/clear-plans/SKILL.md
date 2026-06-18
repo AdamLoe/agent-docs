@@ -3,63 +3,91 @@ name: clear-plans
 description: Sweep docs/plans/ to delete flagged plans and flag shipped ones after migration.
 ---
 
-You are sweeping `docs/plans/` to keep it lean. A plan is working coordination, not canonical knowledge: once its work has shipped **and** its durable context has been migrated into `architecture/`/`decisions/`, the plan should be deleted. Start from what's on disk and in git, not from this conversation's history.
+You are the orchestrator for plan cleanup over the repository's disk and git
+state. You coordinate the sweep through a plan-maintenance worker that buckets
+plans and run folders, migrates durable context into owning docs, flags freshly
+migrated plans, and deletes only already-verified cleanup candidates — you do not
+hand-edit plans or migrate facts in your own context.
 
-This skill runs directly on disk state — no intake questions. Read `~/agent-docs/v1/rules/skill-contracts.md` for the shared dials and model policy, and honor any dials passed in `$ARGUMENTS`.
+## Bootstrap
 
-Read the lifecycle rules first: `docs/plans/index.md` and `~/agent-docs/v1/rules/authoring-rules.md`. Architecture is rewritten **in place**; decisions get the three mandatory fields.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`repo_name`, `code_root`, plus `change-to-doc` and
+`drift-gates`/`drift-verification` for any migration follow-up) → `index.md` →
+`overview.md` → stop.
 
-## The sweep
+This skill is **state-driven**: it runs directly off `docs/plans/` and git state,
+so there is no two-question intake. Honor any dials passed in `$ARGUMENTS` where
+they affect fan-out or model spend. Read `docs/plans/index.md`,
+`~/agent-docs/v1/plan-lifecycle.md`, and the manifest for lifecycle and ownership
+context inline; query `docs/_meta/ownership.json` for migration targets rather
+than bulk-loading it. Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md`
+and `~/agent-docs/v1/rules/orchestrator/dispatch.md` to dispatch.
 
-`ls docs/plans/`. Sweep top-level plan files (skip `index.md` and
-`template.md`) and immediate run folders under `docs/plans/orchestrator/`.
-Run folders are temporary orchestration coordination history; read `hub.md`
-first and use its frontmatter (`status`, `okay_to_delete`, `long_lived`, and
-`owning_docs`) plus closeout/migration notes as the status source. If a run
-folder has no `hub.md`, no lifecycle frontmatter, or no clear
-closeout/migration state, leave it and report it under bucket 4.
+A plan is working coordination, not canonical knowledge: once its work has
+shipped **and** its durable context has been migrated into
+`architecture/`/`decisions/`, the plan should be deleted. Start from what is on
+disk and in git, not from this conversation's history. Reading and summarizing
+the plan set, run-folder `hub.md` frontmatter, and `git status` is inline routing
+work; the sweep itself — bucketing, migration, flagging, and deletion — is worker
+work.
 
-For every plan file or run folder, sort it into one bucket:
+## Worker Phases
 
-**1. `okay_to_delete: true` → delete it.**
-First do a 10-second sanity check: open the `owning_docs` or hub migration
-targets and confirm they actually carry the plan or run's key facts/decisions.
-Before deleting, confirm the latest plan or run-doc content is recoverable in
-local git history: all candidate files must be tracked and have no staged,
-unstaged, renamed, deleted, or untracked changes. If any candidate file is
-dirty or untracked, do **not** delete it in this pass; report that the latest
-plan/run-doc version needs to be committed first, or route to
-`ship-current-work` when the dirty tree is coherent. If migration looks
-genuinely complete and the candidate is clean, delete the plan file or run
-folder (tracked files are recoverable through git) and record it under
-*deleted*. If migration looks **incomplete** despite the flag, do **not**
-delete — treat it as bucket 2 instead and note the mislabel.
+Dials and model policy follow `skill-contracts.md`; dispatch shape, rule bundles,
+and commit concurrency follow `orchestrator/dispatch.md`. Each phase below names
+the exact rule files to pass in the dispatch packet.
 
-**2. `status: shipped` or `abandoned`, but `okay_to_delete: false` → the main job.**
-- Confirm the work really shipped/was-dropped: check the git log and the code the plan claims to have produced. If you can't confirm, leave it and report why (bucket 4).
-- Migrate every durable fact, decision, and trade-off into the owning `docs/architecture/<doc>.md` / `docs/decisions/<domain>.md`. Same bar as `wrap-up-current-chat`: only what would be **bad to lose** or is **needed to understand the current state**. Skip transient prose. Code paths in docs are relative to the manifest's `code_root`.
-- Once migration is complete, set `okay_to_delete: true` and bump
-  `last_updated` for a plan file, or record the same closeout state in a run
-  folder's `hub.md` frontmatter and migration notes. **Then stop — do not
-  delete it this pass.** Freshly migrated plan material is left on disk so the
-  user can eyeball the migration diff; the *next* `clear-plans` run removes it
-  via bucket 1. Record it under *migrated → flagged*.
+- **Plan-maintenance worker** (the sweep and migration — the main job). Pass
+  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`. It sweeps top-level plan files
+  (skipping `index.md` and `template.md`) and run folders, buckets each one
+  (in-flight, ready-to-migrate, ready-to-delete, needs-human, long-lived),
+  migrates durable facts and rationale into the owning docs **before** any status
+  change, then:
+  - **`okay_to_delete: true`** — sanity-checks that the owning docs carry the key
+    facts, confirms the latest plan/run-doc version is tracked in local git with
+    no staged/unstaged/renamed/deleted/untracked changes, and only then deletes
+    (tracked files stay recoverable through git history). If a candidate is dirty
+    or untracked it is **not** deleted this pass — report that the latest version
+    must be committed first, or route to `ship-current-work`. If migration looks
+    incomplete despite the flag, treat it as ready-to-migrate and note the
+    mislabel.
+  - **shipped/abandoned but `okay_to_delete: false`** — confirm the work really
+    shipped/was dropped against git log and code, migrate every durable fact, set
+    `okay_to_delete: true` and bump `last_updated` (or record the same closeout
+    state in a run folder's `hub.md`), then **stop without deleting**. Freshly
+    migrated material is left on disk so the user can eyeball the migration diff;
+    the *next* sweep removes it. Record it as migrated → flagged.
+  - **active/draft** — leave in flight. **`long_lived: true`** — leave, with a
+    one-line note on why it cannot migrate. Run folders with no `hub.md`, no
+    lifecycle frontmatter, or no clear closeout state — leave and flag as
+    needs-human.
 
-**3. `status: active` or `draft` → leave it.** Work is in flight. Record it under *left (in flight)*, one line, so the user sees the live set.
+  It commits its slice before reporting.
+- **Docs-maintenance worker** only when the migration targets need real
+  architecture/decision edits beyond what the plan-maintenance worker handles
+  cleanly. Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
+  `~/agent-docs/v1/rules/authoring-rules.md`. Architecture is rewritten in place;
+  decisions get the mandatory fields. Code paths in docs are relative to the
+  manifest's `code_root`.
+- **Verification worker** only when files changed and a final drift gate is
+  better isolated. Pass `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 
-**4. `long_lived: true` → leave it.** Record it under *left (long-lived)* with a one-line note on why it can't be migrated (if the frontmatter doesn't already say).
+Never delete a plan or run-doc whose latest version is not already in local git
+history, and never delete a freshly migrated plan in the same pass — flagging it
+lets the user review before the next sweep removes it.
 
-## Don'ts
+## Closeout
 
-- Don't delete anything you haven't confirmed is **both** shipped **and** fully migrated.
-- Don't delete plan or run-doc files whose latest version is not already in
-  local git history.
-- Don't delete a freshly-migrated plan in the same pass — flag it and let the user review before the next sweep removes it.
-- Don't invent decisions to record. If the rationale is already in `docs/decisions/`, just confirm and move on.
-- Don't migrate transient prose. The git history of the plan keeps it.
+Record from worker reports, one line per entry:
 
-## Finish
-
-Report four short lists: **deleted**, **migrated → flagged** (with which docs got updates), **left (in flight / long-lived)**, and **needs human** (couldn't confirm shipped, or migration needs a judgment call you shouldn't make alone). Keep each entry to one line.
+- **deleted** — plans/run folders removed this pass
+- **migrated → flagged** — with which architecture/decisions docs got updates
+- **left** — in flight and long-lived
+- **needs human** — couldn't confirm shipped, or migration needs a judgment call
+- commit hash when changes were made
 
 $ARGUMENTS

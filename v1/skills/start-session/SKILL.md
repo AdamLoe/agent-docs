@@ -3,86 +3,96 @@ name: start-session
 description: Begin a coding day or new agent session by checking local repo state, active plans, shipped cleanup candidates, orchestration run docs, and routing into the right agent-docs skill.
 ---
 
-You are starting a work session in the current repository. Inspect local state,
-summarize what is in flight, and continue through the smallest existing
-agent-docs skill that owns the next action. Do not inspect GitHub, remotes,
-issues, pull requests, or external services.
-
-This skill runs directly on disk state — no intake questions. Read
-`~/agent-docs/v1/rules/skill-contracts.md` for shared dials and model policy,
-and honor any dials passed in `$ARGUMENTS`.
+You are the orchestrator that opens a work session in the current repository. You
+inspect local disk, git, and plan/run-doc state, summarize what is in flight, and
+route into the smallest existing agent-docs skill that owns the next action. You do
+not inspect remotes, GitHub, issues, pull requests, or external services.
 
 ## Bootstrap
 
-1. Read `docs/_meta/manifest.md` for `repo_name`, `code_root`,
-   `change-to-doc`, and `drift-gates`.
-2. Read `docs/index.md` and `docs/overview.md`.
-3. Read `docs/plans/index.md` and `~/agent-docs/v1/plan-lifecycle.md`.
-4. List `docs/plans/`. Read every top-level plan file except `index.md` and
-   `template.md`. For each immediate folder under `docs/plans/orchestrator/`,
-   read `hub.md` first and treat that hub frontmatter as the run status
-   source.
-5. Inspect local git state with `git status --short --branch`. Use
-   `git diff --name-only` and `git diff --cached --name-only` only when the
-   status output needs clarification. Use recent local commit history only
-   when recoverability of plan material is unclear.
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**: manifest (`repo_name`, `code_root`, `change-to-doc`, `drift-gates`) →
+`index.md` → `overview.md` → stop.
 
-## Classify State
+This skill is **state-driven**: it runs directly off local disk, git, and plan
+state and does **not** ask the two intake questions. It still honors dials passed
+in `$ARGUMENTS` (e.g. a `review-*`/`cost-*` setting flows into whatever owning
+skill it routes into).
 
-Bucket the repo state before acting:
+Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` for the reads-vs-dispatch test,
+dispatch packet, rule bundles, and commit concurrency.
 
-- **Local git.** Clean, dirty coherent work, or dirty unclear work. Name
-  staged, unstaged, untracked, renamed, or deleted files when they affect the
-  next route.
-- **In flight.** Top-level plans or orchestration runs with `draft` or
-  `active` status, plus any `long_lived: true` material.
-- **Cleanup candidates.** Plans or run folders with `status: shipped` or
-  `abandoned`, especially `okay_to_delete: true`.
-- **Plan history risk.** Cleanup candidates whose files are modified, staged,
-  renamed, deleted, or untracked. Their latest version is not recoverable from
-  local git history yet.
-- **Next workflow.** The smallest skill that owns the next action.
+## Orchestrator reads
 
-For orchestration run folders, leave in-progress runs alone. Treat shipped or
-abandoned runs as disposable plan material only when the hub has lifecycle
-frontmatter and closeout or migration state.
+These are coordination state, read inline under the reads-vs-dispatch test — this
+is routing, not worker dispatch:
 
-## Routing
+- `docs/plans/index.md`.
+- `~/agent-docs/v1/plan-lifecycle.md`.
+- Top-level plan files under `docs/plans/`, excluding `index.md` and
+  `template.md`.
+- `hub.md` for each immediate orchestration run folder under
+  `docs/plans/orchestrator/`; treat hub frontmatter as the run status source and
+  leave in-progress runs alone.
+- `git status --short --branch`; use `git diff --name-only`,
+  `git diff --cached --name-only`, or recent local commit history only when the
+  status output or plan-material recoverability needs clarification.
 
-Use existing skills; do not copy their procedures.
+Bucket the state from these reads: local git (clean, dirty coherent, or dirty
+unclear), in-flight plans/runs, cleanup candidates (`status: shipped` or
+`abandoned`, especially `okay_to_delete: true`), plan-history risk (cleanup
+candidates whose files are dirty or untracked and not yet recoverable from local
+git), and the smallest next workflow.
 
-- If there are cleanup candidates and local git is clean, continue with
-  `clear-plans`. Tell the user this route is being taken and then follow
-  `~/agent-docs/v1/skills/clear-plans/SKILL.md`.
-- If cleanup candidates exist but any candidate plan or run-doc file is dirty
-  or untracked, do not delete it. If the dirty tree is coherent and ready to
-  preserve, continue with `ship-current-work`; otherwise report the files and
-  ask for the one decision needed to proceed.
-- If the repo has a dirty coherent diff unrelated to cleanup, continue with
-  `ship-current-work` before starting new work.
-- If active plans are ready to implement, continue with `ship-plans` and name
+## Worker phases
+
+Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
+concurrency follow `orchestrator/dispatch.md`. start-session usually dispatches
+**no task worker** — it routes into the owning skill instead. Spawn a worker only
+when triage crosses the reads-vs-dispatch boundary:
+
+- **Plan-maintenance worker** when cleanup candidates need eligibility or
+  migration review before deletion. Pass the Plan-maintenance worker bundle:
+  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`.
+- **Review worker** when active or recently shipped work needs a state check
+  before choosing between implementation and cleanup. Pass
+  `~/agent-docs/v1/rules/subagent/review.md` plus the relevant plan/source.
+- **Verification worker** only for a narrow local git/plan-state check better
+  isolated from the orchestrator. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+
+Routing into the owning skill (use existing skills; do not copy their procedures).
+When more than one mutating route is plausible, prefer preserving local git state
+first: `ship-current-work` before `clear-plans`, and safe cleanup before new
+implementation.
+
+- Cleanup candidates exist and local git is clean → `clear-plans`.
+- Cleanup candidates exist but any candidate plan/run-doc file is dirty or
+  untracked → do not delete it; if the dirty tree is coherent and ready to
+  preserve, `ship-current-work`; otherwise report the files and ask the one
+  decision needed.
+- Dirty coherent diff unrelated to cleanup → `ship-current-work` before new work.
+- Active plans ready to implement → `ship-plans`, naming the plan paths.
+- Active or recently shipped work needs checking → `review-shipped-work`, naming
   the plan paths.
-- If active or recently shipped work needs checking, continue with
-  `review-shipped-work` and name the plan paths.
-- If the user supplied a small bounded task in `$ARGUMENTS`, continue with
-  `quick-fix`.
-- If the user supplied broad or ambiguous work in `$ARGUMENTS`, continue with
-  `plan` or `orchestrate` based on scope and coordination risk.
-- If the repo is clean and no task was supplied, stop after the summary and
-  state the recommended next skill, if any.
+- A small bounded task supplied in `$ARGUMENTS` → `quick-fix`.
+- Broad or ambiguous work in `$ARGUMENTS` → `plan` or `orchestrate` by scope and
+  coordination risk.
+- Clean repo and no task supplied → stop after the summary and state the
+  recommended next skill, if any.
 
-When more than one mutating route is plausible, prefer preserving local git
-state first: `ship-current-work` before `clear-plans`, and cleanup before new
-implementation when the cleanup is already safe.
+## Closeout
 
-## Report Shape
+Record from the state reads and any worker reports:
 
-Keep the startup report compact:
-
-1. **State** - clean/dirty git status and branch/upstream summary.
-2. **Plans** - in-flight plans/runs and cleanup candidates.
-3. **Route** - the next skill selected and why.
-4. **Action** - what you are doing now, or the single question blocking a
-   safe route.
+- local git state: clean, dirty coherent work, or dirty unclear work
+- in-flight plans and orchestration runs
+- cleanup candidates and any plan-history risk
+- the selected next skill and why
+- the action taken now, or the single question blocking a safe route
 
 $ARGUMENTS

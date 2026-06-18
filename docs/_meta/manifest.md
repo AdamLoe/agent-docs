@@ -16,7 +16,8 @@ code_root: v1/
 | Repository layout inventory | docs/repository-layout.md |
 | Drift gates and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
 | Doc-authoring rules and adapter-file policy | v1/rules/authoring-rules.md |
-| Orchestration discipline, run docs, and dials | v1/rules/orchestrating.md, v1/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
+| Orchestrator workflow control, dispatch, run docs, and dials | v1/rules/orchestrator/, v1/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
+| Subagent worker-role rules | v1/rules/subagent/, docs/architecture/workflow-kit.md |
 | Plan lifecycle and plan skeleton | v1/plan-lifecycle.md, v1/plan-template.md |
 
 ## drift-gates
@@ -53,5 +54,5 @@ readlink -e ~/.agents/skills/plan/SKILL.md
 | Work lifecycle and rebuild flow | docs/decisions/agent-docs.md |
 | Skill registry and shared skill contracts | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md |
 | Authoring invariants | v1/rules/authoring-rules.md |
-| Orchestration dials and run-doc policy | v1/rules/orchestrating.md, docs/decisions/agent-docs.md |
+| Orchestrator/worker model, dials, and run-doc policy | v1/rules/orchestrator/, v1/rules/subagent/, docs/decisions/agent-docs.md |
 | Plan lifecycle | v1/plan-lifecycle.md |

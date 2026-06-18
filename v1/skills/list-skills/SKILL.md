@@ -1,56 +1,73 @@
 ---
 name: list-skills
-description: List the skills available in this session, grouped by adapter source.
+description: Report the available skill inventory, grouped by source/category.
 ---
 
-You are listing the skills available right now. Skills are prompt directories
-containing a `SKILL.md` whose frontmatter `description:` is the one-liner
-shown to the user. Produce a grouped inventory — do not invent skills, only
-report what actually exists.
+You are the orchestrator for a report-only skill-inventory listing in the current
+session. You report the skills that actually exist, grouped by source/category.
+Reading the registry and skill frontmatter is inline routing work — the
+orchestrator does it the same way `start-session` reads and summarizes plan
+state, under the uniform reads-vs-dispatch boundary. This is not a separate
+direct path; dispatch a worker only for the rare parts that cross that boundary.
+Do not invent skills, and do not run any listed skill.
 
-This skill runs directly — no intake questions and no dials apply. (It is a
-pure inventory utility; the shared contracts in
-`~/agent-docs/v1/rules/skill-contracts.md` are not needed here.)
+## Bootstrap
 
-## How to gather
+Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Protocol**. This skill is **state-driven**: it runs off the registry and on-disk
+skill state, so it skips both intake questions and never stops to prompt. Honor
+any filter passed in `$ARGUMENTS` (a case-insensitive substring matched against
+skill names and descriptions); dials are inert here.
 
-Run the helper shipped beside this skill:
+Then read, inline, the routing/IO state this listing is built from:
+
+- `~/agent-docs/v1/skills/registry.md` — the skill inventory of record.
+- `~/agent-docs/v1/skills/*/SKILL.md` frontmatter (`name:`, `description:`).
+- `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
+  `~/agent-docs/v1/rules/orchestrator/dispatch.md` — to confirm the
+  reads-vs-dispatch boundary and worker routing if a phase is warranted.
+
+A helper ships beside this skill to do the on-disk scan and formatting:
 
 ```sh
 bash ~/.agents/skills/list-skills/list-skills.sh "$ARGUMENTS"
 ```
 
-When running from another adapter, use that copied skill path instead, e.g.
-`bash ~/.claude/skills/list-skills/list-skills.sh "$ARGUMENTS"`. The optional
-argument is a case-insensitive filter substring matched against skill names and
-descriptions.
+From another adapter, use that copied skill path instead, e.g.
+`bash ~/.claude/skills/list-skills/list-skills.sh "$ARGUMENTS"`. The helper scans
+global skills copied into `~/.agents/skills/<name>` and `~/.claude/skills/<name>`
+by `v1/copy-skills.sh`, plus project skills in the current repo's
+`.agents/skills/<name>` and `.claude/skills/<name>`. Built-in / plugin skills are
+not reliably globbable; if the session's available-skills list names skills the
+scans miss, include them under a best-effort "Built-in / plugin" group.
 
-The helper scans:
+## Worker phases
 
-- Global skills copied into `~/.agents/skills/<name>` and
-  `~/.claude/skills/<name>` by `v1/copy-skills.sh`.
-- Project skills in the current repo's `.agents/skills/<name>` and
-  `.claude/skills/<name>` directories, if present.
+Usually **none.** Reading the registry and frontmatter and emitting the grouped
+list is inline routing/IO under the reads-vs-dispatch test — there is nothing to
+fan out or isolate, so do not invent a one-line worker to satisfy the shape.
 
-**Built-in / plugin skills** are not files you can reliably glob.
-If the session's available-skills list names skills not found by the scans
-above, include them under a "Built-in / plugin" group, labelled best-effort.
+Dispatch a worker only when the request crosses the boundary:
 
-## How to report
+- **Verification worker** only when the user wants a registry/frontmatter
+  consistency gate (e.g. every `<name>/SKILL.md` frontmatter matches its registry
+  row and directory) rather than a plain listing. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`, scoped to the skill inventory.
+- **Adapter-freshness worker** only when the user asks about installed copies
+  (whether `~/.agents/skills/` and `~/.claude/skills/` match the `v1/` source).
+  Pass `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`, scoped to that comparison.
 
-Group by origin, in this order: **Global (agent-docs)**, **Project**,
-**Built-in / plugin**. For each skill, one line:
+## Closeout
 
-```
-- `/<name>` — <description>
-```
+Report:
 
-The helper already formats file-discoverable skills this way and keeps
-descriptions to their first sentence if they are long. If you add a
-best-effort built-in/plugin group, keep the helper's source-of-truth note as
-the final line. Do not run any of the listed skills — only list them.
+- the skill list grouped by source/category — **Global (agent-docs)**,
+  **Project**, **Built-in / plugin** — one line per skill as
+  `` - `/<name>` — <description> ``, descriptions trimmed to the first sentence.
+- any registry mismatches or missing skill directories if discovered.
+- a no-change result: this skill only reports. Repairs go through another skill,
+  not here.
 
-Arguments (optional filter substring): $ARGUMENTS
-
-If an argument is given, list only skills whose name or description contains
-it (case-insensitive).
+$ARGUMENTS
