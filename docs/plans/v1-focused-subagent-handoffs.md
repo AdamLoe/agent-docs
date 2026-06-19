@@ -32,7 +32,10 @@ Done means v1 clearly separates the work:
 
 In scope:
 
-- Keep v1 as the active system and retire the generated-context v2 direction.
+- Keep v1 as the active system and retire/abandon the generated-context and
+  metadata-v2 direction.
+- Delete or remove the v2 proof path as active direction unless a live v1
+  reference proves it still matters long enough to migrate or quarantine.
 - Preserve root router-only adapter files and the current Markdown manifest
   model.
 - Update v1 orchestration docs so detailed implementer packet shaping belongs
@@ -48,8 +51,9 @@ In scope:
   assigned slice. They escalate back to the orchestrator only when the work
   grows materially, crosses role boundaries, or needs a direction-setting
   decision.
-- Dogfood the revised rules on a planning-to-implementation flow, preferably
-  against `fluid-simulation` after the docs are updated.
+- Dogfood the revised rules on a planning-to-implementation flow against
+  `fluid-simulation` for this initial validation and any related work under
+  this plan.
 
 Out of scope:
 
@@ -63,15 +67,30 @@ Out of scope:
   work before a planning worker has investigated.
 - Letting subagents switch skills, run lifecycle phases they were not assigned,
   or broaden into planning/review/closeout work on their own.
+- Treating `fluid-simulation` as a long-term required workflow target after
+  this plan's validation pass.
 
 ## Approach
 
+### Planning streams
+
+| Stream | Area | Status | Last observed fact | Next action | Blockers |
+|---|---|---|---|---|---|
+| V2 retirement | Generated-context and metadata-v2 plans plus proof path | Planned | Accepted direction is to stay on v1 and stop treating v2 as active work. | Abandon or supersede the v2 plans and remove the v2 proof path unless a live v1 reference proves it still matters. | Need reference check before deleting proof code. |
+| Handoff boundary | Orchestrator, dispatch, lifecycle, and planning rules | Planned | Orchestrators should route and preserve evidence; planning workers should spend context on brief quality. | Update the rule docs around the boundary and carry-forward summary. | None known. |
+| Worker job cards | Subagent role docs | Planned | Review found the v1/no-generated-infrastructure stance sound. | Tighten each worker role without adding generated packets or helper scripts. | None known. |
+| Skill routing | `plan`, `orchestrate`, and `quick-fix` skill docs | Planned | Medium or unclear work should go through planning before implementation. | Update skill docs to use planner-produced briefs where investigation is needed. | None known. |
+| Dogfood evidence | `fluid-simulation` validation flow | Planned | `fluid-simulation` is the required initial validation target, not a permanent workflow requirement. | Capture the planner prompt, planner brief, carry-forward summary, derived implementation dispatch, and role-adherence notes. | Need access to the target repo/context at validation time. |
+
 ### 1. Retire the v2-generated-context direction
 
-Mark the v2 generated-context and metadata-v2 plans as abandoned or superseded
-by this v1 refactor after any useful lessons are migrated here and into durable
-architecture/decision docs. Remove or quarantine the narrow v2 proof code when
-no live v1 path references it.
+Plan decision: the generated-context and metadata-v2 direction is not the
+active path. Mark the v2 generated-context and metadata-v2 plans as abandoned or
+superseded by this v1 refactor after any useful lessons are migrated here and
+into durable architecture/decision docs. Delete or remove the narrow v2 proof
+path as active direction unless a live v1 reference proves it still matters; if
+that happens, quarantine it only long enough to migrate the remaining useful
+lesson.
 
 Useful lessons to keep:
 
@@ -93,12 +112,15 @@ Update `v1/rules/orchestrator/lifecycle.md` and
 `v1/rules/orchestrator/dispatch.md` around this split:
 
 - **Orchestrator**: intake, lifecycle choice, high-level human questions,
-  worker selection, minimal input routing, sequencing, and evidence tracking.
-  It may pass obvious docs for small tasks, but it does not burn context
-  building a detailed implementation brief for ambiguous or medium work.
+  worker selection, minimal input routing, sequencing, evidence tracking, and
+  carry-forward summaries. It supplies the worker role, task, exact rules,
+  starting inputs, evidence/report expectations, and the concise summary of
+  prior worker findings that the next worker needs. It may pass obvious docs
+  for small tasks, but it does not burn context building a detailed
+  implementation brief for ambiguous or medium work.
 - **Planning worker**: investigates enough to produce an implementer-ready
-  brief or tracked plan. It owns the rich fields that are expensive for the
-  orchestrator to think through.
+  brief or tracked plan. It owns the rich implementation-brief fields when
+  investigation is needed.
 - **Implementation worker**: executes the assigned brief or bounded task,
   discovers source locally within scope, runs the cheapest sufficient gate,
   updates durable docs when required, commits, and reports.
@@ -108,6 +130,18 @@ Update `v1/rules/orchestrator/lifecycle.md` and
 - **Verification worker**: runs named gates and reports exact output. It does
   not fix failures.
 - **Maintenance workers**: perform assigned docs or plan lifecycle hygiene only.
+
+Handoff boundary:
+
+- Orchestrator dispatch supplies role, task, exact rule links, starting inputs,
+  observed evidence to preserve, expected checks, and report shape.
+- Orchestrator carry-forward summary is the knowledge intermediary between
+  workers: it records decisions, facts, and evidence observed so far without
+  loading the next worker with full prior transcripts.
+- Planning worker supplies the implementation brief fields when a task needs
+  investigation before implementation.
+- Implementation worker receives either a bounded task or the planner's brief
+  and reports back when the assignment no longer fits its role.
 
 ### 3. Make planning workers produce implementer briefs
 
@@ -128,7 +162,9 @@ Open decisions:
 
 This is a writing contract for the planning worker, not a new generated packet
 format and not a helper script. The orchestrator can pass the brief directly to
-an implementation worker.
+an implementation worker after adding only the role/task/rules, starting inputs,
+carry-forward summary, evidence expectations, and report shape needed for the
+dispatch.
 
 ### 4. Tighten worker job cards
 
@@ -167,9 +203,12 @@ After the docs are updated:
 
 1. Run the v1 verifier.
 2. Run copied-skill freshness checks if global skill files changed.
-3. Dogfood a small planning-to-implementation handoff and inspect whether the
-   orchestrator stayed small, the planning worker carried the heavy brief, and
-   the implementation worker stayed focused.
+3. Dogfood a small planning-to-implementation handoff using
+   `fluid-simulation` as the validation target for this plan.
+4. Preserve the dogfood evidence in the plan closeout or migrated docs:
+   planner prompt, planner brief returned, orchestrator carry-forward summary,
+   implementation dispatch derived from the brief, and notes on whether the
+   implementation worker stayed in role.
 
 ## Exit gate
 
@@ -177,10 +216,14 @@ After the docs are updated:
 - `docs/plans/generated-repo-local-agent-context.md` and
   `docs/plans/metadata-v2.md` are abandoned, superseded, or otherwise clearly
   not active direction.
+- The v2 proof path is deleted/removed from active direction, or explicitly
+  quarantined only because a live v1 reference proved it still matters.
 - `v1/rules/orchestrator/dispatch.md` distinguishes minimal orchestrator
   dispatch from planner-produced implementation briefs.
 - `v1/rules/orchestrator/lifecycle.md` says detailed brief shaping belongs to a
   planning worker when the task is not already bounded.
+- The orchestrator-as-knowledge-intermediary behavior is explicit: dispatches
+  carry forward a concise observed summary between workers.
 - `v1/rules/subagent/*.md` are concise, role-focused job cards.
 - `v1/skills/plan/SKILL.md`, `v1/skills/orchestrate/SKILL.md`, and
   `v1/skills/quick-fix/SKILL.md` route work according to the new split.
@@ -189,8 +232,12 @@ After the docs are updated:
 - `bash v1/verify-agent-docs.sh` passes.
 - If copied skill files change, `bash v1/copy-skills.sh --check` passes or the
   required refresh is documented.
-- A dogfood handoff shows that the orchestrator can pass a planning-worker brief
-  to an implementation worker without loading the implementation details itself.
+- A `fluid-simulation` dogfood handoff shows that the orchestrator can pass a
+  planning-worker brief to an implementation worker without loading the
+  implementation details itself.
+- Dogfood evidence includes the planner prompt, planner brief returned,
+  orchestrator carry-forward summary, implementation dispatch derived from the
+  brief, and notes on whether the implementation worker stayed in role.
 
 ## Discipline rules
 
@@ -202,8 +249,12 @@ After the docs are updated:
 - Do not make `docs/index.md` a skill router.
 - Do not make orchestrators do planner-level brief writing for work that needs
   investigation.
+- Make orchestrators carry forward the concise observed summary workers need,
+  not the full prior context.
 - Let workers discover local source within their assigned slice, but require
   them to report back when the task materially changes shape.
+- Use `fluid-simulation` for this plan's initial dogfood and related validation,
+  but do not make it a standing workflow requirement.
 
 ## Migration notes (filled in at ship time)
 
@@ -217,7 +268,8 @@ Before setting `status: shipped`, migrate durable facts into:
   routing concepts.
 
 Record whether the old v2 plans were abandoned, deleted, or reduced to archived
-lessons.
+lessons, and whether the v2 proof path was removed or temporarily quarantined
+because of a live v1 reference.
 
 ## See also
 
