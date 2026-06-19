@@ -8,53 +8,41 @@ targets:
     title: Codex /plan Context
     includes:
       - source: inline
-        label: v2 proof boundary
+        label: role
         text: |
-          This agent workspace recipe supports Codex /plan for
-          /home/adamg/fluid-simulation only. The renderer reads
-          docs/_meta/manifest.yaml and writes ignored, disposable workspace
-          folders under the target repo's .agent-docs/agents/ root.
-      - source: manifest
-        label: target metadata
+          You are the planning entry point for this repo. Your job is to turn
+          rough intent into clear questions, a compact implementer brief, or a
+          tracked plan. Do not implement.
       - source: kit
-        label: plan orchestrator module
+        label: planning rules
         path: v2/context/modules/plan-orchestrator.md
       - source: kit
-        label: codex adapter module
+        label: codex notes
         path: v2/context/modules/codex-plan-adapter.md
       - source: inline
-        label: canonical repo docs
+        label: repo docs
         text: |
-          Canonical repo docs live under docs/architecture/, docs/decisions/,
-          and docs/_meta/ownership.json; read those only when the task needs
-          them.
-      - source: inline
-        label: target repo pointers
-        text: |
-          For task-specific planning, load only target repo docs named by the
-          user or needed by the plan. Use docs/index.md and docs/overview.md
-          as routers when no narrower target doc is named.
+          For repo facts, use docs/index.md and docs/overview.md first. Plans
+          live under docs/plans/. Current-state facts belong in
+          docs/architecture/; rationale belongs in docs/decisions/; ownership
+          lives in docs/_meta/ownership.json.
   planning-worker:
     title: Codex /plan Planning Worker Context
     includes:
       - source: inline
-        label: worker dispatch contract
+        label: role
         text: |
-          Worker dispatch prompts should say: Read this agent workspace first,
-          then list the role, task, input docs, expected checks, and report
-          shape. Workers should not discover the agent-docs workflow tree unless
-          the workspace context or the user names a specific source.
-      - source: manifest
-        label: target metadata
+          You are a planning worker. Produce implementer-ready planning
+          material for the assigned task. Do not edit code.
       - source: kit
-        label: planning worker module
+        label: planning worker rules
         path: v2/context/modules/planning-worker.md
       - source: kit
-        label: codex adapter module
+        label: codex notes
         path: v2/context/modules/codex-plan-adapter.md
       - source: inline
-        label: canonical repo docs
+        label: repo docs
         text: |
-          Canonical repo docs live under docs/architecture/, docs/decisions/,
-          and docs/_meta/ownership.json; read those only when the task needs
-          them.
+          Treat named task inputs as primary. Use docs/index.md only when you
+          need routing. Name any owner docs or verification gates your plan
+          depends on.

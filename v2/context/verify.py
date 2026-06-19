@@ -30,10 +30,28 @@ GENERATED_MARKDOWN_BANNED = [
     ("../architecture/", "source-relative architecture link"),
     ("../decisions/", "source-relative decisions link"),
     ("../_meta/", "source-relative metadata link"),
+    ("agent_workspace.root", "manifest metadata dump"),
+    ("agent_docs_version", "manifest metadata dump"),
+    ("code_root:", "manifest metadata dump"),
     ("simulation_contract.md", "stale migration-history doc name"),
     ("decisions.md` planning docs have been migrated", "stale migration-history wording"),
     ("decisions.md planning docs have been migrated", "stale migration-history wording"),
 ]
+PLANNING_MARKERS = {
+    "orchestrator": [
+        "Do not implement",
+        "Ask questions only",
+        "implementer brief",
+        "owner docs",
+        "verification gate",
+    ],
+    "planning-worker": [
+        "Do not edit code",
+        "implementation-ready",
+        "verification gate",
+        "unresolved choices",
+    ],
+}
 MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*]\(([^)]+)\)")
 URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
@@ -151,6 +169,9 @@ def verify_workspace(result, *, max_bytes: int) -> tuple[int, int, dict[str, Any
     require(sources.get("skill") == "plan", "sources.yaml has wrong skill")
     require(sources.get("adapter") == "codex", "sources.yaml has wrong adapter")
     require(sources.get("role") in {"orchestrator", "planning-worker"}, "sources.yaml has wrong role")
+    context_text = result.context.read_text(encoding="utf-8")
+    for marker in PLANNING_MARKERS[sources["role"]]:
+        require(marker in context_text, f"context.md is missing planning instruction: {marker}")
     generated_files = sources.get("generated_files")
     require(isinstance(generated_files, list), "sources.yaml generated_files must be a list")
     for file_path in [result.relative_readme, result.relative_context, result.relative_sources_file]:

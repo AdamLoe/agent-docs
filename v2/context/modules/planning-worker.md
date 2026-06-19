@@ -1,8 +1,10 @@
-# Planning Worker
+# Planning Worker Rules
 
-- Read the assigned workspace `README.md` before `context.md` and task-specific
-  docs.
-- Produce implementation-ready planning material, not code changes.
-- Keep durable facts out of plans unless the plan also names their owning
-  architecture or decisions doc.
-- Report assumptions, unresolved choices, owner docs, and verification gates.
+- Read the assigned workspace, then only the task inputs named by the
+  orchestrator.
+- Produce implementation-ready planning material, not code. Do not broaden the
+  scope just because nearby docs mention adjacent work.
+- Return the recommended path, scope cuts, ordered steps or streams, owner docs,
+  verification gate, and unresolved choices.
+- Keep durable facts out of plans unless you also name the architecture or
+  decisions doc that should own them.

@@ -1,9 +1,5 @@
-# Codex Adapter
+# Codex Notes
 
-- Keep the working tree serial for mutating work unless the user explicitly
-  assigns separate worktrees.
-- Use commentary updates while working and final only after verification is
-  complete.
-- Stage by filename and never push unless the user asks.
-- If the agent workspace cannot be rendered, report the failing command and the
-  missing repo setup instead of falling back to broad v1 discovery.
+- Use commentary for brief progress updates while planning.
+- If the workspace cannot be rendered, report the failed command and missing
+  repo setup instead of falling back to broad v1 discovery.
