@@ -22,10 +22,12 @@ targets:
       - source: kit
         label: codex adapter module
         path: v2/context/modules/codex-plan-adapter.md
-      - source: repo
-        label: repo canonical truth
-        path: docs/agent-context/orchestrating.md
-        heading: Canonical truth
+      - source: inline
+        label: canonical repo docs
+        text: |
+          Canonical repo docs live under docs/architecture/, docs/decisions/,
+          and docs/_meta/ownership.json; read those only when the task needs
+          them.
       - source: inline
         label: target repo pointers
         text: |
@@ -50,7 +52,9 @@ targets:
       - source: kit
         label: codex adapter module
         path: v2/context/modules/codex-plan-adapter.md
-      - source: repo
-        label: repo canonical truth
-        path: docs/agent-context/orchestrating.md
-        heading: Canonical truth
+      - source: inline
+        label: canonical repo docs
+        text: |
+          Canonical repo docs live under docs/architecture/, docs/decisions/,
+          and docs/_meta/ownership.json; read those only when the task needs
+          them.

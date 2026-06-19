@@ -148,9 +148,9 @@ sources:
   - source: kit
     path: v2/skills/plan/context.yaml
     digest: <sha256-prefix>
-  - source: repo
-    path: docs/agent-context/orchestrating.md
-    heading: Canonical truth
+  - source: inline
+    label: canonical repo docs
+    path: v2/skills/plan/context.yaml
     digest: <sha256-prefix>
 ```
 
@@ -176,6 +176,8 @@ The generated Markdown should be as concise as possible:
 - include only context selected for the current skill, adapter, role, and run;
 - avoid copying broad architecture or implementation mechanics unless the role
   needs them;
+- avoid source-relative links from copied snippets; use plain repo-root doc
+  paths for broad repo pointers;
 - omit source-wrapper sections, provenance blocks, and digest text;
 - keep source trace in `sources.yaml`;
 - do not include the full user prompt by default.
@@ -206,9 +208,12 @@ targets:
         path: v2/context/orchestrator.md
       - source: kit
         path: v2/context/planning.md
-      - source: repo
-        path: docs/agent-context/orchestrating.md
-        heading: Canonical truth
+      - source: inline
+        label: canonical repo docs
+        text: |
+          Canonical repo docs live under docs/architecture/, docs/decisions/,
+          and docs/_meta/ownership.json; read those only when the task needs
+          them.
   planning-worker:
     includes:
       - source: kit
@@ -333,7 +338,8 @@ generator and launchers work:
 - `context-legacy-check`: v2 generation does not create or modify
   `docs/.generated/`;
 - `context-markdown-clean`: generated Markdown has no source wrappers,
-  provenance block, or digest text;
+  provenance block, digest text, source-relative copied links, stale migration
+  wording, or broken relative Markdown links;
 - `context-sources-trace`: `sources.yaml` carries generated file paths and source
   trace data;
 - `context-source-check`: selected source paths exist and missing sources fail

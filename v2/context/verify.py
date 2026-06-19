@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -23,6 +24,18 @@ from render import (  # noqa: E402
 
 class VerifyError(Exception):
     pass
+
+
+GENERATED_MARKDOWN_BANNED = [
+    ("../architecture/", "source-relative architecture link"),
+    ("../decisions/", "source-relative decisions link"),
+    ("../_meta/", "source-relative metadata link"),
+    ("simulation_contract.md", "stale migration-history doc name"),
+    ("decisions.md` planning docs have been migrated", "stale migration-history wording"),
+    ("decisions.md planning docs have been migrated", "stale migration-history wording"),
+]
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*]\(([^)]+)\)")
+URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 def require(condition: bool, message: str) -> None:
@@ -94,10 +107,36 @@ def verify_markdown(path: Path, *, max_bytes: int | None = None) -> int:
     require("### Source:" not in text, f"Markdown contains source wrapper: {path}")
     require("## Provenance" not in text, f"Markdown contains provenance block: {path}")
     require("digest" not in text.casefold(), f"Markdown contains digest text: {path}")
+    for banned, label in GENERATED_MARKDOWN_BANNED:
+        require(banned not in text, f"Markdown contains {label}: {path}")
+    verify_relative_markdown_links(path, text)
     byte_count = len(text.encode("utf-8"))
     if max_bytes is not None:
         require(byte_count <= max_bytes, f"agent context exceeds max bytes: {byte_count}")
     return byte_count
+
+
+def markdown_link_path(target: str) -> str | None:
+    target = target.strip()
+    if not target:
+        return None
+    if target.startswith("<") and target.endswith(">"):
+        target = target[1:-1].strip()
+    if not target or target.startswith("#") or target.startswith("/"):
+        return None
+    if URI_SCHEME_RE.match(target):
+        return None
+    target = target.split("#", 1)[0].split("?", 1)[0].strip()
+    return target or None
+
+
+def verify_relative_markdown_links(path: Path, text: str) -> None:
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        link_path = markdown_link_path(match.group(1))
+        if link_path is None:
+            continue
+        resolved = (path.parent / link_path).resolve()
+        require(resolved.exists(), f"Markdown relative link is broken in {path}: {match.group(1)}")
 
 
 def verify_workspace(result, *, max_bytes: int) -> tuple[int, int, dict[str, Any]]:
