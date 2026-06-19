@@ -50,7 +50,8 @@ Agent-docs should feel like a small operating system for agent work:
 
 ## Core Ship Order
 
-Every mutating lifecycle should converge on one order:
+Every mutating lifecycle should converge on one order. These are outcome
+checkpoints, not a one-to-one list of spawned subagents:
 
 - **1. Classify**
   - Identify whether the work is bounded, briefed, tracked, review-only, or
@@ -81,6 +82,94 @@ Every mutating lifecycle should converge on one order:
   - Commit green work locally.
   - Report commits, gates, assumptions, skipped work, and residual risk.
   - Do not push unless the user explicitly asks.
+
+## Subagent Spawn Model
+
+- **Orchestrator skills decide; worker subagents execute.**
+  - User-facing skills classify the request, choose phases, and maintain the
+    coordination surface.
+  - Workers own role execution: planning, implementation, review,
+    docs-maintenance, plan-maintenance, or verification.
+- **Spawning is triggered by the work, not by the step number.**
+  - Spawn when the phase reads across more than a couple files, makes a
+    defensible judgment call, mutates the repo, or runs a verification gate.
+  - Stay inline for pure routing and small coordination reads: manifest, index,
+    overview, registry rows, plan metadata, and `git status`.
+- **Workers receive exact rule bundles.**
+  - Dispatch packets name the role, one owned task, input docs/context, exact
+    rule files, expected output, expected checks, and report shape.
+  - Prior worker evidence is carried forward as facts, not transcripts.
+- **Editing is serial by default.**
+  - One editing worker uses the shared tree at a time and commits before the
+    next editing worker starts.
+  - Parallel editing needs separate worktrees or patch return/integration.
+- **Read-only workers can fan out.**
+  - Planning, review, and investigation workers can run in parallel when their
+    lenses are disjoint and they do not compete for scarce resources.
+- **Commit/report is not a standalone worker role.**
+  - Implementation, docs-maintenance, and plan-maintenance workers commit their
+    completed slices.
+  - The orchestrator records observed commit hashes, runs or dispatches final
+    verification, and reports the final state.
+
+## Ship Order To Worker Map
+
+| Ship order | Normal owner | Worker role | Skills that usually spawn it | Notes |
+|---|---|---|---|---|
+| 1. Classify | Orchestrator inline | None by default | all user-facing skills | Reads router, manifest, registry, plan metadata, and git state only as needed. |
+| 2. Plan | Planning worker, sometimes plan-maintenance | `planning`; `plan-maintenance` for persisted plan files | `/plan`, `/orchestrate`, `/ship-plans` for stale plans, `/quick-fix` only when a small issue needs a brief | Planning may return an implementer brief or tracked plan text; persistence must be explicit. |
+| 3. Implement | Implementation worker | `implementation` | `/quick-fix`, `/orchestrate`, `/ship-plans`, `/ship-current-work` for obvious misses, `/rebuild-agent-docs` for script/template repairs, fix-enabled review/doctor flows | Implements the owned slice, runs the cheapest sufficient local gate, updates docs only when needed for the slice, and commits. |
+| 4. Review | Review worker | `review` | `/orchestrate`, `/ship-current-work`, `/ship-plans`, `/review-*`, `/check-docs`, `/doctor` | Reviews plan material, current diff, or shipped outcome. If it can fix, it must receive the implementation/repo rule bundle or route fixes to implementation. |
+| 5. Migrate docs/plans | Docs- or plan-maintenance worker | `docs-maintenance`; `plan-maintenance` | `/ship-current-work`, `/ship-plans`, `/orchestrate`, `/clear-plans`, `/rebuild-agent-docs`, `/wrap-up-current-chat`, `/fix-docs-drift` | Migrates durable facts/rationale into architecture/decisions and sets plan/run-doc status truthfully. |
+| 6. Final gate | Verification worker | `verification` | `/orchestrate`, `/ship-current-work`, `/ship-plans`, `/quick-fix` when isolated gate is needed, `/rebuild-agent-docs`, `/doctor` fix flows, `/clear-plans`, `/wrap-up-current-chat` | Runs after the last mutation, including doc and plan-status edits. |
+| 7. Commit and report | Editing workers, then orchestrator inline | No dedicated worker | all mutating skills | Workers commit their slices; orchestrator reports commits, gates, assumptions, and residual risk. |
+
+## Skill Spawn Patterns
+
+- **Bootstrap/routing skills**
+  - `/fresh-chat` and `/start-session` mostly read inline and route.
+  - They spawn only when state inspection needs a real review, verification, or
+    plan-maintenance pass.
+- **Planning skill**
+  - `/plan` spawns planning workers per separable concern.
+  - It may spawn a review worker for broad/risky plan material.
+  - It may spawn docs-maintenance only to persist or update tracked plan docs.
+  - It does not spawn implementation workers.
+- **Primary lifecycle orchestrator**
+  - `/orchestrate` can run the full chain:
+    - planning worker for briefs/plans;
+    - review worker for plan critique;
+    - implementation worker(s) by stream;
+    - review worker for shipped outcome;
+    - verification worker for final gates;
+    - docs- or plan-maintenance worker for closeout.
+  - It uses run docs only when requested or when resumability risk justifies
+    asking.
+- **Bounded fix skill**
+  - `/quick-fix` normally spawns one implementation worker.
+  - It adds a planning worker only when the problem is still small but not
+    implementation-ready.
+  - It adds review or verification workers only when risk or gate isolation
+    warrants it.
+- **Finishing skills**
+  - `/ship-current-work` starts with a review worker over the existing diff,
+    then dispatches docs-maintenance, plan-maintenance, verification, or an
+    implementation worker only for missing obvious work.
+  - `/ship-plans` dispatches implementation workers by plan/workstream, then
+    review, final verification, and plan-maintenance.
+- **Maintenance and scaffold skills**
+  - `/rebuild-agent-docs` centers docs-maintenance, with implementation only for
+    script/template repairs, verification for scaffold gates, and
+    plan-maintenance only if plan material is created or retired.
+  - `/doctor` is report-only by default; when fixes are requested, failures route
+    to docs-maintenance or implementation and then verification.
+  - `/fix-docs-drift` should route cross-file judgment to review or
+    docs-maintenance workers, then verification.
+- **Review skills**
+  - `/review-*`, `/check-docs`, and `/review-docs-shape` lead with review or
+    docs-maintenance-style inspection.
+  - Optional fixes must be explicit: either route to implementation/
+    docs-maintenance workers or give the review worker the full mutation bundle.
 
 ## Main Skills
 

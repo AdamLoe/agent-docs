@@ -135,6 +135,10 @@ Work:
   - finish all code/doc/plan/run-doc mutations;
   - run the final consolidated drift gate;
   - report closeout from the verified final state.
+- Document that the ship order is a set of outcome checkpoints, not a one-to-one
+  subagent list. Add a durable skill-to-worker map that names which skills spawn
+  planning, implementation, review, docs-maintenance, plan-maintenance, and
+  verification workers, and which ship-order checkpoints each worker role owns.
 - Add an explicit tracked-plan persistence actor between planning and review:
   write-capable planning worker, plan-maintenance worker, or orchestrator-owned
   persistence.
@@ -149,6 +153,9 @@ Acceptance:
 
 - Rule bundles match the behavior they authorize.
 - No workflow doc allows "green" to predate final frontmatter/run-doc edits.
+- Durable workflow docs explain subagent spawn order and ship-order ownership
+  clearly enough that a fresh orchestrator does not infer "one subagent per
+  numbered step."
 - Plan persistence is explicit enough for a fresh orchestrator to resume.
 - `bash v1/verify-agent-docs.sh`
 
@@ -307,6 +314,9 @@ At ship time, migrate:
   `docs/architecture/install-and-adapters.md`.
 - Workflow lifecycle, dispatch bundles, ship order, and plan persistence to
   `docs/architecture/workflow-kit.md`.
+- Subagent spawn topology and ship-order ownership to
+  `docs/architecture/workflow-kit.md` and, if it records a durable tradeoff,
+  `docs/decisions/agent-docs.md`.
 - Repository inventory and stable layout coverage to
   `docs/repository-layout.md`.
 - Rationale for verifier split, mutation authority, adapter ownership, and
