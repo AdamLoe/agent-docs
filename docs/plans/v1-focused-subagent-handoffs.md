@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         unassigned
 last_updated:  2026-06-19
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -256,20 +256,48 @@ After the docs are updated:
 - Use `fluid-simulation` for this plan's initial dogfood and related validation,
   but do not make it a standing workflow requirement.
 
-## Migration notes (filled in at ship time)
+## Migration notes
 
-Before setting `status: shipped`, migrate durable facts into:
+Shipped by `328e1c1350bacaaed641c23de89e383a60de5af9`.
 
-- `architecture/workflow-kit.md` - v1 role split, planner-produced briefs, and
-  focused worker job-card model.
-- `decisions/agent-docs.md` - rationale for staying on v1 and rejecting
-  generated workspaces, metadata v2, packet helpers, and static context bundles.
-- `_meta/ownership.json` - any ownership updates for worker rules or skill
-  routing concepts.
+Durable current-state facts live in
+[`../architecture/workflow-kit.md`](../architecture/workflow-kit.md): v1 is the
+active kit, handoffs are focused role dispatches, unclear or medium work routes
+through planner-produced implementation briefs, implementation workers discover
+source within the assigned slice, and orchestrators carry concise observed
+summaries between workers. Durable rationale lives in
+[`../decisions/agent-docs.md`](../decisions/agent-docs.md): the kit keeps the
+source-backed, role-specific lessons from the generated-context exploration and
+rejects generated workspaces, metadata v2, packet helpers, static context
+bundles, and broader `docs/index.md` skill routing. The existing ownership data
+already maps workflow lifecycle, skill contracts, orchestration, and plan
+lifecycle surfaces to their owners.
 
-Record whether the old v2 plans were abandoned, deleted, or reduced to archived
-lessons, and whether the v2 proof path was removed or temporarily quarantined
-because of a live v1 reference.
+The generated-context and metadata-v2 plans are abandoned with
+`okay_to_delete: true`; their useful lessons point back to the workflow and
+decision docs above. The v2 proof path was removed from active direction after
+live-reference checks found no required v1 dependency. A post-review skill
+adapter refresh copied the agent-docs skills to `~/.agents/skills` and
+`~/.claude/skills`.
+
+Dogfood evidence: a read-only planning worker against `fluid-simulation` used
+`v1/rules/subagent/planning.md`, `v1/plan-lifecycle.md`, and
+`v1/plan-template.md` and returned an implementer brief for root router-only
+`AGENTS.md` and `CLAUDE.md` files. The brief identified no app-code, build,
+simulation, UI, plan-lifecycle, or global kit changes; named the authoritative
+docs and likely files; recommended both root adapters plus at most a concise
+repository-layout note; and listed `sed`, `git diff --check`, and
+`git status --short` as cheap checks. The orchestrator carry-forward summary
+preserved the target repo's docs state and missing root adapters, and the
+implementation dispatch passed the brief with exact implementation, coding,
+authoring, and repo rules plus a no-write instruction because the target repo
+was outside this workspace. The implementation worker stayed in role: it
+inspected the target repo, verified no intentional omission policy, ran
+`git status --short`, root file existence checks,
+`git ls-files -- AGENTS.md CLAUDE.md docs/repository-layout.md`, targeted `rg`,
+and `git diff --check -- AGENTS.md CLAUDE.md docs/repository-layout.md`, did
+not choose a skill, did not re-plan or broaden into app behavior, did not edit
+files, and did not commit.
 
 ## See also
 
