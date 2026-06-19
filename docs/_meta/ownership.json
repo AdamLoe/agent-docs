@@ -48,7 +48,7 @@
     {
       "surface": "generated-context-v2",
       "paths": ["docs/architecture/workflow-kit.md", "docs/architecture/install-and-adapters.md", "docs/decisions/agent-docs.md", "docs/repository-layout.md", "v2/context/", "v2/skills/plan/SKILL.md", "v2/skills/plan/context.yaml"],
-      "owns": ["v2 generated context renderer", "v2 plan context recipe", "generated context conventions", "docs/.generated ignored output"]
+      "owns": ["v2 generated context renderer", "v2 plan context recipe", "repo-local agent workspace conventions", ".agent-docs/agents ignored output"]
     },
     {
       "surface": "plan-lifecycle",

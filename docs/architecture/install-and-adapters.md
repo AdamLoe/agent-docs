@@ -23,18 +23,19 @@ workflow facts.
 ## v2 proof launcher
 
 The v2 `/plan` proof keeps adapter discovery thin. The launcher shape renders a
-run-local context file first, then tells the agent or worker to read that file
-before task-specific inputs:
+run-local agent workspace first, then tells the agent or worker to read that
+workspace before task-specific inputs:
 
 ```sh
 python3 ~/agent-docs/v2/context/render.py --repo "$PWD" --skill plan --adapter codex --role orchestrator
 ```
 
-The target repo supplies `docs/_meta/manifest.yaml`, including the ignored
-generated-context root and log path. For the current proof, generated context is
-written under the consuming repo's ignored `docs/.generated/` directory. The v1
-copy scripts do not install v2 skills, and no Claude v2 adapter is shipped in
-this proof.
+The command prints the generated workspace `README.md` path. The target repo
+supplies `docs/_meta/manifest.yaml`, including
+`metadata.agent_workspace.root: .agent-docs/agents` and `committed: false`.
+For the current proof, generated material is written under the consuming repo's
+ignored `.agent-docs/agents/<agent-id>/` directory. The v1 copy scripts do not
+install v2 skills, and no Claude v2 adapter is shipped in this proof.
 
 ## Installer
 

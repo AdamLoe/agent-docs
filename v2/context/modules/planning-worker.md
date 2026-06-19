@@ -1,6 +1,7 @@
 # Planning Worker
 
-- Read the generated context file before task-specific docs.
+- Read the assigned workspace `README.md` before `context.md` and task-specific
+  docs.
 - Produce implementation-ready planning material, not code changes.
 - Keep durable facts out of plans unless the plan also names their owning
   architecture or decisions doc.

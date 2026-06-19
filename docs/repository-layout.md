@@ -25,15 +25,16 @@ for workflow surfaces, use
 | `v1/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
 | `v1/verify-agent-docs.sh` | Non-mutating drift gate for this repo. |
 | `v2/` | Narrow generated-context proof, currently limited to Codex `/plan` against `~/fluid-simulation`. |
-| `v2/context/render.py` | Renders ignored repo-local context files from v2 YAML recipes, kit modules, target `manifest.yaml`, selected repo docs, and inline YAML text. |
+| `v2/context/render.py` | Renders ignored repo-local agent workspaces from v2 YAML recipes, kit modules, target `manifest.yaml`, selected repo docs, and inline YAML text. |
 | `v2/context/verify.py` | Functional verifier for the current v2 Codex `/plan` proof. |
 | `v2/context/modules/` | Source Markdown modules selected by v2 context recipes. |
 | `v2/skills/plan/SKILL.md` | Thin source launcher that demonstrates the v2 generated-context startup and worker-dispatch shape. |
 | `v2/skills/plan/context.yaml` | Skill-local recipe for Codex `/plan` orchestrator and planning-worker context. |
 
 Consuming repos that use the v2 proof provide `docs/_meta/manifest.yaml` and
-ignore `docs/.generated/`; the generated Markdown and
-`docs/.generated/generations.yaml` log are disposable and are not committed.
+ignore `.agent-docs/`; generated workspace folders live under
+`.agent-docs/agents/<agent-id>/` with `README.md`, `context.md`, and
+`sources.yaml`. The workspace folders are disposable and are not committed.
 
 ## See also
 

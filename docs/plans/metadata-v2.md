@@ -14,7 +14,7 @@ owning_docs:
 ## Mission
 
 Replace the Markdown manifest and flat ownership map with structured metadata
-that can drive the breaking v2 kit, ignored repo-local generated context,
+that can drive the breaking v2 kit, ignored repo-local agent workspaces,
 stricter verification, and lower-context agent workflows.
 
 Done means `docs/_meta/manifest.yaml` is the canonical repo config,
@@ -27,8 +27,8 @@ Markdown tables.
 
 The current implementation target is only the first v2 generated-context proof:
 Codex `/plan` against `~/fluid-simulation`. For that proof, v2 tools require
-the target repo's `docs/_meta/manifest.yaml`, use it for the ignored generated
-context root, and do not read the Markdown manifest. This slice does not delete
+the target repo's `docs/_meta/manifest.yaml`, use it for the ignored agent
+workspace root, and do not read the Markdown manifest. This slice does not delete
 either repo's Markdown manifest, migrate ownership to v2, add v2 templates, or
 change every skill and rule.
 
@@ -45,7 +45,7 @@ In scope:
   so gates do not rely on ad hoc grep.
 - Convert manifest slots into structured fields: repo identity, code root,
   change-to-doc triggers, drift gates, manual verification, decision domains,
-  and ignored generated-context roots.
+  and ignored agent workspace roots.
 - Upgrade ownership data from flat `owners[]` into concept records with aliases,
   canonical owners, allowed referencers, update triggers, and generated output
   conventions.
@@ -58,8 +58,8 @@ Out of scope:
 
 - Building the generated context system itself; that is owned by
   [`generated-repo-local-agent-context.md`](generated-repo-local-agent-context.md).
-- Checking generated Markdown freshness as committed state. Generated context
-  files live under ignored `docs/.generated/` and are disposable.
+- Checking generated Markdown freshness as committed state. Generated workspace
+  files live under ignored `.agent-docs/agents/` and are disposable.
 - Supporting arbitrary YAML features. The manifest should use a small,
   deterministic subset.
 - Fully linting every prose duplicate between docs. Structural ownership and
@@ -84,9 +84,8 @@ repo:
 
 metadata:
   ownership: docs/_meta/ownership.json
-  generated_context:
-    root: docs/.generated
-    log: docs/.generated/generations.yaml
+  agent_workspace:
+    root: .agent-docs/agents
     committed: false
 
 change_to_doc:
@@ -126,7 +125,7 @@ decisions:
 
 Use path or glob based triggers instead of prose-only "changed surface" labels.
 Keep gates addressable by stable ids so generated docs and decisions can cite
-them without duplicating commands. Do not add `docs/.generated/**` as a
+them without duplicating commands. Do not add `.agent-docs/**` as a
 change-to-doc trigger; that tree is ignored disposable output.
 
 ### 2. Choose a parser and validation profile
@@ -156,7 +155,7 @@ reason to move it to YAML too. Replace `owners[]` with concept records:
     {
       "id": "generated-agent-context",
       "canonical_name": "generated agent context",
-      "aliases": ["repo-local context", "generated worker docs", "docs/.generated"],
+      "aliases": ["repo-local context", "agent workspace", ".agent-docs/agents"],
       "owner": {
         "paths": [
           "docs/architecture/workflow-kit.md",
@@ -180,7 +179,7 @@ reason to move it to YAML too. Replace `owners[]` with concept records:
       },
       "ignored_artifacts": [
         {
-          "path": "docs/.generated/",
+          "path": ".agent-docs/agents/",
           "kind": "generated-context",
           "committed": false
         }
@@ -245,7 +244,7 @@ Extend the gate to validate:
 - ownership concepts have ids, aliases, owner paths, referencer modes, and
   update triggers;
 - aliases are unique unless an explicit conflict record resolves them;
-- generated-context root fields are structurally valid, mark generated Markdown
+- agent workspace root fields are structurally valid, mark generated Markdown
   as uncommitted, and correspond to a gitignored path;
 - template placeholders such as `<!-- fill -->` do not survive in committed v2
   templates.
@@ -273,8 +272,8 @@ plan.
 - A checked-in metadata helper validates and normalizes the manifest and
   ownership data.
 - `v2/verify-agent-docs.sh` validates manifest schema, ownership schema,
-  owner paths, gate ids, generated-context root fields, gitignore coverage for
-  `docs/.generated/`, and stale `manifest.md` references.
+  owner paths, gate ids, agent workspace root fields, gitignore coverage for
+  `.agent-docs/`, and stale `manifest.md` references.
 - Every v2 skill and rule reads the new metadata source or generated context
   derived from it.
 - `v2/agent-docs-guide.md`, `v2/rules/authoring-rules.md`,

@@ -193,18 +193,20 @@ avoid committed coordination folders unless the user accepts that cost.
 
 **Decision.** v2 planning context is rendered per run from a skill-local YAML
 recipe, source-authored kit modules, target repo YAML metadata, and selected
-target repo docs into ignored `docs/.generated/` files.
+target repo docs into ignored `.agent-docs/agents/<agent-id>/` workspace
+folders.
 
 **Why.** The north star is lower context for agents. A generated, repo-local
-context file lets a Codex `/plan` invocation read only the standing context it
-needs instead of loading broad v1 workflow policy and then reasoning its way
-back down to the current task.
+workspace lets a Codex `/plan` invocation read only the launch card and standing
+context it needs instead of loading broad v1 workflow policy and then reasoning
+its way back down to the current task.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v2/context/render.py`](../../v2/context/render.py), [`../../v2/skills/plan/context.yaml`](../../v2/skills/plan/context.yaml).
 
-**Tradeoffs.** Generated context is deliberately disposable and not canonical.
-Debuggability comes from source labels, provenance digests, and the append-only
-generation log, not from committing generated Markdown.
+**Tradeoffs.** Generated workspaces are deliberately disposable and not
+canonical. Agent-facing Markdown stays concise; debuggability comes from
+`sources.yaml`, not from committing generated Markdown or embedding provenance
+inside it.
 
 ## v2 metadata reads structured YAML
 
@@ -220,4 +222,4 @@ tables or loading unrelated manifest slots.
 
 **Tradeoffs.** v1 remains available while v2 is proven, but the v2 proof is a
 breaking path. Consuming repos need a YAML manifest and an ignored
-`docs/.generated/` root before v2 context can render.
+`.agent-docs/agents/` root before v2 context can render.

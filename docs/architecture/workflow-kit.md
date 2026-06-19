@@ -55,36 +55,43 @@ the final observed state.
 
 ## v2 generated context
 
-The v2 proof lowers agent startup context by rendering one run-local Markdown
-file in the consuming repo before the workflow starts. The renderer assembles
-only selected source material; it does not call a model and does not summarize
-free-form prose at generation time. Compact factual summaries and hard
+The v2 proof lowers agent startup context by rendering one run-local agent
+workspace in the consuming repo before the workflow starts. The renderer
+assembles only selected source material; it does not call a model and does not
+summarize free-form prose at generation time. Compact factual summaries and hard
 instructions live in source-authored YAML or Markdown modules and are copied as
 selected inputs.
 
 For the Codex `/plan` proof, `v2/context/render.py` requires the target repo's
-`docs/_meta/manifest.yaml`. It uses the manifest's
-`metadata.generated_context.root` and `.log` fields to write
-`docs/.generated/<random-id>.md` and append
-`docs/.generated/generations.yaml`. Generated ids are URL-safe and
-collision-checked. The generated Markdown and log are ignored disposable
-artifacts; deleting the directory, an individual generated Markdown file, or the
-log is normal and the next render recreates what it needs.
+`docs/_meta/manifest.yaml`. It uses `metadata.agent_workspace.root` to create
+ignored workspaces under `.agent-docs/agents/<agent-id>/`. Generated ids are
+URL-safe and collision-checked. Each workspace contains:
+
+- `README.md` — short launch card with role, skill, adapter, target repo, and
+  file order.
+- `context.md` — concise role-specific working context with no source wrappers,
+  provenance block, or digest text.
+- `sources.yaml` — source trace with generated file paths, source paths,
+  headings, digests, generator metadata, role, adapter, skill, repo, and
+  timestamp.
+
+The workspace root is ignored disposable output. Deleting
+`.agent-docs/agents/`, a workspace folder, or any workspace file is normal; the
+next render creates a fresh workspace.
 
 Includes are explicit in `v2/skills/plan/context.yaml`:
 
 - kit file includes from `v2/context/modules/`
-- target repo file includes from `docs/agent-context/`
-- target repo Markdown sections selected by heading
+- target repo file includes from selected `docs/agent-context/` headings
 - inline YAML text
 - target metadata selected from `docs/_meta/manifest.yaml`
 
-The generated file carries compact source labels and provenance digests so an
-agent can trace each instruction back to its source. Orchestrator context is
-rendered with `--role orchestrator`; planning-worker context is rendered with
-`--role planning-worker` and passed in the worker prompt before task-specific
-inputs. Workers should read the generated context path they are given instead
-of discovering the whole agent-docs workflow tree.
+The default Codex `/plan` recipe avoids target repo routing-table dumps and
+unrelated project non-negotiables. Orchestrator context is rendered with `--role
+orchestrator`; planning-worker context is rendered with `--role
+planning-worker` and passed in the worker prompt before task-specific inputs.
+Agents read the workspace `README.md` first, then `context.md`; `sources.yaml`
+is for trace/debugging instead of standing instructions.
 
 The proof verifier is:
 
@@ -93,8 +100,10 @@ python3 ~/agent-docs/v2/context/verify.py --repo ~/fluid-simulation --skill plan
 ```
 
 It checks target YAML metadata, ignored generated output, render size, random id
-shape, log append behavior, delete/regenerate behavior, planning-worker context,
-and that generated artifacts are neither tracked nor staged.
+shape, unique agent ids, delete/regenerate behavior, orchestrator and
+planning-worker workspaces, unchanged legacy generated output, Markdown
+cleanliness, `sources.yaml` provenance, and that workspace artifacts are neither
+tracked nor staged.
 
 ## Workflow commands
 

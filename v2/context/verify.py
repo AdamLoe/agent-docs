@@ -13,11 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from render import (  # noqa: E402
     ContextRenderError,
     ID_RE,
-    generated_paths,
     kit_root,
     load_context_config,
     load_manifest,
     render_context,
+    workspace_paths,
 )
 
 
@@ -43,14 +43,15 @@ def run_git(repo: Path, args: list[str], *, check: bool = True) -> subprocess.Co
     return result
 
 
-def load_yaml_documents(path: Path) -> list[dict[str, Any]]:
+def load_yaml_mapping(path: Path) -> dict[str, Any]:
     try:
         import yaml
     except ImportError as exc:  # pragma: no cover
         raise VerifyError("PyYAML is required for v2 context verification") from exc
     with path.open("r", encoding="utf-8") as handle:
-        docs = list(yaml.safe_load_all(handle))
-    return [doc for doc in docs if doc is not None]
+        loaded = yaml.safe_load(handle)
+    require(isinstance(loaded, dict), f"YAML root must be a mapping: {path}")
+    return loaded
 
 
 def assert_no_legacy_manifest_reference() -> None:
@@ -64,6 +65,22 @@ def assert_no_legacy_manifest_reference() -> None:
                 raise VerifyError(f"v2 context path references legacy manifest: {path}")
 
 
+def assert_no_legacy_output_reference() -> None:
+    checked_roots = [kit_root() / "v2" / "context", kit_root() / "v2" / "skills"]
+    legacy_root = "docs/" + ".generated"
+    legacy_field = "generated" + "_context"
+    legacy_log = "generations" + ".yaml"
+    banned = [legacy_root, legacy_field, legacy_log]
+    for root in checked_roots:
+        for path in root.rglob("*"):
+            if not path.is_file() or path.suffix not in {".py", ".md", ".yaml"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for value in banned:
+                if value in text:
+                    raise VerifyError(f"v2 context path references legacy generated output: {path}")
+
+
 def verify_context_recipe(skill: str, adapter: str) -> None:
     config_path, config = load_context_config(skill)
     require(adapter in config.get("supported_adapters", []), "context recipe does not support adapter")
@@ -71,14 +88,53 @@ def verify_context_recipe(skill: str, adapter: str) -> None:
     require(config_path.is_file(), "missing context recipe")
 
 
-def verify_rendered_file(path: Path, *, max_bytes: int) -> int:
-    require(path.is_file(), f"generated file missing: {path}")
+def verify_markdown(path: Path, *, max_bytes: int | None = None) -> int:
+    require(path.is_file(), f"workspace Markdown missing: {path}")
     text = path.read_text(encoding="utf-8")
-    require("### Source:" in text, "generated context is missing source labels")
-    require("## Provenance" in text, "generated context is missing provenance")
+    require("### Source:" not in text, f"Markdown contains source wrapper: {path}")
+    require("## Provenance" not in text, f"Markdown contains provenance block: {path}")
+    require("digest" not in text.casefold(), f"Markdown contains digest text: {path}")
     byte_count = len(text.encode("utf-8"))
-    require(byte_count <= max_bytes, f"generated context exceeds max bytes: {byte_count}")
+    if max_bytes is not None:
+        require(byte_count <= max_bytes, f"agent context exceeds max bytes: {byte_count}")
     return byte_count
+
+
+def verify_workspace(result, *, max_bytes: int) -> tuple[int, int, dict[str, Any]]:
+    require(result.workspace.is_dir(), f"workspace missing: {result.workspace}")
+    expected = {result.readme, result.context, result.sources_file}
+    actual = {path for path in result.workspace.iterdir() if path.is_file()}
+    require(expected == actual, f"workspace files mismatch: {sorted(path.name for path in actual)}")
+    readme_bytes = verify_markdown(result.readme)
+    context_bytes = verify_markdown(result.context, max_bytes=max_bytes)
+    sources = load_yaml_mapping(result.sources_file)
+    require(sources.get("agent_id") == result.id, "sources.yaml has wrong agent id")
+    require(sources.get("skill") == "plan", "sources.yaml has wrong skill")
+    require(sources.get("adapter") == "codex", "sources.yaml has wrong adapter")
+    require(sources.get("role") in {"orchestrator", "planning-worker"}, "sources.yaml has wrong role")
+    generated_files = sources.get("generated_files")
+    require(isinstance(generated_files, list), "sources.yaml generated_files must be a list")
+    for file_path in [result.relative_readme, result.relative_context, result.relative_sources_file]:
+        require(file_path in generated_files, f"sources.yaml missing generated file: {file_path}")
+    source_records = sources.get("sources")
+    require(isinstance(source_records, list) and source_records, "sources.yaml missing source records")
+    for record in source_records:
+        require(isinstance(record, dict), "sources.yaml source record must be a mapping")
+        require("path" in record, "sources.yaml source record missing path")
+        require("digest" in record, "sources.yaml source record missing digest")
+    return readme_bytes, context_bytes, sources
+
+
+def legacy_generated_snapshot(repo: Path) -> dict[str, tuple[int, int]]:
+    legacy_root = repo / "docs" / ".generated"
+    if not legacy_root.exists():
+        return {}
+    snapshot: dict[str, tuple[int, int]] = {}
+    for path in sorted(legacy_root.rglob("*")):
+        if path.is_file():
+            stat = path.stat()
+            snapshot[path.relative_to(legacy_root).as_posix()] = (stat.st_size, stat.st_mtime_ns)
+    return snapshot
 
 
 def verify(args: argparse.Namespace) -> list[str]:
@@ -87,11 +143,13 @@ def verify(args: argparse.Namespace) -> list[str]:
     run_git(repo, ["rev-parse", "--show-toplevel"])
 
     assert_no_legacy_manifest_reference()
+    assert_no_legacy_output_reference()
     verify_context_recipe(args.skill, args.adapter)
 
     manifest = load_manifest(repo)
-    generated_root, log_path, root_rel, _ = generated_paths(repo, manifest)
-    ignore = run_git(repo, ["check-ignore", "-v", f"{root_rel}/test.md"]).stdout.strip()
+    workspace_root, root_rel = workspace_paths(repo, manifest)
+    ignore = run_git(repo, ["check-ignore", "-v", f"{root_rel}/test/README.md"]).stdout.strip()
+    legacy_before = legacy_generated_snapshot(repo)
 
     first = render_context(
         repo=repo,
@@ -100,8 +158,9 @@ def verify(args: argparse.Namespace) -> list[str]:
         role="orchestrator",
         max_bytes=args.max_bytes,
     )
-    first_bytes = verify_rendered_file(first.file, max_bytes=args.max_bytes)
+    _, first_bytes, first_sources = verify_workspace(first, max_bytes=args.max_bytes)
     require(ID_RE.match(first.id) is not None, f"generated id is not URL-safe: {first.id}")
+    require(first_sources["role"] == "orchestrator", "first workspace has wrong role")
 
     second = render_context(
         repo=repo,
@@ -110,13 +169,9 @@ def verify(args: argparse.Namespace) -> list[str]:
         role="orchestrator",
         max_bytes=args.max_bytes,
     )
-    second_bytes = verify_rendered_file(second.file, max_bytes=args.max_bytes)
-    require(first.id != second.id, "two generated contexts reused an id")
-
-    log_records = load_yaml_documents(log_path)
-    require(len(log_records) >= 2, "generation log did not append records")
-    require(log_records[-2]["id"] == first.id, "generation log missing first render id")
-    require(log_records[-1]["id"] == second.id, "generation log missing second render id")
+    _, second_bytes, second_sources = verify_workspace(second, max_bytes=args.max_bytes)
+    require(first.id != second.id, "two agent workspaces reused an id")
+    require(second_sources["role"] == "orchestrator", "second workspace has wrong role")
 
     regenerated = render_context(
         repo=repo,
@@ -124,9 +179,12 @@ def verify(args: argparse.Namespace) -> list[str]:
         adapter=args.adapter,
         role="orchestrator",
         max_bytes=args.max_bytes,
-        delete_generated=True,
+        delete_workspace_root=True,
     )
-    regenerated_bytes = verify_rendered_file(regenerated.file, max_bytes=args.max_bytes)
+    _, regenerated_bytes, regenerated_sources = verify_workspace(regenerated, max_bytes=args.max_bytes)
+    require(regenerated_sources["role"] == "orchestrator", "regenerated workspace has wrong role")
+    require(not first.workspace.exists(), "delete/regenerate left first workspace behind")
+    require(not second.workspace.exists(), "delete/regenerate left second workspace behind")
 
     worker = render_context(
         repo=repo,
@@ -135,25 +193,32 @@ def verify(args: argparse.Namespace) -> list[str]:
         role="planning-worker",
         max_bytes=args.max_bytes,
     )
-    worker_bytes = verify_rendered_file(worker.file, max_bytes=args.max_bytes)
+    _, worker_bytes, worker_sources = verify_workspace(worker, max_bytes=args.max_bytes)
+    require(worker_sources["role"] == "planning-worker", "worker workspace has wrong role")
 
-    tracked_generated = run_git(repo, ["ls-files", "--", root_rel]).stdout.strip()
-    require(not tracked_generated, f"generated context is tracked: {tracked_generated}")
-    staged_generated = run_git(repo, ["diff", "--cached", "--name-only", "--", root_rel]).stdout.strip()
-    require(not staged_generated, f"generated context is staged: {staged_generated}")
+    legacy_after = legacy_generated_snapshot(repo)
+    legacy_label = "docs/" + ".generated"
+    require(legacy_before == legacy_after, f"legacy {legacy_label} changed during verification")
+
+    tracked_workspace = run_git(repo, ["ls-files", "--", root_rel]).stdout.strip()
+    require(not tracked_workspace, f"agent workspace is tracked: {tracked_workspace}")
+    staged_workspace = run_git(repo, ["diff", "--cached", "--name-only", "--", root_rel]).stdout.strip()
+    require(not staged_workspace, f"agent workspace is staged: {staged_workspace}")
 
     status = run_git(repo, ["status", "--short", "--ignored", "--", root_rel]).stdout.strip()
-    require(status.startswith("!! "), f"generated context is not reported as ignored: {status}")
+    require(status, "agent workspace status is empty")
+    for line in status.splitlines():
+        require(line.startswith("!! "), f"agent workspace is not reported as ignored: {status}")
 
     return [
         f"OK manifest: {repo / 'docs/_meta/manifest.yaml'}",
         f"OK ignore: {ignore}",
-        f"OK rendered orchestrator: {first.relative_file} ({first_bytes} bytes)",
-        f"OK log append: {len(log_records)} records in {first.relative_log}",
-        f"OK rendered orchestrator again: {second.relative_file} ({second_bytes} bytes)",
-        f"OK delete/regenerate: {regenerated.relative_file} ({regenerated_bytes} bytes)",
-        f"OK rendered planning-worker: {worker.relative_file} ({worker_bytes} bytes)",
-        f"OK generated artifacts untracked and ignored: {root_rel}",
+        f"OK rendered orchestrator workspace: {first.relative_workspace} ({first_bytes} context bytes)",
+        f"OK rendered unique orchestrator workspace: {second.relative_workspace} ({second_bytes} context bytes)",
+        f"OK delete/regenerate workspace: {regenerated.relative_workspace} ({regenerated_bytes} context bytes)",
+        f"OK rendered planning-worker workspace: {worker.relative_workspace} ({worker_bytes} context bytes)",
+        f"OK legacy {'docs/' + '.generated'} unchanged",
+        f"OK agent workspace artifacts untracked and ignored: {root_rel}",
     ]
 
 

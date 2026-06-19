@@ -16,7 +16,7 @@ from typing import Any
 
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
-GENERATOR_VERSION = "v2-context-proof-1"
+GENERATOR_VERSION = "v2-agent-workspace-proof-1"
 
 
 class ContextRenderError(Exception):
@@ -35,11 +35,16 @@ class SourceRecord:
 @dataclass(frozen=True)
 class RenderResult:
     id: str
-    file: Path
-    relative_file: str
-    log: Path
-    relative_log: str
-    generated_root: Path
+    workspace: Path
+    relative_workspace: str
+    readme: Path
+    relative_readme: str
+    context: Path
+    relative_context: str
+    sources_file: Path
+    relative_sources_file: str
+    workspace_root: Path
+    relative_workspace_root: str
     sources: list[SourceRecord]
     byte_count: int
 
@@ -171,32 +176,27 @@ def load_manifest(repo_root: Path) -> dict[str, Any]:
     require_string(repo.get("code_root"), "manifest repo.code_root")
 
     metadata = require_mapping(manifest.get("metadata"), "manifest metadata")
-    generated = require_mapping(
-        metadata.get("generated_context"), "manifest metadata.generated_context"
+    workspace = require_mapping(
+        metadata.get("agent_workspace"), "manifest metadata.agent_workspace"
     )
-    root = require_string(generated.get("root"), "manifest generated_context.root")
-    log = require_string(generated.get("log"), "manifest generated_context.log")
-    if generated.get("committed") is not False:
-        raise ContextRenderError("manifest generated_context.committed must be false")
-    if not root.rstrip("/").endswith(".generated"):
-        raise ContextRenderError("generated context root must end with .generated")
-    if not log.startswith(root.rstrip("/") + "/"):
-        raise ContextRenderError("generated context log must live under the generated root")
+    root = require_string(workspace.get("root"), "manifest agent_workspace.root")
+    if workspace.get("committed") is not False:
+        raise ContextRenderError("manifest agent_workspace.committed must be false")
+    if root.rstrip("/") != ".agent-docs/agents":
+        raise ContextRenderError("agent workspace root must be .agent-docs/agents")
 
     return manifest
 
 
-def generated_paths(repo_root: Path, manifest: dict[str, Any]) -> tuple[Path, Path, str, str]:
-    generated = manifest["metadata"]["generated_context"]
-    root_rel = generated["root"].rstrip("/")
-    log_rel = generated["log"]
-    root = safe_relative_path(repo_root, root_rel, "generated_context.root")
-    log = safe_relative_path(repo_root, log_rel, "generated_context.log")
-    return root, log, root_rel, log_rel
+def workspace_paths(repo_root: Path, manifest: dict[str, Any]) -> tuple[Path, str]:
+    workspace = manifest["metadata"]["agent_workspace"]
+    root_rel = workspace["root"].rstrip("/")
+    root = safe_relative_path(repo_root, root_rel, "agent_workspace.root")
+    return root, root_rel
 
 
-def check_generated_root_ignored(repo_root: Path, root_rel: str) -> str:
-    probe = f"{root_rel.rstrip('/')}/test.md"
+def check_workspace_root_ignored(repo_root: Path, root_rel: str) -> str:
+    probe = f"{root_rel.rstrip('/')}/test/README.md"
     result = subprocess.run(
         ["git", "-C", str(repo_root), "check-ignore", "-v", probe],
         text=True,
@@ -206,7 +206,7 @@ def check_generated_root_ignored(repo_root: Path, root_rel: str) -> str:
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
         suffix = f": {detail}" if detail else ""
-        raise ContextRenderError(f"generated context path is not ignored: {probe}{suffix}")
+        raise ContextRenderError(f"agent workspace path is not ignored: {probe}{suffix}")
     return result.stdout.strip()
 
 
@@ -257,15 +257,22 @@ def include_to_text(
 
     if source == "manifest":
         repo = target_manifest["repo"]
-        generated = target_manifest["metadata"]["generated_context"]
+        workspace = target_manifest["metadata"]["agent_workspace"]
+        agent_context = target_manifest.get("agent_context", {})
         lines = [
             f"- repo: {repo['name']}",
             f"- agent_docs_version: {repo['agent_docs_version']}",
             f"- code_root: {repo['code_root']}",
-            f"- generated_context.root: {generated['root']}",
-            f"- generated_context.log: {generated['log']}",
-            "- generated_context.committed: false",
+            f"- agent_workspace.root: {workspace['root']}",
+            "- agent_workspace.committed: false",
         ]
+        if isinstance(agent_context, dict):
+            index = agent_context.get("index")
+            orchestrating = agent_context.get("orchestrating")
+            if isinstance(index, str) and index:
+                lines.append(f"- agent_context.index: {index}")
+            if isinstance(orchestrating, str) and orchestrating:
+                lines.append(f"- agent_context.orchestrating: {orchestrating}")
         text = "\n".join(lines) + "\n"
         record = SourceRecord(
             source=source,
@@ -301,65 +308,99 @@ def include_to_text(
     return text, record
 
 
-def allocate_id(generated_root: Path) -> str:
-    generated_root.mkdir(parents=True, exist_ok=True)
+def allocate_id(workspace_root: Path) -> str:
+    workspace_root.mkdir(parents=True, exist_ok=True)
     for _ in range(100):
         candidate = secrets.token_urlsafe(9)
         if not ID_RE.match(candidate):
             continue
-        if not (generated_root / f"{candidate}.md").exists():
+        if not (workspace_root / candidate).exists():
             return candidate
-    raise ContextRenderError("could not allocate a collision-free generated context id")
+    raise ContextRenderError("could not allocate a collision-free agent id")
 
 
-def render_markdown(
+def created_at_timestamp() -> str:
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def demote_headings(text: str) -> str:
+    lines: list[str] = []
+    for line in text.strip().splitlines():
+        if HEADING_RE.match(line):
+            lines.append("#" + line)
+        else:
+            lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def render_readme(
     *,
-    context_id: str,
+    agent_id: str,
     repo_root: Path,
     skill: str,
     adapter: str,
+    role: str,
+) -> str:
+    return "\n".join(
+        [
+            "# Agent Workspace",
+            "",
+            f"- agent_id: {agent_id}",
+            f"- role: {role}",
+            f"- skill: {skill}",
+            f"- adapter: {adapter}",
+            f"- target_repo: {repo_root}",
+            "",
+            "## File Order",
+            "",
+            "1. `README.md` - launch card and file order.",
+            "2. `context.md` - standing context for this role.",
+            "3. `task.md` - task-specific input when present.",
+            "4. `sources.yaml` - source trace for debugging, not standing instructions.",
+            "",
+        ]
+    )
+
+
+def render_context_markdown(
+    *,
+    skill: str,
     role: str,
     target: dict[str, Any],
     body_parts: list[tuple[str, str]],
-    records: list[SourceRecord],
 ) -> str:
     title = target.get("title", f"{skill} {role} context")
-    lines = [
-        "# Generated Agent Context",
-        "",
-        f"- id: {context_id}",
-        f"- skill: {skill}",
-        f"- adapter: {adapter}",
-        f"- role: {role}",
-        f"- target_repo: {repo_root}",
-        "- durability: ignored disposable generated context",
-        "",
-        f"## {title}",
-        "",
-    ]
+    lines = [f"# {title}", ""]
 
     for label, text in body_parts:
-        lines.extend([f"### Source: {label}", "", text.strip(), ""])
+        stripped = text.strip()
+        if HEADING_RE.match(stripped.splitlines()[0]):
+            lines.extend([demote_headings(stripped), ""])
+        else:
+            lines.extend([f"## {label}", "", stripped, ""])
 
-    lines.extend(["## Provenance", ""])
-    for record in records:
-        path_label = record.path
-        if record.heading:
-            path_label = f"{path_label}#{record.heading}"
-        lines.append(f"- {record.source}:{path_label} ({record.digest})")
-    lines.append("")
     return "\n".join(lines)
 
 
-def append_generation_log(
+def write_sources_yaml(
     *,
-    log_path: Path,
-    context_id: str,
-    relative_file: str,
+    sources_path: Path,
+    agent_id: str,
+    relative_workspace: str,
+    relative_readme: str,
+    relative_context: str,
+    relative_sources: str,
     skill: str,
     adapter: str,
     role: str,
     repo_root: Path,
+    target_manifest: dict[str, Any],
+    created_at: str,
     records: list[SourceRecord],
 ) -> None:
     try:
@@ -367,19 +408,35 @@ def append_generation_log(
     except ImportError as exc:  # pragma: no cover
         raise ContextRenderError("PyYAML is required for v2 context rendering") from exc
 
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    repo = target_manifest["repo"]
+    workspace = target_manifest["metadata"]["agent_workspace"]
     payload = {
-        "id": context_id,
-        "file": relative_file,
+        "schema_version": 1,
+        "agent_id": agent_id,
+        "workspace": {
+            "root": workspace["root"],
+            "path": relative_workspace,
+            "committed": False,
+        },
+        "generated_files": [
+            relative_readme,
+            relative_context,
+            relative_sources,
+        ],
         "skill": skill,
         "adapter": adapter,
         "role": role,
-        "target_repo": str(repo_root),
-        "generator_version": GENERATOR_VERSION,
-        "created_at": datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z"),
+        "repo": {
+            "root": str(repo_root),
+            "name": repo["name"],
+            "agent_docs_version": repo["agent_docs_version"],
+            "code_root": repo["code_root"],
+        },
+        "generator": {
+            "version": GENERATOR_VERSION,
+            "created_at": created_at,
+            "kit_root": str(kit_root()),
+        },
         "sources": [
             {
                 "source": record.source,
@@ -391,8 +448,7 @@ def append_generation_log(
             for record in records
         ],
     }
-    with log_path.open("a", encoding="utf-8") as handle:
-        yaml.safe_dump(payload, handle, explicit_start=True, sort_keys=False)
+    sources_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
 def render_context(
@@ -402,20 +458,20 @@ def render_context(
     adapter: str,
     role: str = "orchestrator",
     max_bytes: int | None = None,
-    delete_generated: bool = False,
+    delete_workspace_root: bool = False,
 ) -> RenderResult:
     repo_root = Path(repo).expanduser().resolve()
     if not repo_root.is_dir():
         raise ContextRenderError(f"target repo does not exist: {repo_root}")
 
     manifest = load_manifest(repo_root)
-    generated_root, log_path, root_rel, log_rel = generated_paths(repo_root, manifest)
-    check_generated_root_ignored(repo_root, root_rel)
+    workspace_root, root_rel = workspace_paths(repo_root, manifest)
+    check_workspace_root_ignored(repo_root, root_rel)
 
-    if delete_generated and generated_root.exists():
-        if generated_root.name != ".generated":
-            raise ContextRenderError(f"refusing to delete unexpected generated root: {generated_root}")
-        shutil.rmtree(generated_root)
+    if delete_workspace_root and workspace_root.exists():
+        if root_rel != ".agent-docs/agents":
+            raise ContextRenderError(f"refusing to delete unexpected workspace root: {workspace_root}")
+        shutil.rmtree(workspace_root)
 
     config_path, config = load_context_config(skill)
     validate_adapter(config, adapter)
@@ -437,60 +493,82 @@ def render_context(
         body_parts.append((record.label, text))
         records.append(record)
 
-    context_id = allocate_id(generated_root)
-    markdown = render_markdown(
-        context_id=context_id,
+    agent_id = allocate_id(workspace_root)
+    workspace = workspace_root / agent_id
+    workspace.mkdir(parents=True, exist_ok=False)
+    readme_path = workspace / "README.md"
+    context_path = workspace / "context.md"
+    sources_path = workspace / "sources.yaml"
+
+    readme = render_readme(
+        agent_id=agent_id,
         repo_root=repo_root,
         skill=skill,
         adapter=adapter,
         role=role,
+    )
+    markdown = render_context_markdown(
+        skill=skill,
+        role=role,
         target=target,
         body_parts=body_parts,
-        records=records,
     )
     byte_count = len(markdown.encode("utf-8"))
     if max_bytes is not None and byte_count > max_bytes:
         raise ContextRenderError(
-            f"generated context is {byte_count} bytes, above --max-bytes {max_bytes}"
+            f"agent context is {byte_count} bytes, above --max-bytes {max_bytes}"
         )
 
-    output_path = generated_root / f"{context_id}.md"
-    output_path.write_text(markdown, encoding="utf-8")
-    relative_file = relative_to_root(output_path, repo_root)
-    append_generation_log(
-        log_path=log_path,
-        context_id=context_id,
-        relative_file=relative_file,
+    readme_path.write_text(readme, encoding="utf-8")
+    context_path.write_text(markdown, encoding="utf-8")
+    relative_workspace = relative_to_root(workspace, repo_root)
+    relative_readme = relative_to_root(readme_path, repo_root)
+    relative_context = relative_to_root(context_path, repo_root)
+    relative_sources = relative_to_root(sources_path, repo_root)
+    write_sources_yaml(
+        sources_path=sources_path,
+        agent_id=agent_id,
+        relative_workspace=relative_workspace,
+        relative_readme=relative_readme,
+        relative_context=relative_context,
+        relative_sources=relative_sources,
         skill=skill,
         adapter=adapter,
         role=role,
         repo_root=repo_root,
+        target_manifest=manifest,
+        created_at=created_at_timestamp(),
         records=records,
     )
 
     return RenderResult(
-        id=context_id,
-        file=output_path,
-        relative_file=relative_file,
-        log=log_path,
-        relative_log=log_rel,
-        generated_root=generated_root,
+        id=agent_id,
+        workspace=workspace,
+        relative_workspace=relative_workspace,
+        readme=readme_path,
+        relative_readme=relative_readme,
+        context=context_path,
+        relative_context=relative_context,
+        sources_file=sources_path,
+        relative_sources_file=relative_sources,
+        workspace_root=workspace_root,
+        relative_workspace_root=root_rel,
         sources=records,
         byte_count=byte_count,
     )
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Render repo-local v2 agent context.")
+    parser = argparse.ArgumentParser(description="Render repo-local v2 agent workspace.")
     parser.add_argument("--repo", required=True, help="Target repository root.")
     parser.add_argument("--skill", required=True, help="Skill name, currently plan.")
     parser.add_argument("--adapter", required=True, help="Adapter target, currently codex.")
     parser.add_argument("--role", default="orchestrator", help="Context target role.")
-    parser.add_argument("--max-bytes", type=int, help="Fail if generated context exceeds this size.")
+    parser.add_argument("--max-bytes", type=int, help="Fail if agent context exceeds this size.")
     parser.add_argument(
-        "--delete-generated",
+        "--delete-workspace-root",
         action="store_true",
-        help="Delete the target generated-context root before rendering.",
+        help="Delete the target agent workspace root before rendering.",
     )
     return parser.parse_args(argv)
 
@@ -504,13 +582,13 @@ def main(argv: list[str] | None = None) -> int:
             adapter=args.adapter,
             role=args.role,
             max_bytes=args.max_bytes,
-            delete_generated=args.delete_generated,
+            delete_workspace_root=args.delete_workspace_root,
         )
     except ContextRenderError as exc:
         print(f"render failed: {exc}", file=sys.stderr)
         return 1
 
-    print(result.relative_file)
+    print(result.relative_readme)
     return 0
 
 

@@ -1,25 +1,27 @@
 ---
 name: plan
-description: Shape rough intent into planning output using v2 generated context.
+description: Shape rough intent into planning output using a v2 agent workspace.
 ---
 
 # /plan v2 Proof
 
-Render Codex context for the target repo, then read the generated file first:
+Render a Codex agent workspace for the target repo, then read its `README.md`
+first:
 
 ```sh
 python3 ~/agent-docs/v2/context/render.py --repo "$PWD" --skill plan --adapter codex --role orchestrator
 ```
 
-Use the generated context as the standing workflow context for this invocation.
-For planning workers, render `--role planning-worker` and pass the generated
-path in the worker prompt before task-specific inputs:
+Use the workspace `README.md`, then `context.md`, as the standing workflow
+context for this invocation. For planning workers, render `--role
+planning-worker` and pass the worker workspace `README.md` or `context.md` path
+in the worker prompt before task-specific inputs:
 
 ```text
 Role:
 Task:
-Read this generated context first:
-- docs/.generated/<id>.md
+Read this agent workspace first:
+- .agent-docs/agents/<agent-id>/README.md
 Input docs/plans/context:
 Expected checks/evidence:
 Report back with:

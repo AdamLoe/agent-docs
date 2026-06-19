@@ -15,17 +15,18 @@ owning_docs:
 ## Mission
 
 Replace runtime skill composition with deterministic, repo-local generated
-agent context files that are concise, disposable, and specific to the agent
+agent workspace folders that are concise, disposable, and specific to the agent
 run. The durable goal is that an agent gets exactly the standing context it
 needs for its skill, adapter, role, and target repo without reasoning through
 generic agent-docs branches or multi-role rule bundles.
 
 Done means the v2 kit can assemble selected snippets and docs from
 `~/agent-docs/v2/` and the target repo's `docs/agent-context/` into an ignored
-`docs/.generated/<random-id>.md` file. Orchestrator skills load their generated
-context directly; subagents receive a prompt from the orchestrator that
-references the generated context file they must read. Generated files are not
-committed, are not canonical docs, and can be deleted at any time.
+`.agent-docs/agents/<agent-id>/` workspace with `README.md`, `context.md`, and
+`sources.yaml`. Orchestrator skills load the workspace `README.md` first;
+subagents receive a prompt from the orchestrator that references the workspace
+file they must read. Generated workspaces are not committed, are not canonical
+docs, and can be deleted at any time.
 
 ## Current narrowed implementation target
 
@@ -37,8 +38,9 @@ copy-skill/install integration, all skills, v2 templates, full ownership v2, or
 mutating workflows.
 
 The generated outputs for this proof live under the target repo's ignored
-`docs/.generated/` directory and remain disposable. The broader generated
-context plan remains open until more skills and adapters move onto the model.
+`.agent-docs/agents/` directory and remain disposable. The previous
+single-Markdown-file proof is superseded. The broader generated context plan
+remains open until more skills and adapters move onto the model.
 
 ## Scope
 
@@ -46,14 +48,14 @@ In scope:
 
 - Create a breaking `v2/` implementation path while leaving `v1/` available
   until v2 is ready to promote.
-- Generate concise Markdown under `docs/.generated/<random-id>.md` in the
+- Generate a concise workspace under `.agent-docs/agents/<agent-id>/` in the
   consuming repo.
-- Add or update consuming-repo `.gitignore` entries so `docs/.generated/` is
+- Add or update consuming-repo `.gitignore` entries so `.agent-docs/` is
   ignored.
-- Record generated file metadata in an append-only YAML log such as
-  `docs/.generated/generations.yaml`.
-- Keep generated files and the append-only log disposable; deleting the folder,
-  log, or individual generated Markdown files must not break future generation.
+- Record generated file metadata and source trace in each workspace's
+  `sources.yaml`.
+- Keep generated workspace folders disposable; deleting the root, a workspace
+  folder, or individual workspace files must not break future generation.
 - Assemble context deterministically from selected source docs and snippets;
   do not use model-written summarization or prose rewriting in the generator.
 - Store reusable skill defaults beside the skill, for example
@@ -63,7 +65,7 @@ In scope:
   `docs/agent-context/` files.
 - Start by proving `/plan` through v2 in `../fluid-simulation`.
 - Change worker dispatch packets so subagent prompts reference generated
-  context files instead of asking workers to discover generic agent-docs
+  workspace files instead of asking workers to discover generic agent-docs
   internals.
 - Keep Codex and Claude as supported adapter targets for the breaking pass,
   while proving Codex first.
@@ -72,8 +74,8 @@ In scope:
 
 Out of scope:
 
-- Committing generated context Markdown.
-- Treating generated context as canonical architecture, decisions, or
+- Committing generated workspace files.
+- Treating generated workspaces as canonical architecture, decisions, or
   recoverable run history.
 - Maintaining visible generated docs under `docs/generated/agent-context/`.
 - Building arbitrary runtime prompt generation from model-written prose.
@@ -89,12 +91,12 @@ Out of scope:
 This plan depends on [`metadata-v2.md`](metadata-v2.md). That plan should make
 `docs/_meta/manifest.yaml` the structured repo metadata source, delete
 `docs/_meta/manifest.md`, enrich ownership data with update triggers, and
-reserve the ignored generated-context root.
+reserve the ignored agent workspace root.
 
 The generated-context work can start in `v2/` with a narrow generator and the
 `../fluid-simulation` test repo, but the stable v2 launcher contract should not
 settle until metadata v2 can tell tools where the repo metadata, agent-context
-docs, and ignored generated root live.
+docs, and ignored workspace root live.
 
 ### 2. Define the disposable generated context contract
 
@@ -104,45 +106,56 @@ Generated context is a per-run artifact, not a committed product.
   handwritten docs, `~/agent-docs/v2/` rules and context modules, skill-local
   defaults, adapter target, role, user task metadata, and selected target-repo
   `docs/agent-context/` docs.
-- **Generated output**: one concise Markdown file under
-  `docs/.generated/<random-id>.md`.
-- **Run record**: append-only YAML documents under
-  `docs/.generated/generations.yaml`, recording the random id, generated path,
-  skill, adapter, role, target repo, source files, source digests when cheap,
-  generator version, and any run-specific context options.
-- **Durability**: generated Markdown and the run record are disposable. Missing
-  generated files or missing logs cause regeneration, not failure.
+- **Generated output**: one workspace folder under
+  `.agent-docs/agents/<agent-id>/`.
+- **Workspace files**: `README.md` is the read-first launch card, `context.md`
+  is concise standing context, and `sources.yaml` is the source trace. `task.md`
+  is optional only when a launcher supplies task data.
+- **Source trace**: `sources.yaml` records generated files, skill, adapter, role,
+  target repo, source files, headings, source digests, generator version,
+  timestamp, and any run-specific context options.
+- **Durability**: generated workspace files and source trace are disposable.
+  Missing workspace files cause regeneration, not failure.
 
-The random id should be URL-safe and collision-checked. A collision should retry
+The agent id should be URL-safe and collision-checked. A collision should retry
 with a new id rather than overwrite.
 
 Example generated tree:
 
 ```text
-docs/.generated/
-  a7p2czQw8271.md
-  generations.yaml
+.agent-docs/
+  agents/
+    a7p2czQw8271/
+      README.md
+      context.md
+      sources.yaml
 ```
 
-Example append-only record:
+Example `sources.yaml` record:
 
 ```yaml
----
-id: a7p2czQw8271
-file: docs/.generated/a7p2czQw8271.md
+agent_id: a7p2czQw8271
 skill: plan
 adapter: codex
 role: orchestrator
-target_repo: /home/adamg/fluid-simulation
+repo:
+  root: /home/adamg/fluid-simulation
+generated_files:
+  - .agent-docs/agents/a7p2czQw8271/README.md
+  - .agent-docs/agents/a7p2czQw8271/context.md
+  - .agent-docs/agents/a7p2czQw8271/sources.yaml
 sources:
-  - ~/agent-docs/v2/skills/plan/context.yaml
-  - ~/agent-docs/v2/context/orchestrator.md
-  - docs/agent-context/index.md
-  - docs/agent-context/orchestrating.md
+  - source: kit
+    path: v2/skills/plan/context.yaml
+    digest: <sha256-prefix>
+  - source: repo
+    path: docs/agent-context/orchestrating.md
+    heading: Canonical truth
+    digest: <sha256-prefix>
 ```
 
-The log is for debugging and traceability only. Launchers must not require old
-log entries to exist.
+`sources.yaml` is for debugging and traceability only. Launchers must not
+require old workspace folders to exist.
 
 ### 3. Define context selection and assembly
 
@@ -163,7 +176,8 @@ The generated Markdown should be as concise as possible:
 - include only context selected for the current skill, adapter, role, and run;
 - avoid copying broad architecture or implementation mechanics unless the role
   needs them;
-- keep source labels compact so agents can trace where instructions came from;
+- omit source-wrapper sections, provenance blocks, and digest text;
+- keep source trace in `sources.yaml`;
 - do not include the full user prompt by default.
 
 ### 4. Store skill defaults beside skills
@@ -193,15 +207,14 @@ targets:
       - source: kit
         path: v2/context/planning.md
       - source: repo
-        path: docs/agent-context/index.md
-      - source: repo
         path: docs/agent-context/orchestrating.md
+        heading: Canonical truth
   planning-worker:
     includes:
       - source: kit
         path: v2/context/planning-worker.md
-      - source: repo
-        path: docs/agent-context/index.md
+      - source: manifest
+        label: target metadata
 ```
 
 The exact schema can change during implementation, but the first version should
@@ -210,21 +223,22 @@ assembled for a target.
 
 ### 5. Define orchestrator and subagent use
 
-Orchestrators and subagents use generated context differently:
+Orchestrators and subagents use generated workspaces differently:
 
-- **Orchestrator skills** generate or refresh a context file for their own
-  invocation and load that file as unique standing context for the skill.
-- **Subagents** do not discover generated context on their own. The
-  orchestrator includes the generated context path in the subagent user prompt,
-  and the subagent reads that file before doing the assigned role.
+- **Orchestrator skills** generate or refresh a workspace for their own
+  invocation and load `README.md`, then `context.md`, as unique standing context
+  for the skill.
+- **Subagents** do not discover generated workspaces on their own. The
+  orchestrator includes the worker workspace path in the subagent user prompt,
+  and the subagent reads that workspace before doing the assigned role.
 
 Subagent dispatch should therefore move toward this shape:
 
 ```text
 Role:
 Task:
-Read this generated context first:
-- docs/.generated/a7p2czQw8271.md
+Read this agent workspace first:
+- .agent-docs/agents/a7p2czQw8271/README.md
 Input docs/plans/context:
 Expected output:
 Expected checks/evidence:
@@ -233,7 +247,7 @@ Report back with:
 
 The orchestrator still names authoritative task inputs, expected evidence, and
 the report shape. Workers should not need to know where the upstream
-agent-docs checkout lives unless the generated context explicitly tells them.
+agent-docs checkout lives unless the workspace context explicitly tells them.
 
 ### 6. Add the v2 generator
 
@@ -253,12 +267,13 @@ The generator should support:
 - reading skill-local `context.yaml`;
 - resolving kit and repo include paths;
 - extracting Markdown sections by heading;
-- producing a random id and writing `docs/.generated/<id>.md`;
-- appending a YAML record to `docs/.generated/generations.yaml`;
-- creating `docs/.generated/` when missing;
-- treating missing/deleted generated outputs as normal regeneration cases;
-- checking that `docs/.generated/` is ignored by git;
-- returning the generated path to the launcher.
+- producing a random agent id and writing
+  `.agent-docs/agents/<agent-id>/{README.md,context.md,sources.yaml}`;
+- writing source trace to each workspace's `sources.yaml`;
+- creating `.agent-docs/agents/` when missing;
+- treating missing/deleted workspace outputs as normal regeneration cases;
+- checking that `.agent-docs/` is ignored by git;
+- returning the workspace `README.md` path to the launcher.
 
 The generation language should stay declarative. Conditional selection can live
 in source specs and launcher code, but the generated Markdown is resolved text.
@@ -270,14 +285,14 @@ Global copied skills should become thin adapter launchers in v2:
 - discover the target repo root;
 - build run-specific context options;
 - call the generator for the skill, adapter, and role;
-- load the generated context for the orchestrator skill;
-- pass generated context paths in subagent prompts;
+- load the generated workspace for the orchestrator skill;
+- pass generated workspace paths in subagent prompts;
 - report clear regeneration or setup instructions when context cannot be
   generated;
 - avoid carrying workflow policy beyond fallback and error handling.
 
 This preserves tool discovery while moving operational context into the
-generated per-run file.
+generated per-run workspace.
 
 ### 8. Dogfood in `../fluid-simulation`
 
@@ -287,16 +302,18 @@ Ship in this order:
 
 1. Create the v2 context generator and `v2/skills/plan/context.yaml` in
    `agent-docs`.
-2. Add or update `../fluid-simulation/.gitignore` so `docs/.generated/` is
-   ignored.
-3. Generate a Codex `/plan` orchestrator context file in
-   `../fluid-simulation/docs/.generated/<random-id>.md`.
-4. Make the v2 `/plan` launcher load the generated file for orchestrator
-   context.
-5. Make a planning-worker dispatch prompt reference a generated context file.
-6. Delete `../fluid-simulation/docs/.generated/` and prove the next run
+2. Add or update `../fluid-simulation/.gitignore` so `.agent-docs/` is ignored;
+   keep the old `docs/.generated/` ignore only for cleanup/backcompat.
+3. Generate a Codex `/plan` orchestrator workspace in
+   `../fluid-simulation/.agent-docs/agents/<agent-id>/`.
+4. Make the v2 `/plan` launcher load the workspace `README.md` first for
+   orchestrator context.
+5. Make a planning-worker dispatch prompt reference a generated workspace file.
+6. Delete `../fluid-simulation/.agent-docs/agents/` and prove the next run
    regenerates successfully.
-7. Expand to a small mutating workflow only after `/plan` works.
+7. Prove the old `../fluid-simulation/docs/.generated/` folder is not touched by
+   v2 workspace verification.
+8. Expand to a small mutating workflow only after `/plan` works.
 
 This proves the open-ended planning workflow before changing every command.
 
@@ -305,20 +322,26 @@ This proves the open-ended planning workflow before changing every command.
 Do not add a prose-quality review gate. Add functional checks that prove the
 generator and launchers work:
 
-- `context-render-smoke`: render a Codex `/plan` orchestrator context file for
+- `context-render-smoke`: render a Codex `/plan` orchestrator workspace for
   `../fluid-simulation`;
-- `context-random-id`: generated filenames use collision-checked random ids;
-- `context-log-append`: each generation appends a valid YAML document without
-  rewriting earlier records;
-- `context-delete-regenerate`: deleting `docs/.generated/` does not break the
+- `context-random-id`: generated workspace ids use collision-checked random ids;
+- `context-workspace-files`: each generation writes `README.md`, `context.md`,
+  and `sources.yaml`;
+- `context-delete-regenerate`: deleting `.agent-docs/agents/` does not break the
   next generation;
-- `context-ignore-check`: the consuming repo ignores `docs/.generated/`;
+- `context-ignore-check`: the consuming repo ignores `.agent-docs/`;
+- `context-legacy-check`: v2 generation does not create or modify
+  `docs/.generated/`;
+- `context-markdown-clean`: generated Markdown has no source wrappers,
+  provenance block, or digest text;
+- `context-sources-trace`: `sources.yaml` carries generated file paths and source
+  trace data;
 - `context-source-check`: selected source paths exist and missing sources fail
   with clear messages;
 - `context-section-check`: named Markdown section includes resolve or fail
   clearly;
 - `context-dispatch-reference`: migrated subagent prompts reference generated
-  context files instead of generic rule discovery;
+  workspace files instead of generic rule discovery;
 - root auto-loaded files remain router-only;
 - copied Codex and Claude launchers are fresh after skill changes.
 
@@ -326,24 +349,25 @@ generator and launchers work:
 
 - [`metadata-v2.md`](metadata-v2.md) has shipped enough for v2 tools to read
   `docs/_meta/manifest.yaml`, ownership v2 data, and the reserved generated
-  context root.
+  workspace root.
 - `v2/context/` exists with a deterministic assembler, schema or config
   validation, and functional verification.
 - `v2/skills/plan/context.yaml` exists and drives the first `/plan` generation.
-- `../fluid-simulation` ignores `docs/.generated/`.
+- `../fluid-simulation` ignores `.agent-docs/`.
 - A Codex `/plan` orchestrator run can generate and load
-  `../fluid-simulation/docs/.generated/<random-id>.md`.
-- A planning-worker dispatch prompt can reference a generated context file for
+  `../fluid-simulation/.agent-docs/agents/<agent-id>/README.md`.
+- A planning-worker dispatch prompt can reference a generated workspace file for
   the worker to read.
-- Generated Markdown is concise, deterministic assembly from selected source
-  docs/snippets, and not committed.
-- Deleting `docs/.generated/`, `generations.yaml`, or individual generated
-  Markdown files does not prevent the next run from generating fresh context.
+- Generated Markdown is concise deterministic assembly from selected source
+  docs/snippets, with provenance kept in `sources.yaml`, and not committed.
+- Deleting `.agent-docs/agents/`, a workspace folder, or individual workspace
+  files does not prevent the next run from generating fresh context.
+- v2 verification does not create or modify legacy `docs/.generated/` output.
 - Functional generator checks pass for the migrated `/plan` path.
-- `docs/architecture/workflow-kit.md` describes generated run-local context,
+- `docs/architecture/workflow-kit.md` describes generated run-local workspaces,
   ignored output paths, skill-local defaults, and dispatch changes.
 - `docs/architecture/install-and-adapters.md` describes v2 launchers and
-  generated context discovery.
+  generated workspace discovery.
 - `docs/decisions/agent-docs.md` records why v2 moved from runtime composition
   to deterministic per-run context assembly.
 - `docs/_meta/ownership.json` or its v2 successor owns the generator,
@@ -353,14 +377,16 @@ generator and launchers work:
 
 ## Discipline rules
 
-- Do not commit generated Markdown or generated run logs.
+- Do not commit generated workspace files.
 - Do not make generated files canonical workflow truth.
-- Do not require generated files or logs to survive deletion.
+- Do not require generated workspace files or trace data to survive deletion.
 - Do not use model summarization or rewriting inside the generator.
 - Do not include the full user prompt in generated Markdown by default.
+- Do not put source wrappers, provenance blocks, or digest text in generated
+  Markdown; keep trace data in `sources.yaml`.
 - Do not ask subagents to discover agent-docs internals.
 - Do not let global launchers regain broad workflow policy after the generated
-  context path exists.
+  workspace path exists.
 - Do not generate every Cartesian-product target; generate only what the
   current run needs.
 
@@ -368,17 +394,17 @@ generator and launchers work:
 
 Before setting `status: shipped`, migrate durable facts into:
 
-- `architecture/workflow-kit.md` - v2 generated context model, ignored output
+- `architecture/workflow-kit.md` - v2 generated workspace model, ignored output
   paths, skill-local defaults, generator behavior, verifier responsibilities,
   and dispatch changes.
 - `architecture/install-and-adapters.md` - v2 copied skill launchers and
-  generated context discovery.
+  generated workspace discovery.
 - `decisions/agent-docs.md` - rationale for breaking from runtime composition
   to deterministic per-run context assembly.
 - `_meta/ownership.json` or its v2 successor - generated context generator,
   skill-default context, and ignored output conventions.
 - `repository-layout.md` - `v2/context/`, `v2/skills/*/context.yaml`, and the
-  consuming-repo `docs/.generated/` convention.
+  consuming-repo `.agent-docs/agents/` convention.
 
 ## See also
 
