@@ -1,6 +1,7 @@
 # Workflow kit
 
-`v1/` is the current kit version.
+`v1/` is the stable kit version. `v2/` is a narrow generated-context proof for
+Codex `/plan` against `~/fluid-simulation`; it is not a full kit migration.
 
 ## Orchestrator/worker model
 
@@ -47,6 +48,53 @@ the final observed state.
 | `v1/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
 | `v1/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
 | `v1/plan-lifecycle.md`, `v1/plan-template.md` | Plan metadata and plan skeleton. |
+| `v2/context/render.py` | Deterministic renderer for the v2 generated-context proof. It reads `v2/skills/plan/context.yaml`, selected kit modules, the target repo's `docs/_meta/manifest.yaml`, selected target repo docs, and inline YAML text. |
+| `v2/context/verify.py` | Narrow functional verifier for Codex `/plan` context generation against `~/fluid-simulation`. |
+| `v2/context/modules/` | Source-authored Markdown modules used by the v2 renderer. |
+| `v2/skills/plan/` | Thin v2 `/plan` launcher shape plus the skill-local context recipe. |
+
+## v2 generated context
+
+The v2 proof lowers agent startup context by rendering one run-local Markdown
+file in the consuming repo before the workflow starts. The renderer assembles
+only selected source material; it does not call a model and does not summarize
+free-form prose at generation time. Compact factual summaries and hard
+instructions live in source-authored YAML or Markdown modules and are copied as
+selected inputs.
+
+For the Codex `/plan` proof, `v2/context/render.py` requires the target repo's
+`docs/_meta/manifest.yaml`. It uses the manifest's
+`metadata.generated_context.root` and `.log` fields to write
+`docs/.generated/<random-id>.md` and append
+`docs/.generated/generations.yaml`. Generated ids are URL-safe and
+collision-checked. The generated Markdown and log are ignored disposable
+artifacts; deleting the directory, an individual generated Markdown file, or the
+log is normal and the next render recreates what it needs.
+
+Includes are explicit in `v2/skills/plan/context.yaml`:
+
+- kit file includes from `v2/context/modules/`
+- target repo file includes from `docs/agent-context/`
+- target repo Markdown sections selected by heading
+- inline YAML text
+- target metadata selected from `docs/_meta/manifest.yaml`
+
+The generated file carries compact source labels and provenance digests so an
+agent can trace each instruction back to its source. Orchestrator context is
+rendered with `--role orchestrator`; planning-worker context is rendered with
+`--role planning-worker` and passed in the worker prompt before task-specific
+inputs. Workers should read the generated context path they are given instead
+of discovering the whole agent-docs workflow tree.
+
+The proof verifier is:
+
+```sh
+python3 ~/agent-docs/v2/context/verify.py --repo ~/fluid-simulation --skill plan --adapter codex --max-bytes 16000
+```
+
+It checks target YAML metadata, ignored generated output, render size, random id
+shape, log append behavior, delete/regenerate behavior, planning-worker context,
+and that generated artifacts are neither tracked nor staged.
 
 ## Workflow commands
 

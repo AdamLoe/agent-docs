@@ -188,3 +188,36 @@ and avoids reviving retired orchestration command names.
 
 **Tradeoffs.** Default runs are less resumable after context loss, but they
 avoid committed coordination folders unless the user accepts that cost.
+
+## v2 context is generated per run
+
+**Decision.** v2 planning context is rendered per run from a skill-local YAML
+recipe, source-authored kit modules, target repo YAML metadata, and selected
+target repo docs into ignored `docs/.generated/` files.
+
+**Why.** The north star is lower context for agents. A generated, repo-local
+context file lets a Codex `/plan` invocation read only the standing context it
+needs instead of loading broad v1 workflow policy and then reasoning its way
+back down to the current task.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v2/context/render.py`](../../v2/context/render.py), [`../../v2/skills/plan/context.yaml`](../../v2/skills/plan/context.yaml).
+
+**Tradeoffs.** Generated context is deliberately disposable and not canonical.
+Debuggability comes from source labels, provenance digests, and the append-only
+generation log, not from committing generated Markdown.
+
+## v2 metadata reads structured YAML
+
+**Decision.** v2 generated-context tools require `docs/_meta/manifest.yaml` in
+the target repo and do not use the legacy Markdown manifest as a v2 metadata
+source.
+
+**Why.** A structured manifest gives the renderer and verifier stable fields for
+generated output paths, commit policy, and repo identity without parsing prose
+tables or loading unrelated manifest slots.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v2/context/render.py`](../../v2/context/render.py), [`../../v2/context/verify.py`](../../v2/context/verify.py).
+
+**Tradeoffs.** v1 remains available while v2 is proven, but the v2 proof is a
+breaking path. Consuming repos need a YAML manifest and an ignored
+`docs/.generated/` root before v2 context can render.

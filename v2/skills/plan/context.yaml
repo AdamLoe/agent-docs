@@ -1,0 +1,66 @@
+schema_version: 1
+skill: plan
+supported_adapters:
+  - codex
+default_role: orchestrator
+targets:
+  orchestrator:
+    title: Codex /plan Context
+    includes:
+      - source: inline
+        label: v2 proof boundary
+        text: |
+          This generated context recipe is the current v2 proof. It supports
+          Codex /plan for /home/adamg/fluid-simulation only. v2 context reads
+          docs/_meta/manifest.yaml and treats docs/.generated/ as ignored,
+          disposable output.
+      - source: manifest
+        label: target metadata
+      - source: kit
+        label: plan orchestrator module
+        path: v2/context/modules/plan-orchestrator.md
+      - source: kit
+        label: codex adapter module
+        path: v2/context/modules/codex-plan-adapter.md
+      - source: repo
+        label: repo agent-context routing
+        path: docs/agent-context/index.md
+        heading: Routing
+      - source: repo
+        label: repo canonical truth
+        path: docs/agent-context/orchestrating.md
+        heading: Canonical truth
+      - source: repo
+        label: repo non-negotiables
+        path: docs/agent-context/orchestrating.md
+        heading: Non-negotiables (these protect the next agent, not bookkeeping)
+      - source: repo
+        label: repo orchestration constraints
+        path: docs/agent-context/orchestrating.md
+        heading: This-project constraints
+  planning-worker:
+    title: Codex /plan Planning Worker Context
+    includes:
+      - source: inline
+        label: worker dispatch contract
+        text: |
+          Worker dispatch prompts should say: Read this generated context first,
+          then list the role, task, input docs, expected checks, and report
+          shape. Workers should not discover the agent-docs workflow tree unless
+          the generated context or the user names a specific source.
+      - source: manifest
+        label: target metadata
+      - source: kit
+        label: planning worker module
+        path: v2/context/modules/planning-worker.md
+      - source: kit
+        label: codex adapter module
+        path: v2/context/modules/codex-plan-adapter.md
+      - source: repo
+        label: repo canonical truth
+        path: docs/agent-context/orchestrating.md
+        heading: Canonical truth
+      - source: repo
+        label: repo orchestration constraints
+        path: docs/agent-context/orchestrating.md
+        heading: This-project constraints

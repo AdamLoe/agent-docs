@@ -46,6 +46,11 @@
       "owns": ["orchestrator/worker split", "orchestration dials", "worker dispatch contract", "worker-role rules", "orchestration run docs"]
     },
     {
+      "surface": "generated-context-v2",
+      "paths": ["docs/architecture/workflow-kit.md", "docs/architecture/install-and-adapters.md", "docs/decisions/agent-docs.md", "docs/repository-layout.md", "v2/context/", "v2/skills/plan/SKILL.md", "v2/skills/plan/context.yaml"],
+      "owns": ["v2 generated context renderer", "v2 plan context recipe", "generated context conventions", "docs/.generated ignored output"]
+    },
+    {
       "surface": "plan-lifecycle",
       "paths": ["v1/plan-lifecycle.md", "v1/plan-template.md", "docs/plans/"],
       "owns": ["plan statuses", "plan templates", "plan cleanup semantics"]
