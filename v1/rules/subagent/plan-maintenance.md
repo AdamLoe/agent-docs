@@ -28,6 +28,8 @@ targets.
   blocked/partial plans active or draft and say why.
 - Delete only already-verified cleanup candidates whose latest content is clean
   and tracked in local git, so the deleted version stays recoverable.
+- Stay in the plan-maintenance lane. Do not implement missing work or rewrite
+  architecture beyond the migration your dispatch assigns.
 - When you edit repo files, commit your slice before reporting
   ([`../repo-rules.md`](../repo-rules.md)).
 

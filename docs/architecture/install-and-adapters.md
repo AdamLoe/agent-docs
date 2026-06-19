@@ -1,7 +1,7 @@
 # Install and adapters
 
-This repo's real checkout is `~/agent-docs`. Stable kit files live under `v1/`;
-the narrow generated-context proof lives under `v2/`.
+This repo's real checkout is `~/agent-docs`. Stable kit files live under `v1/`.
+Tool-owned paths are adapters only.
 
 ## Discovery contract
 
@@ -11,31 +11,12 @@ the narrow generated-context proof lives under `v2/`.
 | `CLAUDE.md` | `docs/index.md`, `docs/overview.md` | Root router for Claude. |
 | `~/.claude/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Claude personal skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
 | `~/.agents/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Codex native user skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
-| `~/agent-docs/v2/skills/plan/SKILL.md` | source-only v2 proof launcher | Demonstrates the Codex `/plan` generated-context launch shape. It is not copied by the v1 adapter refresh. |
 
 `~/agent-docs` stays the checkout root, not a symlink to `v1/`; the version
-segment remains explicit wherever a file path enters the kit.
-Claude plugin manifests are not a supported adapter path for this repo; the
-only managed Claude discovery path is copied personal skills. Root auto-loaded
-files are router-only adapters and must not own architecture, decisions, or
-workflow facts.
-
-## v2 proof launcher
-
-The v2 `/plan` proof keeps adapter discovery thin. The launcher shape renders a
-run-local agent workspace first, then tells the agent or worker to read that
-workspace before task-specific inputs:
-
-```sh
-python3 ~/agent-docs/v2/context/render.py --repo "$PWD" --skill plan --adapter codex --role orchestrator
-```
-
-The command prints the generated workspace `README.md` path. The target repo
-supplies `docs/_meta/manifest.yaml`, including
-`metadata.agent_workspace.root: .agent-docs/agents` and `committed: false`.
-For the current proof, generated material is written under the consuming repo's
-ignored `.agent-docs/agents/<agent-id>/` directory. The v1 copy scripts do not
-install v2 skills, and no Claude v2 adapter is shipped in this proof.
+segment remains explicit wherever a file path enters the kit. Claude plugin
+manifests are not a supported adapter path for this repo. Root auto-loaded files
+are router-only adapters and must not own architecture, decisions, or workflow
+facts.
 
 ## Installer
 
@@ -71,9 +52,8 @@ Restart the tool if refreshed skills do not appear in the current session.
 
 ## Reference convention
 
-Stable docs and skills use `~/agent-docs/v1/...` for kit files. v2 proof docs
-and generated-context recipes use `~/agent-docs/v2/...`. Relative links are
-fine inside repo Markdown when they point to neighboring docs.
+Stable docs and skills use `~/agent-docs/v1/...` for kit files. Relative links
+are fine inside repo Markdown when they point to neighboring docs.
 
 ## See also
 

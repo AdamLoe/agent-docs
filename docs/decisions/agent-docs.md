@@ -189,37 +189,25 @@ and avoids reviving retired orchestration command names.
 **Tradeoffs.** Default runs are less resumable after context loss, but they
 avoid committed coordination folders unless the user accepts that cost.
 
-## v2 context is generated per run
+## Focused v1 handoffs over generated context
 
-**Decision.** v2 planning context is rendered per run from a skill-local YAML
-recipe, source-authored kit modules, target repo YAML metadata, and selected
-target repo docs into ignored `.agent-docs/agents/<agent-id>/` workspace
-folders.
+**Decision.** The active kit stays on v1 and lowers context through focused
+worker roles, planner-produced implementation briefs, and concise orchestrator
+carry-forward summaries.
 
-**Why.** The north star is lower context for agents. A generated, repo-local
-workspace lets a Codex `/plan` invocation read only the launch card and standing
-context it needs instead of loading broad v1 workflow policy and then reasoning
-its way back down to the current task.
+**Why.** The useful part of the generated-context exploration was deterministic,
+source-backed, role-specific input. The cost was extra infrastructure: generated
+workspaces, packet helpers, YAML metadata, parser work, and launcher behavior
+that became another workflow surface to keep correct. V1 can get the benefit by
+making the handoff boundary explicit.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v2/context/render.py`](../../v2/context/render.py), [`../../v2/skills/plan/context.yaml`](../../v2/skills/plan/context.yaml).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/subagent/planning.md`](../../v1/rules/subagent/planning.md).
 
-**Tradeoffs.** Generated workspaces are deliberately disposable and not
-canonical. Agent-facing Markdown stays concise; debuggability comes from
-`sources.yaml`, not from committing generated Markdown or embedding provenance
-inside it.
+**Alternatives considered.** Generated repo-local workspaces, metadata v2,
+packet helper scripts, static context bundles, and broader `docs/index.md`
+skill routing.
 
-## v2 metadata reads structured YAML
-
-**Decision.** v2 generated-context tools require `docs/_meta/manifest.yaml` in
-the target repo and do not use the legacy Markdown manifest as a v2 metadata
-source.
-
-**Why.** A structured manifest gives the renderer and verifier stable fields for
-generated output paths, commit policy, and repo identity without parsing prose
-tables or loading unrelated manifest slots.
-
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v2/context/render.py`](../../v2/context/render.py), [`../../v2/context/verify.py`](../../v2/context/verify.py).
-
-**Tradeoffs.** v1 remains available while v2 is proven, but the v2 proof is a
-breaking path. Consuming repos need a YAML manifest and an ignored
-`.agent-docs/agents/` root before v2 context can render.
+**Tradeoffs.** Orchestrators still need discipline to pass compact summaries and
+route unclear work to planning workers. The upside is that handoffs remain plain
+dispatch text backed by source docs and rules, without adding a second generated
+context system.

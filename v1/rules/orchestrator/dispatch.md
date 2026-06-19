@@ -8,7 +8,8 @@ Lifecycle and phase choice live in [`lifecycle.md`](lifecycle.md).
 ## Dispatch packet
 
 Pass **exact rule-file links** to each worker. Do not copy full rules into the
-prompt, and do not tell a worker to discover the workflow system. Fill every
+prompt, and do not tell a worker to discover the workflow system. Keep dispatch
+minimal; it routes work, it does not replace planning investigation. Fill every
 field:
 
 ```text
@@ -23,10 +24,46 @@ Expected checks/evidence:   (the cheapest sufficient gate; paste its result)
 Report back with:           (the worker report fields below)
 ```
 
+Also include a concise carry-forward summary when prior worker evidence matters:
+
+```text
+Observed so far:
+- decisions made
+- facts proven
+- files/docs touched
+- gates run and pasted results
+- commits, blockers, assumptions
+```
+
 Avoid detailed file-ownership fences unless parallel workers are likely to
 collide; planning and implementation workers identify their own touched files
 after reading the task. Fences address read/analysis overlap, not commit safety
 — concurrent editing uses the serial-commit or worktree rule below.
+
+## Planner-produced implementation briefs
+
+For already bounded work, the dispatch can go straight to implementation with
+the task, starting inputs, rules, checks, and report shape above.
+
+For unclear or medium work, dispatch a planning worker first. The planning worker
+owns the implementer-ready brief fields:
+
+```text
+Goal:
+Non-goals:
+Authoritative docs:
+Likely source areas:
+Expected behavior:
+Implementation notes:
+Cheapest sufficient checks:
+Stop and report if:
+Open decisions:
+```
+
+The orchestrator may pass the planner's brief through to an implementation
+worker after adding the worker role, exact rules, observed-so-far summary,
+expected evidence, and report shape. Do not invent packet helper scripts,
+generated context bundles, or workspace files for this handoff.
 
 ## Worker report
 
@@ -75,6 +112,8 @@ Bake these into every worker prompt so you stop re-litigating them:
 
 - **Name the authoritative source of truth.** Verify shapes against it, never a
   mock or fixture. When sources disagree, state a precedence order.
+- **Carry forward observed evidence.** Give the next worker the concise
+  decisions/facts/checks/commits it needs, not full prior transcripts.
 - **New tests go in their own per-feature file**, never a shared one — two
   workers appending to one file is a merge hazard.
 - **State the cheapest sufficient gate** for the slice and require the worker to

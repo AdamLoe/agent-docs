@@ -70,7 +70,6 @@ link to neighboring files in the same repo.
   docs/              <- architecture, decisions, agent-context, plans
   v1/                <- the kit: skills/, rules/, plan-lifecycle.md,
                        plan-template.md, agent-docs-guide.md
-  v2/                <- a future revision: copy v1, evolve from there
 ```
 
 A consuming repo pins its version via `agent_docs_version` in

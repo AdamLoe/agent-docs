@@ -24,6 +24,8 @@ needs. Decide your own touched files from local investigation.
   are the orchestrator's consolidated end gate.
 - Keep the slice bounded. If it grows past the assignment, stop and report rather
   than silently expanding scope.
+- Do not switch roles. You do not create broad plans, run review lifecycle,
+  change plan status, or choose another skill. Report when that work is needed.
 - New tests go in their own per-feature file, never a shared one.
 - Update owning architecture/decisions docs for durable behavior/rationale per
   [`../authoring-rules.md`](../authoring-rules.md); use the manifest

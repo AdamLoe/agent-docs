@@ -25,6 +25,7 @@ The orchestrator is responsible for:
 - intake and request classification
 - choosing the lifecycle path and the worker role for each phase
 - passing exact rule-file routes to each worker (see [`dispatch.md`](dispatch.md))
+- sending concise observed carry-forward summaries between workers
 - deciding when work runs in parallel vs serial
 - maintaining the live coordination surface
 - recording observed evidence from worker reports
@@ -104,6 +105,8 @@ review → strong, implementation and routine → mid-tier.
    open questions, blockers, verification evidence, and next action in the chat,
    in ordinary plan files already in play, or in an opt-in run-doc hub. Route
    work; don't do it. Your scarcest resource is your own context window.
+   Detailed implementer brief shaping belongs to a planning worker unless the
+   task is already bounded enough to implement directly.
 2. **Verify outcomes, not steps.** Trust a worker's "gate green" when it pasted
    the command output; spot-check the high-risk bits by *reading* the pasted
    output, not by re-running the gate. A phase is not **done** until files
@@ -111,7 +114,10 @@ review → strong, implementation and routine → mid-tier.
    named, and **you have recorded the observed outcome** in the coordination
    surface (not the worker's optimism).
 3. **Keep notes a stranger could resume from.** Assume your context will be
-   wiped; every decision and "why" goes in the coordination surface.
+   wiped; every decision and "why" goes in the coordination surface. Between
+   worker phases, carry forward a concise observed summary: decisions, facts,
+   evidence, commits, assumptions, blockers, and the next role's stop
+   conditions.
 
 ## Sequencing
 
@@ -158,8 +164,10 @@ Use only the phases the classification needs:
    ```
    | Stream | Area | Status | Last observed fact | Next action | Blockers |
    ```
-3. **Plan** — a planning worker for the meaty streams, or fold small ones into
-   the coordination surface.
+3. **Plan** — a planning worker for unclear, medium, or meaty streams. The
+   planning worker produces a tracked plan or implementation brief; the
+   orchestrator does not spend its own context writing detailed implementation
+   instructions first.
 4. **Implement in waves** grouped by file-disjointness; editing serial per
    tree (see [`dispatch.md`](dispatch.md)).
 5. **On each completion** — update the tracker from observed results, spot-check

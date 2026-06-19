@@ -33,12 +33,14 @@ run and how much they fan out.
 
 - **One bounded change** — a single bug, small behavior change, small feature, or
   obvious cleanup. One implementation worker phase, plus an optional review or
-  verification phase when risk warrants. (For a fix this small, `/quick-fix` is
-  the dedicated entry point.)
-- **Briefed implementation** — clear medium work that does not need a tracked
-  plan. A planning worker phase produces an implementer brief; an implementation
-  worker phase ships from it. Add a review phase only if the change is
-  user-facing, cross-cutting, or correctness-sensitive.
+  verification phase when risk warrants. Use this only when the task is already
+  scoped tightly enough to execute. (For a fix this small, `/quick-fix` is the
+  dedicated entry point.)
+- **Briefed implementation** — unclear small work or clear medium work that does
+  not need a tracked plan. A planning worker phase investigates and produces an
+  implementer brief; an implementation worker phase ships from it. Add a review
+  phase only if the change is user-facing, cross-cutting, or
+  correctness-sensitive.
 - **Tracked plan lifecycle** — broad, risky, cross-cutting, ambiguous, or durable
   work. Planning worker → review worker (plan) → implementation worker(s) →
   review worker (shipped) → verification + plan-maintenance closeout.
@@ -59,11 +61,13 @@ Dials and model policy follow `skill-contracts.md`; dispatch packet shape, rule
 bundles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
 phases the classification needs.
 
-- **Planning worker** (ambiguous, broad, or durable work, or to produce a brief).
+- **Planning worker** (unclear, medium, broad, or durable work, or to produce a
+  brief).
   Pass `~/agent-docs/v1/rules/subagent/planning.md`,
   `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/plan-template.md`. It runs think → batched questions until
-  implementation-ready, then writes one implementer planning doc per workstream.
+  `~/agent-docs/v1/plan-template.md`. It investigates until the next phase is
+  implementation-ready, then returns the implementer brief shape from
+  `subagent/planning.md` or drafts one tracked plan per workstream.
 - **Review worker — plan** (tracked or risky plans, before implementation). Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the plan files under review.
   Apply or request plan changes before dispatching implementation.
@@ -71,9 +75,11 @@ phases the classification needs.
   `~/agent-docs/v1/rules/subagent/implementation.md`,
   `~/agent-docs/v1/rules/coding-style.md`,
   `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. It implements, runs the cheapest
-  sufficient gate, migrates durable docs when needed, and commits its slice
-  before reporting.
+  `~/agent-docs/v1/rules/repo-rules.md`. Dispatch it directly only for already
+  bounded tasks, or after passing through the planning worker's brief plus your
+  concise observed-so-far summary. It implements, runs the cheapest sufficient
+  gate, migrates durable docs when needed, and commits its slice before
+  reporting.
 - **Review worker — shipped** (nontrivial shipped work). Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. It verifies
   the shipped state and may fix and commit obvious missed shipping work; route
@@ -110,7 +116,8 @@ Inspect git status and worker evidence, then report:
 
 - lifecycle used and why
 - worker phases run, including any skipped phases
-- worker reports and the observed facts you recorded (not worker optimism)
+- worker reports and the observed facts you recorded for carry-forward (not
+  worker optimism)
 - commits made by implementation/review/maintenance workers
 - gates run and results
 - assumptions made, especially under `review-none`

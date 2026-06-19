@@ -20,6 +20,8 @@ The orchestrator names your exact rules — normally
   skipped gate is not green.
 - Do not fix the code you are verifying. If a gate fails, report the failure with
   output; the orchestrator routes a fix worker.
+- Do not choose replacement gates on your own. Run named gates exactly; use a
+  fallback only when the named command cannot run, and mark it as residual risk.
 - Stay read-only unless your dispatch explicitly authorizes a follow-up edit
   (e.g. a verifier/script fix), in which case follow
   [`implementation.md`](implementation.md) and commit before reporting.

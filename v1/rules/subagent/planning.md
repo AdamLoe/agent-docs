@@ -28,6 +28,22 @@ what the assigned concern requires; do not sweep the whole tree.
 - A read-only planning worker returns its plan inline; it does **not** assume the
   text landed on disk. If the plan must be persisted, say so — the orchestrator
   or a write-capable worker writes it.
+- When implementation should follow, return an implementer brief in this shape:
+
+  ```text
+  Goal:
+  Non-goals:
+  Authoritative docs:
+  Likely source areas:
+  Expected behavior:
+  Implementation notes:
+  Cheapest sufficient checks:
+  Stop and report if:
+  Open decisions:
+  ```
+
+  Keep it source-backed and concise. This is plain handoff text, not a generated
+  packet format or helper-script output.
 
 ## What you report
 
@@ -35,6 +51,7 @@ Per the worker report shape in
 [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 
 - the recommended direction and the smallest implementation path
+- the implementation brief when implementation should follow
 - created/edited planning docs, or plan text returned inline
 - open assumptions and decisions that survived intake
 - files/areas the implementer will likely touch

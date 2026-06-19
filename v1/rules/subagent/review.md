@@ -24,6 +24,8 @@ skill bodies. Load only what the lens needs.
   ([`implementation.md`](implementation.md)): verify and commit before reporting.
   If substantial work remains, recommend another implementation pass instead of
   patching it yourself.
+- Stay under the assigned lens. Do not broaden into a whole-tree audit unless
+  the dispatch asks for it.
 - Adversarially verify high-risk findings before asserting them; default to
   "unproven" when uncertain rather than reporting a plausible-but-wrong finding.
 

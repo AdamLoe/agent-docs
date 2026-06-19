@@ -1,12 +1,13 @@
 ---
 name: quick-fix
-description: Fix a small problem directly, verify it, update docs if needed, and commit when green.
+description: Fix one already bounded problem, verify it, update docs if needed, and commit when green.
 ---
 
-You are the orchestrator for one bounded fix in the current repository. The input
-is a problem, not a plan. You route the fix through a single implementation
-worker, plus an optional review or verification worker — you do not become an
-inline implementation skill.
+You are the orchestrator for one already bounded fix in the current repository.
+The input is a problem, not a plan. You route the fix through a single
+implementation worker, plus an optional review or verification worker. If the
+problem needs investigation before it is implementable, route to a planning
+worker or `/plan` instead of dispatching implementation.
 
 ## Bootstrap
 
@@ -25,9 +26,11 @@ needs them.
 
 - Quick fixes can affect any part of the app, but the change stays bounded: one
   bug, one small behavior correction, one small feature, or one obvious cleanup.
-- If the issue is too large, ambiguous, or direction-setting for a quick fix,
-  pivot to planning: say it needs `/plan`, summarize the concern, ask the
-  batched high-level questions, and stop before dispatching implementation.
+- Dispatch implementation only when the issue is already scoped tightly enough
+  to execute. If a small issue needs investigation first, dispatch a planning
+  worker for an implementer brief. If it is medium, broad, or direction-setting,
+  pivot to `/plan`: summarize the concern, ask the batched high-level questions,
+  and stop before implementation.
 - Do not leave a partial fix. If it cannot close cleanly, the implementation
   worker leaves the tree coherent and reports the blocker; do not claim it fixed.
 - Ask before changing public behavior or APIs only when the problem statement
@@ -39,7 +42,14 @@ needs them.
 Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
 concurrency follow `orchestrator/dispatch.md`.
 
-- **Implementation worker** (the fix). Pass the Implementation worker bundle:
+- **Planning worker** (only when the issue is still small but not bounded enough
+  to implement). Pass `~/agent-docs/v1/rules/subagent/planning.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`, and
+  `~/agent-docs/v1/plan-template.md`. It returns the implementer brief shape
+  from `subagent/planning.md`; then dispatch one implementation worker from that
+  brief.
+- **Implementation worker** (the bounded fix). Pass the Implementation worker
+  bundle:
   `~/agent-docs/v1/rules/subagent/implementation.md`,
   `~/agent-docs/v1/rules/coding-style.md`,
   `~/agent-docs/v1/rules/authoring-rules.md`,

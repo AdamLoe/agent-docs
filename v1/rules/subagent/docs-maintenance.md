@@ -23,6 +23,8 @@ The orchestrator names your exact rules — always
   framing. Rationale goes in `decisions/<domain>.md` with the mandatory fields.
 - For a drift check, report findings; do not edit unless your dispatch says to
   repair. For repair, fix the drift and run the relevant `drift-verification`.
+- Stay in the docs-maintenance lane. Do not implement app behavior or close plan
+  lifecycle unless your dispatch separately assigns that role.
 - When you edit repo files, commit your slice before reporting and follow
   [`../repo-rules.md`](../repo-rules.md).
 

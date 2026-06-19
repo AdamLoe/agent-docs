@@ -22,7 +22,7 @@ Once intent is known, read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
 `~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Then
 load only the smallest matching task route:
 
-- Current subsystem facts or code behaviour → `docs/architecture/index.md`,
+- Current subsystem facts or code behavior → `docs/architecture/index.md`,
   then the subsystem doc it routes to.
 - Rationale / "why is it this way?" → `docs/decisions/index.md`, then the
   relevant domain doc.
@@ -60,9 +60,13 @@ strong model.
   worker bundle: `~/agent-docs/v1/rules/subagent/planning.md`,
   `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/plan-template.md`, plus
   the task routes that concern needs. It investigates and returns a concrete
-  recommendation and implementer-ready direction. A read-only planning worker
-  returns its plan inline — persisting it to disk needs a write-capable worker
-  or the orchestrator.
+  recommendation and either a tracked plan or an implementer brief. When
+  implementation should follow, require the brief shape from
+  `subagent/planning.md` so the next implementation worker gets goal,
+  non-goals, authoritative docs, likely source areas, expected behavior,
+  implementation notes, cheapest sufficient checks, stop conditions, and open
+  decisions. A read-only planning worker returns its plan inline — persisting it
+  to disk needs a write-capable worker or the orchestrator.
 - **Review worker** only for broad, risky, or cross-cutting plan material. Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the plan material to critique.
 - **Docs-maintenance worker** only when planning creates or edits tracked docs
@@ -81,6 +85,7 @@ Record from worker reports:
 - created or edited planning docs, or plan text returned inline
 - open assumptions that survived intake
 - the recommended implementation skill or orchestration path
+- any implementer brief and remaining open decisions
 - any blockers or decisions still open
 
 $ARGUMENTS
