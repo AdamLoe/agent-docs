@@ -14,6 +14,7 @@ code_root: v1/
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, v1/agent-docs-guide.md |
 | Skill registry, command bodies, and shared skill contracts | v1/skills/, v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
+| ChatGPT context export utility | docs/repository-layout.md, v1/export-chatgpt-context.sh |
 | Drift gates, budget checks, optional telemetry validation, and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
 | Docs scaffold template and consuming-repo scaffold checks | v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Doc-authoring rules and adapter-file policy | v1/rules/authoring-rules.md |

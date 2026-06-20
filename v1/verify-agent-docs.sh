@@ -922,7 +922,7 @@ reject_any_match 'v1/[.]claude-plugin' "retired Claude plugin path referenced"
 [ ! -e "$repo_root/v1/.claude-plugin" ] ||
   fail "retired Claude plugin path exists: v1/.claude-plugin"
 
-for script_path in v1/install.sh v1/copy-skills.sh v1/verify-agent-docs.sh; do
+for script_path in v1/install.sh v1/copy-skills.sh v1/export-chatgpt-context.sh v1/verify-agent-docs.sh; do
   require_executable "$script_path"
   require_git_executable_mode "$script_path"
 done
