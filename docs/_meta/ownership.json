@@ -61,6 +61,11 @@
       "owns": ["command family grouping", "skill inventory routing"]
     },
     {
+      "surface": "feedback-capture",
+      "paths": [".gitignore", "v1/skills/feedback-agent-docs/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "owns": ["upstream feedback inbox path", "gitignored capture behavior", "feedback capture no-commit contract"]
+    },
+    {
       "surface": "authoring-rules",
       "paths": ["v1/rules/authoring-rules.md"],
       "owns": ["documentation authoring rules", "router-only adapter exception"]

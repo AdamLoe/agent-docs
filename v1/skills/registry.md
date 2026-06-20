@@ -49,7 +49,7 @@ recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
 | `fix-docs-drift` | mutating | repair docs drift across the tree | docs-maintenance, review, verification, implementation | yes, via workers | no-prompt | mid | optional scope/dials |
 | `doctor` | report-only by default | validate scaffold, manifest, ownership, registry, and stale references | verification, docs-maintenance, implementation | only if user asks to fix failures | no-prompt | mid | optional scope |
 | `list-skills` | report-only | list source skills and adapter freshness | none (inline); optional verification | no | no-prompt | mid | optional filter |
-| `feedback-agent-docs` | capture | record kit feedback into the upstream inbox | none (inline); optional docs-maintenance | no (writes the kit inbox, not the repo) | no-prompt | mid | optional feedback content |
+| `feedback-agent-docs` | capture | record kit feedback into the upstream inbox | none (inline); optional docs-maintenance | no (writes the gitignored kit inbox) | no-prompt | mid | optional feedback content |
 
 Suite-wide policy lives in `v1/rules/skill-contracts.md`; orchestrator policy in
 `v1/rules/orchestrator/`; worker-role rules in `v1/rules/subagent/`; repo/git

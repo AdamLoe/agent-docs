@@ -4,11 +4,12 @@ description: Record a comment or request about the agent-docs kit (a rule, skill
 ---
 
 You are the orchestrator for a narrow **capture** workflow: append one structured
-feedback record about the shared agent-docs kit into the kit's upstream inbox,
-which lives **outside** the current repo. Mode: capture. You do not edit the kit,
-do not touch the current repo, and do not commit. Appending one record is a
-single IO step, so it runs inline — you do not become an inline maintenance
-skill, but you also do not invent a worker for a one-line append.
+feedback record about the shared agent-docs kit into the kit's upstream inbox.
+Mode: capture. You do not edit kit source/docs or commit for a normal capture;
+the inbox is a gitignored kit-local file so dogfooding inside the agent-docs
+checkout does not create accidental untracked source changes. Appending one
+record is a single IO step, so it runs inline — you do not become an inline
+maintenance skill, but you also do not invent a worker for a one-line append.
 
 ## Bootstrap
 
@@ -38,12 +39,14 @@ Then read, against the task:
   signals from real use: an agent confused by a rule, a workflow causing
   unnecessary user frustration, a user reacting badly to kit behavior.
 - **Not for:** app-specific docs in the *current* repo. Fix those directly or via
-  the repo's own review skills. This skill commits nothing and edits no kit files.
+  the repo's own review skills. This skill commits nothing and edits no tracked
+  kit source/docs.
 
 The kit checkout is `~/agent-docs`; feedback lands as one JSON line in
-`~/agent-docs/feedback/inbox.jsonl`. If `~/agent-docs` does not exist, the kit may
-be checked out elsewhere — ask the user for the checkout path. If you cannot
-locate it, report that and stop; do not invent a destination.
+`~/agent-docs/feedback/inbox.jsonl`. In the agent-docs checkout this path is
+intentionally ignored by git. If `~/agent-docs` does not exist, the kit may be
+checked out elsewhere — ask the user for the checkout path. If you cannot locate
+it, report that and stop; do not invent a destination.
 
 ## Worker Phases
 
@@ -102,10 +105,11 @@ Report:
 
 - the feedback **category** (`scope`) and **surface** recorded
 - the inbox record appended — echo the lodged line and the inbox path
-- **no-repo-change result**: the append is out-of-repo, so there is no commit;
-  surface a commit hash **only** if a worker changed repo files
+- **no tracked repo change result**: the append targets a gitignored inbox, so
+  there is no commit for normal capture; surface a commit hash **only** if a
+  worker changed repo files
 
-Do not commit, do not edit kit files, and do not modify the current repo —
-triage of the inbox happens later inside the agent-docs repo.
+Do not commit, do not edit kit source/docs, and do not modify tracked repo
+files — triage of the inbox happens later inside the agent-docs repo.
 
 $ARGUMENTS

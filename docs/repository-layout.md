@@ -8,6 +8,7 @@ for workflow surfaces, use
 | Path | Purpose |
 |---|---|
 | `.gitattributes` | Git attribute policy for tracked text files. |
+| `.gitignore` | Ignores local capture artifacts such as the feedback inbox. |
 | `README.md` | User-facing install summary. |
 | `AGENTS.md` | Router-only auto-loaded file for agent tools that read it. |
 | `CLAUDE.md` | Router-only auto-loaded file for Claude. |

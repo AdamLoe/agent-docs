@@ -190,8 +190,8 @@ owned by `v1/copy-skills.sh --check`.
 - `/wrap-up-current-chat` captures chat-only durable context.
 - `/clear-plans` cleans shipped or abandoned plans and orchestration run docs
   after migration.
-- `/feedback-agent-docs` records a kit-level comment or request from a consuming
-  repo into the upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
+- `/feedback-agent-docs` records a kit-level comment or request into the
+  gitignored upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
 - `/list-skills` reports the canonical source skill inventory, project-local
   skill directories, and Claude/Codex adapter freshness.
 

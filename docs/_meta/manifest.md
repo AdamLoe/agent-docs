@@ -23,6 +23,7 @@ code_root: v1/
 | Context efficiency and documentation budgets | v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh |
 | Worker report usage reporting and optional telemetry validation | v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh |
 | Command families and skill inventory | v1/skills/registry.md, docs/architecture/workflow-kit.md |
+| Feedback capture inbox and ignore policy | v1/skills/feedback-agent-docs/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, .gitignore |
 
 ## drift-gates
 
@@ -70,3 +71,4 @@ default drift gate.
 | Context efficiency, documentation budgets, and usage reporting | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md, v1/rules/authoring-rules.md |
 | Orchestrator/worker model, dials, and run-doc policy | v1/rules/orchestrator/, v1/rules/subagent/, docs/decisions/agent-docs.md |
 | Plan lifecycle | v1/plan-lifecycle.md |
+| Feedback capture inbox and ignore policy | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md |

@@ -52,10 +52,11 @@ committing its slice before the next starts; aim for ~5–8 clusters in the
   `drift-verification` slot content (inline it; the worker starts cold), and the
   fix-vs-escalate boundary above. Each worker resolves every `path → symbol`
   pointer (match by name, never line number), scans for forbidden transcription
-  and ungated literal counts, spot-checks its cluster's high-risk facts, triages
-  its `Update when` bullets against `git log` using `change-to-doc`, fixes in
-  place, and commits. Cross-cluster issues go in its `escalate:` list for you to
-  reconcile.
+  and ungated literal counts, spot-checks its cluster's high-risk facts,
+  compares touched surfaces with the manifest `change-to-doc` owners when
+  drift seems cross-cutting, fixes in place, and commits. Cross-cluster issues
+  go in its `escalate:` list with the exact paths, evidence, and recommended
+  follow-up role.
 - **Review worker** for the hard ownership and rationale calls a maintenance
   worker escalated. Pass the Review worker bundle —
   `~/agent-docs/v1/rules/subagent/review.md` — plus the docs and escalations in
@@ -72,11 +73,11 @@ committing its slice before the next starts; aim for ~5–8 clusters in the
   `~/agent-docs/v1/rules/authoring-rules.md`,
   `~/agent-docs/v1/rules/repo-rules.md`.
 
-Reconcile inline what no single worker owned: a renamed symbol whose pointer
-appears in three docs, and the curation of any append-only **Living notes**
-section (cap to ~6–8 distinct lessons, drop superseded entries, promote a
-recurred lesson into the body sparingly, then delete the dated incident — a
-lead-only judgment task, not a worker's).
+Do not resolve cross-file judgment inline. When no single worker owned a
+renamed symbol, ownership call, or rationale mismatch that spans clusters,
+dispatch a follow-up docs-maintenance or review worker with the affected paths,
+prior evidence, and a narrow fix-vs-escalate boundary. Keep only routing,
+evidence tracking, and final gate coordination in the orchestrator context.
 
 ## Closeout
 

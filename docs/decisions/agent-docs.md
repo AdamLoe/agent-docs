@@ -176,6 +176,18 @@ copy from being mistaken for the authoritative inventory.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/list-skills/SKILL.md`](../../v1/skills/list-skills/SKILL.md), [`../../v1/skills/list-skills/list-skills.sh`](../../v1/skills/list-skills/list-skills.sh), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
 
+## Feedback inbox is gitignored
+
+**Decision.** `/feedback-agent-docs` appends kit-level feedback to
+`~/agent-docs/feedback/inbox.jsonl`, and the agent-docs checkout ignores that
+inbox file.
+
+**Why.** The inbox should be a low-friction capture queue, including while
+dogfooding inside the kit repo, without creating accidental untracked source
+changes or a required commit for every note.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/feedback-agent-docs/SKILL.md`](../../v1/skills/feedback-agent-docs/SKILL.md), [`../../.gitignore`](../../.gitignore).
+
 ## Subagent-first orchestration
 
 **Decision.** Every user-facing skill is an orchestrator entry point that

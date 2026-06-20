@@ -751,7 +751,7 @@ while IFS=$'\t' read -r tag line_no name mode action worker_roles commits intake
     no|"only through routed skills"|"only if it edits tracked docs/plans (via workers)") ;;
     "yes, via worker"|"yes, via workers"|"yes, via plan-maintenance worker"|"yes, via docs-maintenance worker") ;;
     "yes, only if a fix worker runs"|"only if user asks to apply edits"|"only if user asks to fix failures") ;;
-    "no (writes the kit inbox, not the repo)") ;;
+    "no (writes the gitignored kit inbox)") ;;
     *) fail "registry row for $name has invalid commits metadata: $commits" ;;
   esac
 
