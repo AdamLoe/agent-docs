@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         unassigned
 last_updated:  2026-06-20
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -269,13 +269,19 @@ user skill directories outside the repo.
 
 ## Migration notes (filled in at ship time)
 
-Before setting this plan to `shipped`, migrate durable facts into:
-
-- `docs/architecture/workflow-kit.md` for the new command surface and lifecycle.
-- `docs/decisions/agent-docs.md` if implementation introduces durable rationale
-  beyond the decisions already captured here.
-
-List the exact migrated facts here before setting `okay_to_delete: true`.
+- `docs/architecture/workflow-kit.md` carries the durable command-surface facts:
+  `/review-app` is the broad app audit and cleanup-discovery entry point; it
+  runs a confirmed read-only audit, ranks findings by severity and cleanup ROI,
+  and creates only user-approved plans. Its command-routing table maps broad
+  cleanup discovery through a configured app audit to `/review-app`.
+- `docs/decisions/agent-docs.md` did not need a new entry. Implementation added
+  no durable rationale beyond this plan's settled decisions; the existing
+  workflow decisions already cover subagent-first orchestration, opt-in run
+  docs, final-state shipping, and plan cleanup.
+- Implementation shipped in commit `da2a36d` with `v1/skills/review-app/`,
+  the `v1/skills/registry.md` row, the workflow command-surface update, and
+  verifier support. A read-only review found no findings, so the plan is
+  disposable after this closeout commit.
 
 ## See also
 
