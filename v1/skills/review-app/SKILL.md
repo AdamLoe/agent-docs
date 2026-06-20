@@ -35,7 +35,9 @@ Confirm:
 
 - target scope: whole app, subsystem, user journey, named files, or named docs
 - audit lenses to include or exclude
-- `review-*` and `cost-*` dials; defaults may be recommended, not assumed
+- explicit `review-*` and `cost-*` dials; because this can spend significant
+  worker budget, omitted dials are incomplete until the user confirms default
+  or custom values
 - run state: chat-only or committed run docs
 - whether best-effort app startup and screenshot inspection are allowed
 - areas to avoid, active work to respect, and existing plans already owning work
@@ -106,8 +108,14 @@ Serialize plan writes on the shared tree and stage only owned paths.
 
 ## Closeout
 
+After any approved plan or run-doc mutation, ensure the mutating worker stages
+only owned paths, commits its slice before reporting, and returns the commit
+hash. Then run the final manifest drift gate after the last mutation. For
+stateful run docs, leave `hub.md` with truthful lifecycle frontmatter, phase
+status, migration notes, and `okay_to_delete` state.
+
 Report the confirmed config, lenses run, findings and approvals, created plan
-paths, run-doc status, checks or screenshot evidence, assumptions, blockers, and
-remaining risk.
+paths, run-doc status, commits, final gate result, screenshot evidence when
+used, assumptions, blockers, and remaining risk.
 
 $ARGUMENTS
