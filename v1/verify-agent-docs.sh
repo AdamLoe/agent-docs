@@ -10,11 +10,14 @@ usage() {
   cat <<'EOF'
 Usage:
   bash v1/verify-agent-docs.sh
+  bash v1/verify-agent-docs.sh --telemetry-jsonl <run-log.jsonl>
   bash v1/verify-agent-docs.sh --scaffold <repo-root>
 
 Default mode validates the agent-docs kit checkout that contains this script.
 The --scaffold mode validates only the target repo's docs/ scaffold, manifest,
 ownership JSON, routing, and unresolved scaffold placeholders.
+The optional --telemetry-jsonl mode also validates raw token-usage JSONL when a
+runtime provided it; omitted telemetry is reported as unavailable, not failed.
 EOF
 }
 
@@ -304,6 +307,179 @@ require_no_scaffold_placeholders() {
     fail "$label contains unresolved '\"fill\"' placeholder: ${match#$root/}"
 }
 
+require_word_limit_under() {
+  local root=$1
+  local path=$2
+  local cap=$3
+  local label=$4
+  local count
+
+  [ -f "$root/$path" ] || fail "$label word-count target missing: $path"
+  count=$(wc -w < "$root/$path")
+  count=${count//[[:space:]]/}
+  [ "$count" -le "$cap" ] ||
+    fail "$label word cap exceeded for $path: $count > $cap"
+}
+
+require_word_limit() {
+  local path=$1
+  local cap=$2
+  local label=$3
+
+  require_word_limit_under "$repo_root" "$path" "$cap" "$label"
+}
+
+require_file_word_limit() {
+  local file=$1
+  local cap=$2
+  local label=$3
+  local count
+
+  [ -f "$file" ] || fail "$label word-count target missing: ${file#$repo_root/}"
+  count=$(wc -w < "$file")
+  count=${count//[[:space:]]/}
+  [ "$count" -le "$cap" ] ||
+    fail "$label word cap exceeded for ${file#$repo_root/}: $count > $cap"
+}
+
+require_text() {
+  local path=$1
+  local text=$2
+  local message=$3
+
+  grep -Fq "$text" "$repo_root/$path" || fail "$message"
+}
+
+require_layout_path() {
+  local layout_path=$1
+
+  grep -Fq "| \`$layout_path\` |" "$repo_root/docs/repository-layout.md" ||
+    fail "repository layout missing stable path: $layout_path"
+}
+
+validate_word_budgets() {
+  local file
+
+  for file in \
+    AGENTS.md \
+    CLAUDE.md \
+    docs/index.md \
+    docs/architecture/index.md \
+    docs/decisions/index.md \
+    docs/agent-context/index.md \
+    docs/plans/index.md \
+    v1/template/docs/index.md \
+    v1/template/docs/architecture/index.md \
+    v1/template/docs/decisions/index.md \
+    v1/template/docs/agent-context/index.md \
+    v1/template/docs/plans/index.md; do
+    require_word_limit "$file" 250 "router/index budget"
+  done
+
+  for file in docs/overview.md v1/template/docs/overview.md; do
+    require_word_limit "$file" 350 "overview budget"
+  done
+
+  for file in "$repo_root"/docs/architecture/*.md; do
+    require_file_word_limit "$file" 1500 "architecture budget"
+  done
+
+  for file in "$repo_root"/docs/decisions/*.md; do
+    require_file_word_limit "$file" 2600 "decisions budget"
+  done
+
+  for file in "$repo_root"/docs/plans/*.md; do
+    require_file_word_limit "$file" 2600 "plan budget"
+  done
+
+  for file in "$repo_root"/docs/plans/orchestrator/*/hub.md; do
+    [ -e "$file" ] || continue
+    require_file_word_limit "$file" 2600 "run hub budget"
+  done
+
+  while IFS= read -r file; do
+    require_file_word_limit "$file" 1200 "run finding/stream budget"
+  done < <(find "$repo_root/docs/plans/orchestrator" \
+    \( -path '*/findings/*.md' -o -path '*/streams/*.md' \) -type f 2>/dev/null)
+
+  for file in "$repo_root"/docs/agent-context/*.md; do
+    require_file_word_limit "$file" 1200 "agent-context budget"
+  done
+
+  for file in "$repo_root"/v1/skills/*/SKILL.md; do
+    require_file_word_limit "$file" 900 "skill body budget"
+  done
+
+  for file in "$repo_root"/v1/rules/subagent/*.md; do
+    require_file_word_limit "$file" 500 "subagent role-card budget"
+  done
+
+  for file in "$repo_root"/v1/rules/*.md; do
+    require_file_word_limit "$file" 1800 "generic rule budget"
+  done
+
+  for file in "$repo_root"/v1/rules/orchestrator/*.md; do
+    require_file_word_limit "$file" 2200 "orchestrator rule budget"
+  done
+
+  require_word_limit "v1/plan-lifecycle.md" 900 "plan lifecycle budget"
+  require_word_limit "v1/plan-template.md" 500 "plan template budget"
+  require_word_limit "v1/agent-docs-guide.md" 3500 "adoption guide budget"
+  require_word_limit "docs/repository-layout.md" 350 "repository layout budget"
+}
+
+validate_usage_telemetry_jsonl() {
+  local telemetry_path=$1
+  local python_cmd
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] ||
+    fail "cannot validate usage telemetry JSONL; install python"
+
+  if ! "$python_cmd" - "$telemetry_path" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+count = 0
+
+with open(path, "r", encoding="utf-8") as handle:
+    for line_number, line in enumerate(handle, 1):
+        line = line.strip()
+        if not line:
+            continue
+        count += 1
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"line {line_number}: invalid JSON: {exc}") from exc
+        if not isinstance(record, dict):
+            raise SystemExit(f"line {line_number}: telemetry record must be an object")
+
+        unavailable = record.get("unavailable_reason")
+        if unavailable is not None:
+            if not isinstance(unavailable, str) or not unavailable.strip():
+                raise SystemExit(f"line {line_number}: unavailable_reason must be non-empty")
+            continue
+
+        for key in ("input_tokens", "cached_input_tokens", "output_tokens"):
+            value = record.get(key)
+            if not isinstance(value, int) or value < 0:
+                raise SystemExit(f"line {line_number}: {key} must be a non-negative integer")
+        source = record.get("usage_source")
+        if not isinstance(source, str) or not source.strip():
+            raise SystemExit(f"line {line_number}: usage_source must be non-empty")
+        if record["cached_input_tokens"] > record["input_tokens"]:
+            raise SystemExit(f"line {line_number}: cached_input_tokens exceeds input_tokens")
+
+if count == 0:
+    raise SystemExit("telemetry JSONL contains no records")
+PY
+  then
+    fail "usage telemetry JSONL invalid: $telemetry_path"
+  fi
+}
+
 check_scaffold_tree() {
   local root=$1
   local label=$2
@@ -346,8 +522,15 @@ check_scaffold_tree() {
   require_no_scaffold_placeholders "$root" "docs" "$label"
 }
 
+telemetry_log=""
+
 case "${1:-}" in
   "")
+    ;;
+  --telemetry-jsonl)
+    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+    [ -f "$2" ] || fail "telemetry JSONL path is not a file: $2"
+    telemetry_log=$2
     ;;
   --scaffold)
     [ "$#" -eq 2 ] || { usage >&2; exit 2; }
@@ -422,6 +605,26 @@ require_manifest_change_to_doc \
   "Docs scaffold template and consuming-repo scaffold checks" \
   "v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md" \
   "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Drift gates, budget checks, optional telemetry validation, and agent-readiness verifier" \
+  "docs/_meta/manifest.md, v1/verify-agent-docs.sh" \
+  "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Context efficiency and documentation budgets" \
+  "v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
+  "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Worker report usage reporting and optional telemetry validation" \
+  "v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
+  "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Command families and skill inventory" \
+  "v1/skills/registry.md, docs/architecture/workflow-kit.md" \
+  "docs/_meta/manifest.md"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "repository-layout" \
@@ -442,8 +645,68 @@ require_ownership_surface_path \
   "docs-scaffold-template" \
   "v1/template/docs/" \
   "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "agent-readiness-verifier" \
+  "v1/verify-agent-docs.sh" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "context-efficiency" \
+  "v1/rules/authoring-rules.md" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "documentation-budgets" \
+  "v1/verify-agent-docs.sh" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "usage-reporting" \
+  "v1/rules/orchestrator/dispatch.md" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "command-families" \
+  "v1/skills/registry.md" \
+  "docs/_meta/ownership.json"
 
 validate_ownership_paths_under "$repo_root" "docs/_meta/ownership.json" "docs/_meta"
+
+for layout_path in \
+  ".gitattributes" \
+  "v1/agent-docs-guide.md" \
+  "v1/plan-lifecycle.md" \
+  "v1/plan-template.md"; do
+  require_layout_path "$layout_path"
+done
+
+require_text "v1/rules/authoring-rules.md" "Cache-stable layer" \
+  "authoring rules missing cache-stable layer policy"
+require_text "v1/rules/authoring-rules.md" "Task-specific layer" \
+  "authoring rules missing task-specific layer policy"
+require_text "v1/rules/authoring-rules.md" "Never-auto-loaded layer" \
+  "authoring rules missing never-auto-loaded layer policy"
+require_text "v1/rules/authoring-rules.md" "Documentation class budgets" \
+  "authoring rules missing documentation class budgets"
+require_text "docs/architecture/workflow-kit.md" "Context layers" \
+  "workflow architecture missing context layer contract"
+require_text "v1/rules/orchestrator/dispatch.md" "Token usage:" \
+  "dispatch report shape missing Token usage block"
+require_text "v1/rules/orchestrator/dispatch.md" "unavailable_reason" \
+  "dispatch report shape missing usage unavailable_reason"
+require_text "v1/rules/skill-contracts.md" "Usage Reporting" \
+  "skill contracts missing usage reporting policy"
+
+for worker_rule in planning implementation review docs-maintenance plan-maintenance verification; do
+  require_text "v1/rules/subagent/$worker_rule.md" "Token usage" \
+    "subagent report shape missing token usage policy: $worker_rule"
+  require_text "v1/rules/subagent/$worker_rule.md" "unavailable_reason" \
+    "subagent report shape missing usage unavailable_reason: $worker_rule"
+done
+
+section "documentation budget checks"
+validate_word_budgets
 
 section "scaffold template checks"
 check_scaffold_tree "$repo_root/v1/template" "template docs scaffold"
@@ -666,5 +929,13 @@ done
 section "local adapter freshness checks"
 bash "$repo_root/v1/copy-skills.sh" --check "$repo_root" ||
   fail "copied skill adapters are stale"
+
+section "optional usage telemetry checks"
+if [ "$telemetry_log" = "" ]; then
+  printf 'USAGE TELEMETRY CHECK SKIPPED: unavailable_reason=no telemetry JSONL provided\n'
+else
+  validate_usage_telemetry_jsonl "$telemetry_log"
+  printf 'USAGE TELEMETRY JSONL PASS: %s\n' "$telemetry_log"
+fi
 
 printf 'ALL AGENT-DOCS GATES PASS\n'

@@ -23,7 +23,7 @@
     {
       "surface": "agent-readiness-verifier",
       "paths": ["docs/_meta/manifest.md", "v1/verify-agent-docs.sh"],
-      "owns": ["drift gate entry point", "agent-readiness checks", "stale reference detection"]
+      "owns": ["drift gate entry point", "agent-readiness checks", "stale reference detection", "budget checks", "optional telemetry JSONL validation"]
     },
     {
       "surface": "docs-scaffold-template",
@@ -39,6 +39,26 @@
       "surface": "skill-contracts",
       "paths": ["v1/skills/", "v1/skills/registry.md", "v1/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
       "owns": ["skill registry", "skill modes", "skill command bodies", "shared skill bootstrap", "shared skill shipping", "generic model language"]
+    },
+    {
+      "surface": "context-efficiency",
+      "paths": ["v1/rules/skill-contracts.md", "v1/rules/authoring-rules.md", "v1/rules/orchestrator/dispatch.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "owns": ["cache-stable input layer", "task-specific input layer", "never-auto-loaded material", "source-first compact reports"]
+    },
+    {
+      "surface": "documentation-budgets",
+      "paths": ["v1/rules/authoring-rules.md", "v1/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/_meta/manifest.md"],
+      "owns": ["static doc class budgets", "rule word caps", "skill body word caps", "word-count enforcement"]
+    },
+    {
+      "surface": "usage-reporting",
+      "paths": ["v1/rules/orchestrator/dispatch.md", "v1/rules/subagent/", "v1/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "owns": ["optional token usage report block", "usage unavailable reason", "raw usage telemetry validation"]
+    },
+    {
+      "surface": "command-families",
+      "paths": ["v1/skills/registry.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["command family grouping", "skill inventory routing"]
     },
     {
       "surface": "authoring-rules",

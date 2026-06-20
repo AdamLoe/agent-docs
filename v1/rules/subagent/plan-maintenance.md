@@ -46,6 +46,8 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - migration targets used
 - gates run and result
 - commit hash for edited work, or an explicit no-change result
+- optional `Token usage` block per dispatch rules, with `unavailable_reason`
+  when runtime usage data is not exposed
 
 Target `<=600` output tokens for routine maintenance, or `<=1,200` for a broad
 plan-health report. Use compact evidence and short excerpts; do not include full

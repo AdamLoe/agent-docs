@@ -40,6 +40,8 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - deferred human decisions (hard ownership/rationale calls)
 - gates run and result
 - commit hash for edited work, or an explicit no-change result
+- optional `Token usage` block per dispatch rules, with `unavailable_reason`
+  when runtime usage data is not exposed
 
 Target `<=600` output tokens for routine repair/check work, or `<=1,200` when
 the dispatch asks for a review-style report. Use compact evidence; do not

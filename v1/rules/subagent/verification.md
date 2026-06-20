@@ -38,6 +38,8 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - any gate that could not run, with the fallback taken and residual risk
 - commit hash only if your dispatch authorized and you made a fix
 - otherwise an explicit no-change result
+- optional `Token usage` block per dispatch rules, with `unavailable_reason`
+  when runtime usage data is not exposed
 
 Target `<=600` output tokens. Use short excerpts rather than transcripts unless
 the dispatch or user explicitly requests full output.

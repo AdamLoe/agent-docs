@@ -41,6 +41,8 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - open questions the orchestrator or human must resolve
 - any fixes applied and their commit hash, or an explicit no-change result
 - whether a further implementation or review pass is needed
+- optional `Token usage` block per dispatch rules, with `unavailable_reason`
+  when runtime usage data is not exposed
 
 Target `<=1,200` output tokens unless the requested artifact is the report. Use
 compact evidence and short excerpts; do not include full transcripts unless the

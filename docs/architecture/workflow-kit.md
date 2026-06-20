@@ -2,11 +2,22 @@
 
 `v1/` is the stable and active kit version. The workflow lowers context by
 routing work to focused roles, not by generating per-run context workspaces.
-The fixed startup runtime-card is `v1/rules/skill-contracts.md`; it stays short
-and points to lifecycle, dispatch, and registry owner docs for deeper policy.
-Mandatory skill startup is cache-first: read the runtime card, the manifest slots
-needed by the skill, and `docs/index.md`, then stop. `docs/overview.md` is a
-task-routed system-shape doc, not a startup prerequisite.
+The fixed startup runtime-card is `v1/rules/skill-contracts.md`; deeper policy
+lives in lifecycle, dispatch, and registry docs. Mandatory skill startup is
+cache-first: read the runtime card, needed manifest slots, and `docs/index.md`,
+then stop. `docs/overview.md` is task-routed, not a startup prerequisite.
+
+## Context layers
+
+Cache-stable inputs are the router-only adapters, `v1/rules/skill-contracts.md`,
+manifest startup slots, docs indexes, and stable worker role cards. The
+task-specific layer is the smallest owning slice: one architecture leaf, one
+decisions domain, one agent-context procedure, selected plan/run docs, and
+needed source/tests. Ownership JSON and repository layout are queried only for
+ownership or location questions. Never auto-load architecture
+leaves, decisions, plans, run docs, `v1/agent-docs-guide.md`, full ownership
+JSON, source files, verifier output, or pitch material. Class word budgets live
+in `v1/rules/authoring-rules.md` and are enforced by `v1/verify-agent-docs.sh`.
 
 ## Orchestrator/worker model
 
@@ -39,8 +50,8 @@ The orchestrator is a knowledge intermediary, not the author of every
 implementation detail. It passes each worker a minimal dispatch: role, task,
 exact rule links, starting inputs, path plus heading/search hints for large
 docs, observed facts to preserve, expected checks/evidence, and report shape.
-Dispatch packets stay compact: no copied rules, no generated context bundles,
-and no full prior transcripts by default.
+Dispatch packets stay compact: no copied rules, generated bundles, or full
+prior transcripts by default.
 
 When work is ambiguous or medium-sized, a planning worker spends the context to
 investigate and return an implementation brief. That brief is plain Markdown,
@@ -71,7 +82,10 @@ prior transcript.
 Worker reports are compact and self-contained. Routine reports name outcome,
 files, concise gate evidence, migrations, blockers/risk, and commit or
 no-change state. Planning and review reports can be longer, but still use short
-excerpts rather than transcripts unless the user asks for full output.
+excerpts rather than transcripts unless the user asks for full output. When a
+runtime exposes raw input, cached-input, and output token counts, reports may
+include the optional usage block from `v1/rules/orchestrator/dispatch.md`; when
+it does not, the block records `unavailable_reason` instead of invented counts.
 
 ## Ship order
 

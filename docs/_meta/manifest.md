@@ -14,12 +14,15 @@ code_root: v1/
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, v1/agent-docs-guide.md |
 | Skill registry, command bodies, and shared skill contracts | v1/skills/, v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
-| Drift gates and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
+| Drift gates, budget checks, optional telemetry validation, and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
 | Docs scaffold template and consuming-repo scaffold checks | v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Doc-authoring rules and adapter-file policy | v1/rules/authoring-rules.md |
 | Orchestrator workflow control, dispatch, run docs, and dials | v1/rules/orchestrator/, v1/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Subagent worker-role rules | v1/rules/subagent/, docs/architecture/workflow-kit.md |
 | Plan lifecycle and plan skeleton | v1/plan-lifecycle.md, v1/plan-template.md |
+| Context efficiency and documentation budgets | v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh |
+| Worker report usage reporting and optional telemetry validation | v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh |
+| Command families and skill inventory | v1/skills/registry.md, docs/architecture/workflow-kit.md |
 
 ## drift-gates
 
@@ -45,6 +48,15 @@ readlink -e ~/.agents/skills/fresh-chat/SKILL.md
 readlink -e ~/.agents/skills/plan/SKILL.md
 ```
 
+Optional raw usage logs can be checked when a runtime provides JSONL telemetry:
+
+```sh
+bash v1/verify-agent-docs.sh --telemetry-jsonl <path>
+```
+
+Without a run log, usage telemetry is reported unavailable and does not fail the
+default drift gate.
+
 ## decisions-domains
 
 | Domain | Owning doc |
@@ -55,5 +67,6 @@ readlink -e ~/.agents/skills/plan/SKILL.md
 | Work lifecycle and rebuild flow | docs/decisions/agent-docs.md |
 | Skill registry and shared skill contracts | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md |
 | Authoring invariants | v1/rules/authoring-rules.md |
+| Context efficiency, documentation budgets, and usage reporting | docs/decisions/agent-docs.md, docs/architecture/workflow-kit.md, v1/rules/authoring-rules.md |
 | Orchestrator/worker model, dials, and run-doc policy | v1/rules/orchestrator/, v1/rules/subagent/, docs/decisions/agent-docs.md |
 | Plan lifecycle | v1/plan-lifecycle.md |

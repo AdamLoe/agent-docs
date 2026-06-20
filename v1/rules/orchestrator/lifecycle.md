@@ -88,8 +88,10 @@ Effort is governed by the kit's two shared dials, defined in
 [`../skill-contracts.md`](../skill-contracts.md) — there is no orchestration-only
 effort vocabulary. The concrete agent counts below are orchestration guidance,
 not a global per-tier spec; the dials stay "vibes, not a rulebook" elsewhere.
-Worker-output budgets are review heuristics until telemetry exists, but
-orchestrators use them when shaping dispatches and accepting reports.
+Worker-output budgets are review heuristics until telemetry exists. When a
+runtime exposes raw input, cached-input, and output counts, worker reports use
+the optional usage block in [`dispatch.md`](dispatch.md); otherwise they record
+`unavailable_reason`. Do not translate usage into vendor dollars.
 
 | Dial setting | Fan-out | Worker-output budget | Model spend |
 |---|---|---|---|

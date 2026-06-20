@@ -67,8 +67,28 @@ read this first.
    gate inline**. Otherwise point to the code symbol that is the
    authoritative list and let the reader count.
 
-4. **Each architecture doc is ~1–2k tokens, one file per subsystem.**
-   Bigger burns context; smaller is a navigation tax. Split past ~2k.
+4. **Respect context layers and class budgets.** Keep always-loaded and
+   frequently-routed files small, then route to the exact owner for the task.
+
+   **Cache-stable layer:** router-only `AGENTS.md`/`CLAUDE.md`, the stable
+   runtime card in `v1/rules/skill-contracts.md`, manifest startup slots,
+   `docs/index.md`, subtree indexes, and worker role cards. `docs/overview.md`
+   is stable orientation, but still task-routed unless a skill names it.
+
+   **Task-specific layer:** one architecture leaf, one decisions domain, one
+   agent-context procedure, selected plan/run-doc files, and selected
+   source/test files. Query ownership metadata only for ownership questions;
+   use `docs/repository-layout.md` only to locate files.
+
+   **Never-auto-loaded layer:** architecture leaves, decisions, plans, run docs,
+   `v1/agent-docs-guide.md`, full ownership JSON, repository layout, source
+   files, verifier output, and narrative pitch material.
+
+   **Documentation class budgets:** routers and subtree indexes `<=250` words;
+   overview docs `<=350`; architecture leaves `<=1,500`; decision domains,
+   active plans, and run hubs `<=2,600`; run findings/stream notes `<=1,200`;
+   skill bodies `<=900`; subagent role cards `<=500`. Split or route when a
+   file needs more. The repo verifier owns the hard word-count checks.
 
 5. **`decisions/` is sectioned by architecture domain, not by date.**
    Each entry has three **mandatory** fields — `Decision` (one sentence

@@ -57,6 +57,13 @@ Run relevant gates whenever practical. If a gate cannot run, report the command
 attempted, why it failed or was unavailable, what cheaper check you ran instead,
 and the residual risk. A skipped gate is not green.
 
+## Usage Reporting
+
+When a runtime exposes raw token counts, worker reports may include the optional
+usage block defined in `orchestrator/dispatch.md`. When it does not, reports use
+`unavailable_reason`. Do not invent counts, infer cache metrics, or translate
+usage into vendor pricing.
+
 ## Dials
 
 Two axes tune every skill. The user sets them by naming them; otherwise both

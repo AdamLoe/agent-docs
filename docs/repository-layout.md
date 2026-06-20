@@ -7,6 +7,7 @@ for workflow surfaces, use
 
 | Path | Purpose |
 |---|---|
+| `.gitattributes` | Git attribute policy for tracked text files. |
 | `README.md` | User-facing install summary. |
 | `AGENTS.md` | Router-only auto-loaded file for agent tools that read it. |
 | `CLAUDE.md` | Router-only auto-loaded file for Claude. |
@@ -18,6 +19,9 @@ for workflow surfaces, use
 | `docs/agent-context/` | Repo-local operating rules for agents working here. |
 | `docs/plans/` | Plan router and lifecycle status area. |
 | `v1/` | Current versioned agent-docs kit. |
+| `v1/agent-docs-guide.md` | Narrative guide for adopting or repairing the docs workflow. |
+| `v1/plan-lifecycle.md` | Generic plan and run-doc lifecycle rules. |
+| `v1/plan-template.md` | Generic tracked-plan skeleton. |
 | `v1/skills/` | Reusable workflow skill directories plus the shared registry. |
 | `v1/rules/` | Generic rules shared by every consuming repo. |
 | `v1/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |

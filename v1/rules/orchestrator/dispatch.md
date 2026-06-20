@@ -91,12 +91,30 @@ Every worker report includes:
 - durable facts or decisions that need migration
 - blockers, assumptions, and residual risk
 - **commit hash for edited work, or a clear no-change report for read-only work**
+- optional `Token usage` block when the runtime exposes usage data, or the same
+  block with `unavailable_reason` when it does not
 
 Routine worker reports target `<=600` output tokens. Planning and review reports
 target `<=1,200` output tokens unless the requested artifact is the report.
 Passing gates report command, exit code, and the shortest proof line. Failing
 gates include the shortest useful failure excerpt. Do not paste full transcripts
 unless the user explicitly requests them.
+
+Use this optional usage shape only for raw counts exposed by the runtime; do not
+invent counts, estimate cache behavior, or convert usage to vendor dollars:
+
+```text
+Token usage:
+- input_tokens:
+- cached_input_tokens:
+- output_tokens:
+- usage_source:
+- unavailable_reason:
+```
+
+When usage is available, fill the three count fields and `usage_source`; leave
+`unavailable_reason` blank or omit it. When usage is unavailable, provide a
+short `unavailable_reason` and leave unknown counts blank or omit them.
 
 ## Rule bundles
 

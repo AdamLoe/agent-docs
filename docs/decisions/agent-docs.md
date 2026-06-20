@@ -235,6 +235,22 @@ short saves output tokens without weakening evidence.
 **Tradeoffs.** Workers spend some input reading source docs directly, but the
 workflow avoids stale generated context and large prior-transcript handoffs.
 
+## Static budgets before usage gates
+
+**Decision.** Agent-docs enforces context economy first with static layer
+contracts and word-count budgets: cache-stable startup inputs stay small,
+task-specific docs are routed by owner, and never-auto-loaded material stays out
+of startup. Worker reports may include raw token usage when the runtime exposes
+it, but unavailable usage is represented by `unavailable_reason`; vendor dollar
+pricing and runtime-specific cache scoring are not part of the contract.
+
+**Why.** Static budgets catch the cheap regressions without requiring every
+adapter to expose identical telemetry. Optional raw counts can inform later
+review, but gating on prices or one runtime's cache model would make the
+tool-neutral kit brittle.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh).
+
 ## Final-state shipping order
 
 **Decision.** Mutating workflows finish all code, docs, plan-frontmatter, and
