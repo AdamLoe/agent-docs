@@ -485,6 +485,8 @@ context_report() {
   local profile_filter=${1:-}
   local found=0
   local id purpose core_paths overlays mutation budget status total exception
+  local display_paths
+  local display_profiles
 
   section "context profiles"
   while IFS=$'\t' read -r id purpose core_paths overlays mutation budget status; do
@@ -495,9 +497,10 @@ context_report() {
     if [ "$total" -gt "$budget" ]; then
       exception="over budget in report-only status; correctness requires listed core files"
     fi
+    display_paths=${core_paths//\`/}
     printf 'PROFILE %s\n' "$id"
     printf '  purpose: %s\n' "$purpose"
-    printf '  files: %s\n' "$core_paths"
+    printf '  files: %s\n' "$display_paths"
     printf '  conditions: %s\n' "$overlays"
     printf '  mutation: %s\n' "$mutation"
     printf '  words: %s/%s\n' "$total" "$budget"
@@ -510,8 +513,9 @@ context_report() {
   section "scenario contract"
   if [ -z "$profile_filter" ]; then
     while IFS=$'\t' read -r id _ _ profiles phases mutators state final budget_expectation; do
+      display_profiles=${profiles//\`/}
       printf 'SCENARIO %s profiles=%s phases=%s mutators=%s state=%s final=%s budget=%s\n' \
-        "$id" "$profiles" "$phases" "$mutators" "$state" "$final" "$budget_expectation"
+        "$id" "$display_profiles" "$phases" "$mutators" "$state" "$final" "$budget_expectation"
     done < <(scenario_rows)
   else
     printf 'SCENARIO CONTRACT AVAILABLE: rerun without --profile for all rows\n'
