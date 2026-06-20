@@ -59,12 +59,25 @@ adapters usable in `$HOME`.
 ## Router-only auto-loaded files
 
 **Decision.** Root `AGENTS.md` and `CLAUDE.md` exist only as routers to the
-docs entry points. They must not own architecture, decisions, or app facts.
+docs entry point. They must not own architecture, decisions, or app facts.
 
 **Why.** Always-loaded fact dumps drift and crowd the context window. Routers
 keep startup cheap while preserving the normal docs tree as the owner.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md).
+
+## Overview is task-routed
+
+**Decision.** Standard skill startup reads `v1/rules/skill-contracts.md`, the
+manifest slots needed by the skill, and `docs/index.md`; `docs/overview.md` is
+loaded only when the task needs system-shape orientation or a skill names it as
+task input.
+
+**Why.** The route audit showed every skill can classify from its own body,
+manifest slots, and the docs index. Making overview optional keeps repeated
+startup cache-stable without losing the one-screen orientation route.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md), [`../../v1/skills/`](../../v1/skills/).
 
 ## Work ships through `/ship-current-work`
 
@@ -150,6 +163,18 @@ compact and grouped by intent instead of exposed as one long undifferentiated
 list.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
+
+## Skill listing reports source plus freshness
+
+**Decision.** `/list-skills` reports the canonical `~/agent-docs/v1/skills/`
+inventory, project-local skill directories, and freshness of the installed
+Claude/Codex adapter copies.
+
+**Why.** Source skill bodies are the contract of record, while tool adapters are
+copied discovery surfaces that can go stale. Listing both prevents an installed
+copy from being mistaken for the authoritative inventory.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/list-skills/SKILL.md`](../../v1/skills/list-skills/SKILL.md), [`../../v1/skills/list-skills/list-skills.sh`](../../v1/skills/list-skills/list-skills.sh), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
 
 ## Subagent-first orchestration
 

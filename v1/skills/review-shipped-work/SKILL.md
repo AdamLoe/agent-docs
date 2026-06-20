@@ -12,9 +12,9 @@ reviewer or implementer — you route the phases and report.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. The plan paths are
-the task; if none are given, ask the two intake questions and wait.
+Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`. The plan paths are the task; if none are given, ask the
+two intake questions and wait.
 
 Once the plans are named, read `docs/plans/index.md`,
 `~/agent-docs/v1/plan-lifecycle.md`, each named plan in full, and

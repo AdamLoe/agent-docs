@@ -11,8 +11,8 @@ not inspect remotes, GitHub, issues, pull requests, or external services.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, `change-to-doc`, `drift-gates`) →
-`index.md` → `overview.md` → stop.
+Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
+`drift-gates`.
 
 This skill is **state-driven**: it runs directly off local disk, git, and plan
 state and does **not** ask the two intake questions. It still honors dials passed

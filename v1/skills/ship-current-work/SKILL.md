@@ -11,8 +11,8 @@ hunk or run gates inline.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`, `decisions-domains`) → `index.md` → `overview.md` → stop.
+Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`, `decisions-domains`.
 
 This skill is **state-driven**: it runs directly off the current git state, with
 no two-question intake. Read `docs/_meta/ownership.json` and the current

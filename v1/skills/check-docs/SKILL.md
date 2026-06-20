@@ -20,10 +20,10 @@ authoritative for what's-where and why.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. The doc paths to check
-are the task; if none are named, run the two-question intake (which doc(s) to
-check, plus dials) and wait before the deeper reads.
+Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`. The doc paths to check are the task; if none are named,
+run the two-question intake (which doc(s) to check, plus dials) and wait before
+the deeper reads.
 
 Once the doc paths are known, read
 `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and

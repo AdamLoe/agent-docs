@@ -13,10 +13,10 @@ asks.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, plan/orchestration slots) →
-`index.md` → `overview.md` → stop. The task is the named plan paths plus any
-custom review lens; if no plan paths or lens are given, run the two-question
-intake and wait.
+Protocol** with manifest slots: `repo_name`, `code_root`, and any
+plan/orchestration slots named by the repo. The task is the named plan paths
+plus any custom review lens; if no plan paths or lens are given, run the
+two-question intake and wait.
 
 Once the plans are named, read `docs/plans/index.md`,
 `~/agent-docs/v1/plan-lifecycle.md`, and `~/agent-docs/v1/plan-template.md` so

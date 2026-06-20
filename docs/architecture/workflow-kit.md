@@ -4,6 +4,9 @@
 routing work to focused roles, not by generating per-run context workspaces.
 The fixed startup runtime-card is `v1/rules/skill-contracts.md`; it stays short
 and points to lifecycle, dispatch, and registry owner docs for deeper policy.
+Mandatory skill startup is cache-first: read the runtime card, the manifest slots
+needed by the skill, and `docs/index.md`, then stop. `docs/overview.md` is a
+task-routed system-shape doc, not a startup prerequisite.
 
 ## Orchestrator/worker model
 
@@ -97,7 +100,7 @@ fix-enabled bundle in `v1/rules/orchestrator/dispatch.md`.
 | Surface | Owns |
 |---|---|
 | `v1/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
-| `v1/skills/registry.md` | Skill inventory and mode/action metadata. |
+| `v1/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
 | `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
 | `v1/verify-agent-docs.sh` | Non-mutating kit drift gate; `--scaffold <repo-root>` checks a target repo's docs scaffold. |
 | `v1/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
@@ -175,6 +178,8 @@ owned by `v1/copy-skills.sh --check`.
   after migration.
 - `/feedback-agent-docs` records a kit-level comment or request from a consuming
   repo into the upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
+- `/list-skills` reports the canonical source skill inventory, project-local
+  skill directories, and Claude/Codex adapter freshness.
 
 ## Command routing
 

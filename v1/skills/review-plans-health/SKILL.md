@@ -13,10 +13,9 @@ delete files unless the user explicitly asks you to apply the cleanup.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, `change-to-doc`) → `index.md` →
-`overview.md` → stop. This skill is **state-driven** — it runs off the plan tree
-on disk, so there is no two-question intake; honor any dials passed in
-`$ARGUMENTS`.
+Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`. This
+skill is **state-driven** — it runs off the plan tree on disk, so there is no
+two-question intake; honor any dials passed in `$ARGUMENTS`.
 
 Then read, inline, the coordination state this review judges against:
 

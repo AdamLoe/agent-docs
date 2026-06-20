@@ -13,10 +13,10 @@ shared shipping shape.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, `drift-gates`) → `index.md` →
-`overview.md` → stop. doctor is **state-driven**: it runs off existing disk and
-git state, so it skips both intake questions and does not stop to ask for a task.
-It still honors dials passed in `$ARGUMENTS`.
+Protocol** with manifest slots: `repo_name`, `code_root`, `drift-gates`. doctor
+is **state-driven**: it runs off existing disk and git state, so it skips both
+intake questions and does not stop to ask for a task. It still honors dials
+passed in `$ARGUMENTS`.
 
 Then read, inline, the coordination state this check validates:
 `docs/_meta/manifest.md`, `docs/_meta/ownership.json`, `v1/skills/registry.md`,

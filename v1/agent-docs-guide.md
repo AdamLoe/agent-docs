@@ -129,7 +129,8 @@ ownership map and the app bindings are **data**, not prose:
   table of "Need → Read" rows. It owns no facts; it points.
 - **`overview.md`** — the system in one screen: a diagram, the major
   components, the handful of hard-to-grep facts (exact dependency
-  versions, environment quirks). Read once at chat start for shape.
+  versions, environment quirks). Read when the task needs first-screen
+  orientation.
 - **`_meta/manifest.md`** — the app's binding to this kit. Fills the
   kit's slots: `code_root` (what code paths resolve against), the
   `change-to-doc` table, the `drift-gates`, the `decisions-domains` set.
@@ -147,12 +148,12 @@ The tree is a decision tree, not a book. A reader never reads it top to
 bottom. The flow is always:
 
 ```
-/fresh-chat  →  _meta/manifest.md  →  index.md  →  overview.md  →  (wait for the task)
-                                                                       │
-                          ┌────────────────────────────┬──────────────┼───────────────┐
-                          ▼                ▼            ▼              ▼
-                  architecture/      decisions/   agent-context/    plans/
-                     index.md         index.md       index.md       index.md
+/fresh-chat  →  _meta/manifest.md  →  index.md  →  (wait for the task)
+                                             │
+             ┌──────────────┬───────────────┼──────────────┬───────────────┐
+             ▼              ▼               ▼              ▼               ▼
+        overview.md   architecture/    decisions/   agent-context/      plans/
+                       index.md         index.md       index.md         index.md
                           │                │            │                │
                      one subsystem    one domain    one procedure   one plan
 ```
@@ -348,8 +349,9 @@ reusable entry point.
 
 Auto-loaded files such as `CLAUDE.md`, `AGENTS.md`, or equivalents must not
 own architecture, decisions, or app-specific facts. They may exist only as
-router/adapters when a tool requires one: point to `docs/index.md`,
-`docs/overview.md`, and relevant skill entry points, then stop.
+router/adapters when a tool requires one: point to `docs/index.md` and relevant
+skill entry points, then stop. `docs/overview.md` is a task route from the
+index, not mandatory adapter startup.
 
 `docs/` owns app facts. Skills and rules own workflow. Tool adapters own no
 facts.
@@ -358,7 +360,7 @@ facts.
 
 Every skill reads [`rules/skill-contracts.md`](rules/skill-contracts.md) at
 startup and runs the same **Standard Intake Protocol**: read the manifest and
-the two router files, then stop. If the invocation already carries a task, it
+`docs/index.md`, then stop. If the invocation already carries a task, it
 proceeds; if not, it asks exactly two questions — a dial picker and an
 open-ended "what do you want to do?" — and waits, without guessing the task.
 A few context-free skills (e.g. `/start-session`, `/clear-plans`,

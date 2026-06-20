@@ -18,8 +18,7 @@ recoverable from docs, code, or git history; it does not ship a diff. Scope is
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, `decisions-domains`) → `index.md`
-→ `overview.md` → stop.
+Protocol** with manifest slots: `repo_name`, `code_root`, `decisions-domains`.
 
 This skill is **state-driven**: it runs directly off this session's history, with
 no two-question intake. Read `docs/_meta/ownership.json` and the

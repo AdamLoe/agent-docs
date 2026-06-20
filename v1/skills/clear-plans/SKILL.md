@@ -12,9 +12,8 @@ hand-edit plans or migrate facts in your own context.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, plus `change-to-doc` and
-`drift-gates`/`drift-verification` for any migration follow-up) → `index.md` →
-`overview.md` → stop.
+Protocol** with manifest slots: `repo_name`, `code_root`, plus `change-to-doc`
+and `drift-gates`/`drift-verification` for any migration follow-up.
 
 This skill is **state-driven**: it runs directly off `docs/plans/` and git state,
 so there is no two-question intake. Honor any dials passed in `$ARGUMENTS` where

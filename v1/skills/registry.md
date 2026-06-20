@@ -13,16 +13,15 @@ workflow produces commits, which happen through editing workers, not an inline
 top-level commit. **Intake**: `asks` skills run the two-question intake when
 launched without context; `no-prompt` skills operate on existing disk/git state
 and run directly (honoring any dials passed in). **Launch tier** is the
-recommended model to launch the skill on (planning/review → strong;
-implementation and mechanical work → mid). All are defined in
-`v1/rules/skill-contracts.md`.
+recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
+`strongest`. All are defined in `v1/rules/skill-contracts.md`.
 
 ## Start and plan
 
 | Skill | Mode | Action | Worker roles | Commits | Intake | Launch | Normal Input |
 |---|---|---|---|---|---|---|---|
 | `start-session` | bootstrap | inspect local repo and plan state, then route to the owning workflow skill | routes; plan-maintenance, review, verification | only through routed skills | no-prompt | mid | optional task or dials |
-| `fresh-chat` | bootstrap | load docs router and route ordinary work | routes; optional review/docs-maintenance | no | asks | any | user's first task |
+| `fresh-chat` | bootstrap | load docs router and route ordinary work | routes; optional review/docs-maintenance | no | asks | mid | user's first task |
 | `plan` | planning | shape app-state thoughts into briefs, plans, or discussion | planning, review, docs-maintenance | only if it edits tracked docs/plans (via workers) | asks | strong | planning context |
 | `orchestrate` | lifecycle orchestration | orchestrate quick-fix through plan/review/implement/review lifecycle | planning, review, implementation, verification, plan-maintenance | yes, via workers | asks | strong | change request |
 
@@ -49,7 +48,7 @@ implementation and mechanical work → mid). All are defined in
 | `check-docs` | report-only | check named docs for mechanical drift | docs-maintenance, verification | no | asks | mid | doc paths |
 | `fix-docs-drift` | mutating | repair docs drift across the tree | docs-maintenance, review, verification, implementation | yes, via workers | no-prompt | mid | optional scope/dials |
 | `doctor` | report-only by default | validate scaffold, manifest, ownership, registry, and stale references | verification, docs-maintenance, implementation | only if user asks to fix failures | no-prompt | mid | optional scope |
-| `list-skills` | report-only | list discoverable skills | none (inline); optional verification | no | no-prompt | mid | optional filter |
+| `list-skills` | report-only | list source skills and adapter freshness | none (inline); optional verification | no | no-prompt | mid | optional filter |
 | `feedback-agent-docs` | capture | record kit feedback into the upstream inbox | none (inline); optional docs-maintenance | no (writes the kit inbox, not the repo) | no-prompt | mid | optional feedback content |
 
 Suite-wide policy lives in `v1/rules/skill-contracts.md`; orchestrator policy in

@@ -12,7 +12,7 @@ code_root: v1/
 | Per-tool adapters, skill discovery, cross-tool contract, skill copy refresh | docs/architecture/install-and-adapters.md, v1/copy-skills.sh |
 | Router-only auto-loaded files | AGENTS.md, CLAUDE.md, README.md, docs/architecture/install-and-adapters.md |
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, v1/agent-docs-guide.md |
-| Skill registry and shared skill contracts | v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
+| Skill registry, command bodies, and shared skill contracts | v1/skills/, v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
 | Drift gates and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
 | Docs scaffold template and consuming-repo scaffold checks | v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md |

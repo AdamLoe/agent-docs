@@ -8,17 +8,16 @@ individual skill bodies.
 
 ## Standard Intake Protocol
 
-Run this exact startup order:
+Run this exact cache-first startup order:
 
 1. Read this file.
 2. Read `docs/_meta/manifest.md` for `repo_name`, `code_root`, and any task
    slots needed (`change-to-doc`, `drift-gates`, `drift-verification`,
    `decisions-domains`).
 3. Read `docs/index.md`.
-4. Read `docs/overview.md`.
-5. Stop. Do not load more rules, architecture/decisions/agent-context docs,
-   plans, templates, registry, ownership, or source until the task state says
-   they are needed.
+4. Stop. Do not load `docs/overview.md`, more rules,
+   architecture/decisions/agent-context docs, plans, templates, registry,
+   ownership, or source until the task state says they are needed.
 
 Then branch:
 
@@ -37,7 +36,10 @@ Then branch:
 
 Use the skill body or `v1/skills/registry.md` Intake column to identify
 `asks` vs. `no-prompt`. Query `docs/_meta/ownership.json` only for ownership
-questions; do not bulk-load it.
+questions; do not bulk-load it. Treat `docs/overview.md` as a normal
+task-routed doc from `docs/index.md`: read it for system-shape orientation,
+docs-shape review, scaffold repair, or another explicit task need, not as part
+of mandatory startup.
 
 ## Human Stops
 
@@ -91,8 +93,9 @@ Use role-based names so adapters can map them locally: `cheap`, `mid-tier`,
   workers freely; `review-high`/`review-max` adds a strong red-team or second
   opinion where useful.
 
-A skill's launch tier is recorded in `v1/skills/registry.md`. Dispatched workers
-follow the role mapping above regardless of launch tier.
+A skill's launch tier is recorded in `v1/skills/registry.md` as `cheap`, `mid`,
+`strong`, or `strongest`; `mid` maps to the `mid-tier` role above. Dispatched
+workers follow the role mapping above regardless of launch tier.
 
 ## Owner Pointers
 

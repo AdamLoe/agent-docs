@@ -12,9 +12,9 @@ worker or `/plan` instead of dispatching implementation.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. The problem to fix is
-the task; if it is missing, run the two-question intake and wait.
+Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`. The problem to fix is the task; if it is missing, run the
+two-question intake and wait.
 
 Once the problem is known, read
 `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and

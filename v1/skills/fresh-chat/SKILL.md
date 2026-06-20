@@ -11,16 +11,17 @@ spawning a worker yourself only for a broad read-only context question.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`) → `index.md` → `overview.md` →
-stop. This skill is **not** state-driven: when launched without a task in
-`$ARGUMENTS`, run the two-question intake and wait — do not guess the task, do
-not offer a menu of tasks.
+Protocol** with manifest slots: `repo_name`, `code_root`. This skill is **not**
+state-driven: when launched without a task in `$ARGUMENTS`, run the
+two-question intake and wait — do not guess the task, do not offer a menu of
+tasks.
 
 Once the request is known, read
 `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
 `~/agent-docs/v1/rules/orchestrator/dispatch.md` to apply the reads-vs-dispatch
 test and route. Load the smallest matching route for the user's actual request:
 
+- System shape or first-screen orientation → `docs/overview.md`.
 - Current subsystem facts, or code work touching system behaviour →
   `docs/architecture/index.md`, then the subsystem doc it routes to.
 - Rationale / "why is it this way?" → `docs/decisions/index.md`, then the
@@ -42,7 +43,6 @@ Routing context only, read inline — this is coordination state, not task work:
 - Orchestrator core (skill-contracts, lifecycle, dispatch — above).
 - `docs/_meta/manifest.md` for `repo_name` and `code_root`.
 - `docs/index.md`.
-- `docs/overview.md`.
 - The smallest route for the user's actual request.
 
 ## Worker phases

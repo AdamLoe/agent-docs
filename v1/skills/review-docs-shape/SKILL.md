@@ -14,10 +14,10 @@ in a later skill the human invokes. As a broad review this defaults to
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol** as a state-driven skill: this skill runs directly off disk and git
-state with no two-question intake. Read `docs/_meta/manifest.md` (`code_root`,
-`decisions-domains`, plus `change-to-doc` when direction/debt is in scope),
-`docs/index.md`, and `docs/overview.md`. Honor any dials passed in `$ARGUMENTS`.
+Protocol** with manifest slots: `code_root`, `decisions-domains`, plus
+`change-to-doc` when direction/debt is in scope. This skill runs directly off
+disk and git state with no two-question intake. Honor any dials passed in
+`$ARGUMENTS`.
 
 Then orient against the review target so the opinion is grounded, not
 free-floating. Read inline (this is coordination reading, not worker dispatch):
@@ -27,6 +27,8 @@ free-floating. Read inline (this is coordination reading, not worker dispatch):
 - The relevant index docs (`docs/architecture/index.md`,
   `docs/decisions/index.md`, `docs/agent-context/index.md`) for whichever layers
   are in scope — to judge routing and fit.
+- `docs/overview.md` when the review covers first-screen orientation or
+  whole-tree coverage.
 - The target docs or subtree (skim, don't deep-read — that is worker work).
 - Active plans in `docs/plans/` when direction matters — to judge what's coming
   that the docs will need to serve.

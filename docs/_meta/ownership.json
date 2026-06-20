@@ -37,8 +37,8 @@
     },
     {
       "surface": "skill-contracts",
-      "paths": ["v1/skills/registry.md", "v1/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
-      "owns": ["skill registry", "skill modes", "shared skill bootstrap", "shared skill shipping", "generic model language"]
+      "paths": ["v1/skills/", "v1/skills/registry.md", "v1/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["skill registry", "skill modes", "skill command bodies", "shared skill bootstrap", "shared skill shipping", "generic model language"]
     },
     {
       "surface": "authoring-rules",

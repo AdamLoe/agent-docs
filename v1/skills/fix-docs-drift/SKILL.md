@@ -17,10 +17,10 @@ calls, and "doc may be the spec, code may be the bug" mismatches get escalated.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. This skill is
-**state-driven**: it runs off the docs tree itself, so it skips the two-question
-intake and runs directly. Honor any dials passed in `$ARGUMENTS`. Default
+Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
+`drift-gates`, `drift-verification`. This skill is **state-driven**: it runs off
+the docs tree itself, so it skips the two-question intake and runs directly.
+Honor any dials passed in `$ARGUMENTS`. Default
 **`cost-high`** — a whole-tree sweep is the high-fan-out band per
 `skill-contracts.md`; a small or targeted sweep resolves to `cost-medium`, an
 explicit quick pass to `cost-low`.

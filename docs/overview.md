@@ -22,7 +22,7 @@ consuming repo supplies app-specific facts in its own `docs/_meta/`.
 The repo is tool-neutral. Tool-owned paths are only adapters:
 
 - `AGENTS.md` and `CLAUDE.md` are root router files that point to
-  `docs/index.md` and `docs/overview.md`
+  `docs/index.md`; this overview is task-routed from that index
 - `~/.claude/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by
   `v1/copy-skills.sh`
 - `~/.agents/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by

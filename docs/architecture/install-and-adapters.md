@@ -9,8 +9,8 @@ Tool-owned paths are adapters only.
 
 | Path | Target | Purpose |
 |---|---|---|
-| `AGENTS.md` | `docs/index.md`, `docs/overview.md` | Root router for agent tools that auto-load it. |
-| `CLAUDE.md` | `docs/index.md`, `docs/overview.md` | Root router for Claude. |
+| `AGENTS.md` | `docs/index.md` | Root router for agent tools that auto-load it. |
+| `CLAUDE.md` | `docs/index.md` | Root router for Claude. |
 | `~/.claude/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Claude personal skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
 | `~/.agents/skills/<name>` | copied from `~/agent-docs/v1/skills/<name>` | Codex native user skill discovery. Agent-docs copies carry `.agent-docs-managed`. |
 
@@ -18,7 +18,8 @@ Tool-owned paths are adapters only.
 points at the checkout root, not at `v1/`; the version segment remains explicit
 wherever a file path enters the kit. Claude plugin manifests are not a supported
 adapter path for this repo. Root auto-loaded files are router-only adapters and
-must not own architecture, decisions, or workflow facts.
+must not own architecture, decisions, or workflow facts; `docs/overview.md` is
+read through the docs index when a task needs system-shape orientation.
 
 ## Installer
 

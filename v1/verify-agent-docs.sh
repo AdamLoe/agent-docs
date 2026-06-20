@@ -402,8 +402,8 @@ require_doc_route "docs/index.md" "repository-layout.md" "docs"
 for router_file in AGENTS.md CLAUDE.md; do
   grep -Fq 'docs/index.md' "$repo_root/$router_file" ||
     fail "$router_file must route to docs/index.md"
-  grep -Fq 'docs/overview.md' "$repo_root/$router_file" ||
-    fail "$router_file must route to docs/overview.md"
+  ! grep -Fxq -- '- `docs/overview.md`' "$repo_root/$router_file" ||
+    fail "$router_file must not list docs/overview.md as a mandatory startup route"
   grep -Fq 'router only' "$repo_root/$router_file" ||
     fail "$router_file must state that it is router only"
 done
@@ -449,6 +449,75 @@ section "scaffold template checks"
 check_scaffold_tree "$repo_root/v1/template" "template docs scaffold"
 
 require_file "v1/skills/registry.md"
+
+declare -A registry_seen=()
+registry_row_count=0
+while IFS=$'\t' read -r tag line_no name mode action worker_roles commits intake launch normal_input; do
+  case "$tag" in
+    MALFORMED)
+      fail "malformed registry row at line $line_no: $name"
+      ;;
+    ROW)
+      ;;
+    *)
+      fail "unexpected registry parser output: $tag"
+      ;;
+  esac
+
+  [ "$name" != "" ] || fail "registry row at line $line_no has empty skill name"
+  [ "$mode" != "" ] || fail "registry row for $name has empty mode"
+  [ "$action" != "" ] || fail "registry row for $name has empty action"
+  [ "$worker_roles" != "" ] || fail "registry row for $name has empty worker roles"
+  [ "$commits" != "" ] || fail "registry row for $name has empty commits metadata"
+  [ "$normal_input" != "" ] || fail "registry row for $name has empty normal input"
+
+  [ -z "${registry_seen[$name]+set}" ] || fail "duplicate registry row for skill: $name"
+  registry_seen[$name]=1
+  registry_row_count=$((registry_row_count + 1))
+
+  [ -d "$repo_root/v1/skills/$name" ] ||
+    fail "registry has stale skill row with no directory: $name"
+
+  case "$mode" in
+    bootstrap|planning|mutating|report-only|capture) ;;
+    "lifecycle orchestration"|"review with optional fixes"|"report-only by default") ;;
+    *) fail "registry row for $name has invalid mode: $mode" ;;
+  esac
+
+  case "$commits" in
+    no|"only through routed skills"|"only if it edits tracked docs/plans (via workers)") ;;
+    "yes, via worker"|"yes, via workers"|"yes, via plan-maintenance worker"|"yes, via docs-maintenance worker") ;;
+    "yes, only if a fix worker runs"|"only if user asks to apply edits"|"only if user asks to fix failures") ;;
+    "no (writes the kit inbox, not the repo)") ;;
+    *) fail "registry row for $name has invalid commits metadata: $commits" ;;
+  esac
+
+  case "$intake" in
+    asks|no-prompt) ;;
+    *) fail "registry row for $name has invalid intake: $intake" ;;
+  esac
+
+  case "$launch" in
+    cheap|mid|strong|strongest) ;;
+    *) fail "registry row for $name has invalid launch tier: $launch" ;;
+  esac
+done < <(
+  awk -F'|' '
+    /^\| `[^`]+` \|/ {
+      if (NF != 10) {
+        printf "MALFORMED\t%d\t%s\n", NR, $0
+        next
+      }
+      for (i = 2; i <= 9; i++) {
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
+      }
+      name = $2
+      gsub(/^`|`$/, "", name)
+      printf "ROW\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", NR, name, $3, $4, $5, $6, $7, $8, $9
+    }
+  ' "$repo_root/v1/skills/registry.md"
+)
+[ "$registry_row_count" -gt 0 ] || fail "registry has no skill rows"
 
 skill_count=0
 for skill_file in "$repo_root"/v1/skills/*/SKILL.md; do

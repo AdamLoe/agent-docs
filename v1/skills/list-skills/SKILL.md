@@ -1,15 +1,16 @@
 ---
 name: list-skills
-description: Report the available skill inventory, grouped by source/category.
+description: Report the canonical source skill inventory, project skills, and installed adapter freshness.
 ---
 
 You are the orchestrator for a report-only skill-inventory listing in the current
-session. You report the skills that actually exist, grouped by source/category.
-Reading the registry and skill frontmatter is inline routing work — the
-orchestrator does it the same way `start-session` reads and summarizes plan
-state, under the uniform reads-vs-dispatch boundary. This is not a separate
-direct path; dispatch a worker only for the rare parts that cross that boundary.
-Do not invent skills, and do not run any listed skill.
+session. Report the canonical agent-docs source skills, project-local skills,
+and whether the installed Claude/Codex adapter copies are fresh. Reading the
+registry and skill frontmatter is inline routing work — the orchestrator does it
+the same way `start-session` reads and summarizes plan state, under the uniform
+reads-vs-dispatch boundary. This is not a separate direct path; dispatch a worker
+only for the rare parts that cross that boundary. Do not invent skills, and do
+not run any listed skill.
 
 ## Bootstrap
 
@@ -27,19 +28,22 @@ Then read, inline, the routing/IO state this listing is built from:
   `~/agent-docs/v1/rules/orchestrator/dispatch.md` — to confirm the
   reads-vs-dispatch boundary and worker routing if a phase is warranted.
 
-A helper ships beside this skill to do the on-disk scan and formatting:
+A helper ships beside this skill to do the on-disk scan, freshness comparison,
+and formatting:
 
 ```sh
 bash ~/.agents/skills/list-skills/list-skills.sh "$ARGUMENTS"
 ```
 
 From another adapter, use that copied skill path instead, e.g.
-`bash ~/.claude/skills/list-skills/list-skills.sh "$ARGUMENTS"`. The helper scans
-global skills copied into `~/.agents/skills/<name>` and `~/.claude/skills/<name>`
-by `v1/copy-skills.sh`, plus project skills in the current repo's
-`.agents/skills/<name>` and `.claude/skills/<name>`. Built-in / plugin skills are
-not reliably globbable; if the session's available-skills list names skills the
-scans miss, include them under a best-effort "Built-in / plugin" group.
+`bash ~/.claude/skills/list-skills/list-skills.sh "$ARGUMENTS"`. The helper
+lists `~/agent-docs/v1/skills/<name>` as the canonical source inventory, scans
+project skills in the current repo's `.agents/skills/<name>` and
+`.claude/skills/<name>`, and compares installed copies in
+`~/.agents/skills/<name>` and `~/.claude/skills/<name>` to the source. Built-in /
+plugin skills are not reliably globbable; if the session's available-skills list
+names skills the scans miss, include them under a best-effort
+"Built-in / plugin" group.
 
 ## Worker phases
 
@@ -54,19 +58,22 @@ Dispatch a worker only when the request crosses the boundary:
   row and directory) rather than a plain listing. Pass
   `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`, scoped to the skill inventory.
-- **Adapter-freshness worker** only when the user asks about installed copies
-  (whether `~/.agents/skills/` and `~/.claude/skills/` match the `v1/` source).
-  Pass `~/agent-docs/v1/rules/subagent/verification.md` and
+- **Adapter-freshness worker** only when the user wants deeper evidence than the
+  helper summary (for example, exact stale file names under `~/.agents/skills/`
+  or `~/.claude/skills/`). Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`, scoped to that comparison.
 
 ## Closeout
 
 Report:
 
-- the skill list grouped by source/category — **Global (agent-docs)**,
+- the skill list grouped by source/category — **Source (agent-docs)**,
   **Project**, **Built-in / plugin** — one line per skill as
   `` - `/<name>` — <description> ``, descriptions trimmed to the first sentence.
-- any registry mismatches or missing skill directories if discovered.
+- installed adapter freshness for Claude and Codex.
+- any registry mismatches, missing skill directories, or stale adapter copies if
+  discovered.
 - a no-change result: this skill only reports. Repairs go through another skill,
   not here.
 

@@ -13,8 +13,7 @@ skill, but you also do not invent a worker for a one-line append.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`repo_name`, `code_root`) → `index.md` → `overview.md` →
-stop.
+Protocol** with manifest slots: `repo_name`, `code_root`.
 
 This skill is **state-driven**: skip the dial/task intake — it operates on the
 existing conversation plus the inbox on disk, and the dials are inert for a pure

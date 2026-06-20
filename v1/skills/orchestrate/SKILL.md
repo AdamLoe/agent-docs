@@ -13,9 +13,9 @@ into implementer mode.
 ## Bootstrap
 
 Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
-Protocol**: manifest (`code_root`, `change-to-doc`, `drift-gates`,
-`drift-verification`) → `index.md` → `overview.md` → stop. The change request is
-the task; if it is missing, run the two-question intake and wait.
+Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
+`drift-verification`. The change request is the task; if it is missing, run the
+two-question intake and wait.
 
 Once the change is known, read
 `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
