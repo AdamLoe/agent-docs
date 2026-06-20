@@ -1,7 +1,7 @@
 ---
 status:        draft
 owner:         codex
-last_updated:  2026-06-19
+last_updated:  2026-06-20
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -10,7 +10,23 @@ owning_docs:
   - decisions/agent-docs.md
 ---
 
-# Agent-docs hardened system pitch
+# Agent-docs hardened system pitch (migration reference)
+
+## Context Status
+
+This file is reference and migration context only. Do not dispatch
+implementation work from it, and do not treat it as a peer plan alongside
+`agent-docs-hardening.md` and `token-economy.md`.
+
+Implementation workers should use `agent-docs-hardening.md` as the active anchor
+and `token-economy.md` as the folded companion for token-economy scope. During
+the reader-path closeout, compare the pitch material below against the shipped
+system and migrate only still-true facts/rationale into architecture and
+decisions. After that migration, this file may be marked `shipped` and
+`okay_to_delete: true`.
+
+The current `draft` status is intentional: the material is useful context, but
+it is not itself an actionable implementation plan.
 
 ## The Pitch
 
@@ -207,7 +223,9 @@ checkpoints, not a one-to-one list of spawned subagents:
 ## Flow Of Work
 
 - **New chat**
-  - Read `docs/index.md` and `docs/overview.md`.
+  - Read `docs/index.md` and `docs/overview.md` under the current default.
+  - Keep `docs/overview.md` mandatory until the active plans' route audit proves
+    it can become task-routed.
   - Use `/fresh-chat` or `/start-session` when the next action is unclear.
 - **Small bug or cleanup**
   - Use `/quick-fix`.
@@ -282,6 +300,7 @@ checkpoints, not a one-to-one list of spawned subagents:
 ## See Also
 
 - [`agent-docs-hardening.md`](agent-docs-hardening.md)
+- [`token-economy.md`](token-economy.md)
 - [`orchestrator/repo-wide-review-2026-06-19/findings/synthesis.md`](orchestrator/repo-wide-review-2026-06-19/findings/synthesis.md)
 - [`../../docs/architecture/workflow-kit.md`](../architecture/workflow-kit.md)
 - [`../../docs/architecture/install-and-adapters.md`](../architecture/install-and-adapters.md)

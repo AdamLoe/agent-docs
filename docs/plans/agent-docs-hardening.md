@@ -1,7 +1,7 @@
 ---
-status:        draft
+status:        active
 owner:         codex
-last_updated:  2026-06-19
+last_updated:  2026-06-20
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -32,6 +32,9 @@ In scope:
 - Metadata ownership, command ownership, registry validation, and layout checks.
 - Skill body/registry drift cleanup.
 - Reader-path docs that explain the working model without bloating routers.
+- Token-economy policy folded from `token-economy.md`: cache-stable startup,
+  source-first dispatch, compact output, static doc/skill budgets, and optional
+  telemetry.
 
 Out of scope:
 
@@ -41,6 +44,33 @@ Out of scope:
   `docs/plans/` files.
 - Moving durable architecture facts before the implementation proves the final
   shape.
+
+## Accepted Scope And Deferrals
+
+Accepted scope for this lifecycle is the work already listed in this plan's six
+streams plus the five token-economy streams in `token-economy.md`. Implementation
+workers should use the combined waves below as the serial source of truth; do not
+treat `agent-docs-new-system-pitch.md` as a third implementation plan.
+
+Defaults and deferred scope:
+
+- Keep `docs/overview.md` mandatory during startup until the startup/skill wave
+  completes a route audit proving every skill can classify without it. Only then
+  make `docs/overview.md` task-routed.
+- Run copy/install safety before any skill-body normalization or copied-adapter
+  refresh. `copy-skills.sh` safety is a prerequisite, not cleanup after the
+  skill rewrite.
+- Static doc, rule, and skill size caps become hard verifier checks once
+  documented. Per-run output caps remain review heuristics until telemetry
+  exists.
+- Defer per-skill budget/profile registry columns until baseline usage data
+  exists.
+- Keep `/list-skills`, feedback capture, and `AGENT_DOCS_SKILLS_DEST` aligned
+  with source and docs after implementation workers inspect their current
+  behavior; this plan does not choose those defaults from prose alone.
+- Migrate useful pitch material during the reader-path closeout. Only after that
+  migration may `agent-docs-new-system-pitch.md` be marked shipped and
+  `okay_to_delete: true`.
 
 ## Approach
 
@@ -60,12 +90,14 @@ Work:
   by default unless an explicit force/ownership mode is added.
 - Preflight all unmanaged skill-name conflicts before deleting stale managed
   entries or copying updated skills.
-- Decide whether `AGENT_DOCS_SKILLS_DEST` is public testing behavior. Document
-  it if yes; clear or ignore it from `install.sh` if no.
+- Inspect source and docs for `AGENT_DOCS_SKILLS_DEST`, then make behavior and
+  documentation agree. If it remains public testing behavior, document it; if
+  not, clear or ignore it from `install.sh`.
 - Consider `--dry-run` for copy/install so users can inspect mutations before
   touching tool skill roots.
 - Clarify the three path concepts in prose: physical checkout, canonical
   `~/agent-docs` self-reference, and copied tool skill adapters.
+- Finish this stream before skill normalization or copied-adapter refresh.
 
 Acceptance:
 
@@ -209,10 +241,11 @@ Work:
 - Rewrite `fix-docs-drift` so cross-file judgment goes to workers; remove
   retired `Update when` / `Living notes` concepts if they are no longer part of
   the doc model.
-- Decide where feedback capture lives when dogfooding inside `agent-docs`:
-  ignored in-repo inbox, out-of-repo inbox, or committed feedback records.
-- Decide whether `/list-skills` reports canonical source inventory, installed
-  adapter inventory, or both with freshness state.
+- Inspect source and docs for feedback capture when dogfooding inside
+  `agent-docs`, then align behavior with one documented destination.
+- Inspect source and docs for `/list-skills`, then make the command and docs
+  agree on whether it reports canonical source inventory, installed adapter
+  inventory, or both with freshness state.
 - Replace the undefined `fresh-chat` launch tier with a registry-valid value or
   document `any` as valid and verify it.
 
@@ -244,7 +277,8 @@ Work:
   recoverability by moving workflow facts into auto-loaded files.
 - After implementation, migrate the pitch from
   `docs/plans/agent-docs-new-system-pitch.md` into architecture and decisions
-  if it still reflects the system.
+  if it still reflects the system. The pitch is migration evidence only; do not
+  dispatch implementation from it.
 
 Acceptance:
 
@@ -252,43 +286,59 @@ Acceptance:
 - Router files remain facts-free.
 - `bash v1/verify-agent-docs.sh`
 
-## Sequencing
+## Combined Implementation Waves
 
-1. **Install safety first.** This is the only finding with realistic user-data or
-   tool-discovery risk.
-2. **Verifier/scaffold second.** The kit needs to know what it is validating
-   before tightening every downstream gate.
-3. **Rules/lifecycle third.** Once verification boundaries are clear, align
-   dispatch bundles, ship order, plan persistence, and dirty-tree discipline.
-4. **Metadata fourth.** Add ownership and mechanical drift checks after the
-   intended contracts are stable.
-5. **Skill cleanup fifth.** Bring registry and skill bodies into the hardened
-   contract.
-6. **Reader path last.** Rewrite overview/README/architecture language after the
-   implementation has settled.
+Run editing serially on the shared working tree. Read-only planning or review can
+fan out only when it does not create competing edit instructions.
 
-Parallelism:
-
-- Streams 1 and 2 should run serially if both touch verifier/install docs.
-- Stream 3 should run mostly serially because the same central rule files
-  define lifecycle semantics.
-- Streams 4 and 5 can run in parallel after Streams 2 and 3 settle if they use
-  disjoint files.
-- Stream 6 should be final docs-maintenance work.
+1. **Install/copy safety.** Complete Stream 1 before any skill-body
+   normalization or adapter refresh. This wave owns `copy-skills.sh`,
+   `install.sh`, install docs, path terminology, conflict preflight,
+   symlink-root handling, and the `AGENT_DOCS_SKILLS_DEST` source/docs decision.
+2. **Verifier/scaffold boundary.** Complete Stream 2 so workers know whether a
+   check validates the kit checkout, a consuming-repo scaffold, or local adapter
+   freshness before tightening downstream gates.
+3. **Combined lifecycle/dispatch policy.** Merge Stream 3 with token-economy
+   Streams 2 and 3. This wave owns dispatch bundles, mutation authority, ship
+   order, tracked-plan persistence, dirty-tree discipline, source-doc vs summary
+   policy, compact reports, gate excerpts, and cost-dial output heuristics.
+4. **Startup/skill normalization after overview audit.** Merge Stream 5 with
+   token-economy Stream 1 only after Wave 1 is done. Keep `docs/overview.md`
+   mandatory until this wave proves every skill can classify without it; if the
+   audit passes, make it task-routed and normalize skill bodies/registry rows.
+   Refresh copied adapters only through the now-safe copy path.
+5. **Metadata/budgets/telemetry/enforcement.** Merge Stream 4 with the remaining
+   skill-suite cleanup plus token-economy Streams 4 and 5. This wave owns
+   registry/body drift checks, ownership/manifest coverage, repository-layout
+   coverage, static doc/skill budget checks, optional token-usage report shape,
+   and telemetry validation when data exists.
+6. **Reader-path and migration closeout.** Finish Stream 6 last. Rewrite the
+   overview, README, plan index, architecture, and decisions from the implemented
+   state; migrate useful pitch material; then update plan statuses only after
+   durable context has landed.
 
 ## Exit Gate
 
 The plan is done when:
 
-- All accepted findings from
+- The accepted scope in this plan and `token-economy.md` has shipped, and any
+  deferral named in "Accepted Scope And Deferrals" is explicitly preserved in
+  the final report or follow-up plan.
+- Findings from
   `docs/plans/orchestrator/repo-wide-review-2026-06-19/findings/synthesis.md`
-  are fixed or explicitly deferred.
+  are resolved to one of those accepted or deferred buckets.
 - Durable current-state facts are migrated into:
   - `docs/architecture/install-and-adapters.md`
   - `docs/architecture/workflow-kit.md`
   - `docs/repository-layout.md`
 - Durable rationale is migrated into `docs/decisions/agent-docs.md`.
 - New or changed ownership mappings are in `docs/_meta/ownership.json`.
+- Token-economy defaults are represented truthfully: static doc/skill caps are
+  hard checks, per-run output caps are review heuristics until telemetry exists,
+  and per-skill budget/profile registry columns remain deferred until baseline
+  usage exists.
+- Useful pitch material is migrated into architecture/decisions, and the pitch
+  file is closed only after that migration.
 - The final mutation is followed by:
 
   ```sh
@@ -314,6 +364,8 @@ At ship time, migrate:
   `docs/architecture/install-and-adapters.md`.
 - Workflow lifecycle, dispatch bundles, ship order, and plan persistence to
   `docs/architecture/workflow-kit.md`.
+- Cache-stable startup, source-first dispatch, compact output, budget layers,
+  and telemetry defaults to `docs/architecture/workflow-kit.md`.
 - Subagent spawn topology and ship-order ownership to
   `docs/architecture/workflow-kit.md` and, if it records a durable tradeoff,
   `docs/decisions/agent-docs.md`.
@@ -321,11 +373,15 @@ At ship time, migrate:
   `docs/repository-layout.md`.
 - Rationale for verifier split, mutation authority, adapter ownership, and
   feedback/list-skills behavior to `docs/decisions/agent-docs.md`.
+- Rationale for overview route gating, static-vs-heuristic token caps, and
+  deferred per-skill budget/profile registry columns to
+  `docs/decisions/agent-docs.md`.
 - Ownership changes to `docs/_meta/ownership.json`.
 
 ## See Also
 
 - [`agent-docs-new-system-pitch.md`](agent-docs-new-system-pitch.md)
+- [`token-economy.md`](token-economy.md)
 - [`orchestrator/repo-wide-review-2026-06-19/findings/synthesis.md`](orchestrator/repo-wide-review-2026-06-19/findings/synthesis.md)
 - [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md)
 - [`../../v1/plan-template.md`](../../v1/plan-template.md)
