@@ -40,6 +40,7 @@ recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
 
 | Skill | Mode | Action | Worker roles | Commits | Intake | Launch | Normal Input |
 |---|---|---|---|---|---|---|---|
+| `review-app` | review with approved planning | run a configured app audit, report findings, then create approved cleanup plans | review, planning, plan-maintenance, verification | yes, via plan-maintenance worker for opted-in run docs and approved plans | asks | strong | app scope, lenses, run-doc choice, plan approval |
 | `review-shipped-work` | review with optional fixes | review work against named plans | review, implementation, docs-maintenance, plan-maintenance, verification | yes, only if a fix worker runs | asks | strong | plan paths |
 | `review-plans` | report-only by default | critique named plans with a high-level or custom lens | review, planning | only if user asks to apply edits | asks | strong | plan paths and optional custom lens |
 | `review-plans-health` | report-only | review `docs/plans/` hygiene | plan-maintenance, review | no | no-prompt | mid | optional scope |

@@ -3,9 +3,9 @@
 `v1/` is the stable and active kit version. The workflow lowers context by
 routing work to focused roles, not by generating per-run context workspaces.
 The fixed startup runtime-card is `v1/rules/skill-contracts.md`; deeper policy
-lives in lifecycle, dispatch, and registry docs. Mandatory skill startup is
+lives in lifecycle, dispatch, and registry docs. Mandatory startup is
 cache-first: read the runtime card, needed manifest slots, and `docs/index.md`,
-then stop. `docs/overview.md` is task-routed, not a startup prerequisite.
+then stop. `docs/overview.md` is task-routed.
 
 ## Context layers
 
@@ -22,14 +22,13 @@ in `v1/rules/authoring-rules.md` and are enforced by `v1/verify-agent-docs.sh`.
 ## Orchestrator/worker model
 
 The kit is **subagent-first**. Every user-facing skill is an orchestrator entry
-point: it classifies the request, chooses lifecycle phases, dispatches workers
-with exact rule-file routes, tracks observed evidence, and reports to the human.
-Workers do the planning, implementation, review, maintenance, or verification.
+point: it classifies the request, chooses phases, dispatches workers with exact
+rule routes, tracks evidence, and reports. Workers do planning, implementation,
+review, maintenance, or verification.
 
 An orchestrator only does a step inline when it is pure routing or IO under the
-reads-vs-dispatch test: read across no more than a couple of files, no
-defensible judgment call, no mutation, and no gate. Worker dispatch is expected
-of the runtime; an adapter that cannot spawn a required worker reports an error.
+reads-vs-dispatch test: no broad reads, judgment call, mutation, or gate. Worker
+dispatch is expected of the runtime; adapters report an error when unavailable.
 Workers read authoritative docs and source directly when exact details,
 judgment, or evidence matter. The orchestrator carries observed facts between
 workers; it does not rewrite authoritative docs into generated summaries.
@@ -148,8 +147,7 @@ bash ~/agent-docs/v1/verify-agent-docs.sh
 With no arguments, the verifier validates the `agent-docs` checkout that
 contains the script: this repo's docs, manifest, ownership data, skill registry,
 template scaffold, stale references, executable bits, and local copied adapter
-freshness. Its output labels the kit-repo checks, scaffold-template checks, and
-local adapter freshness check separately.
+freshness. Its output labels kit-repo, scaffold-template, and adapter checks.
 
 For a consuming repo, run the target-aware scaffold check from that repo root or
 pass an explicit target:
@@ -172,6 +170,8 @@ owned by `v1/copy-skills.sh --check`.
 - `/orchestrate` coordinates the quick-fix or plan/review/implement/review
   lifecycle through specialist workers. Medium or unclear work goes through a
   planning-worker brief before implementation.
+- `/review-app` runs a confirmed read-only app audit for cleanup discovery,
+  ranks findings by severity and cleanup ROI, and creates only approved plans.
 - `/plan` shapes rough intent into discussion, implementer briefs, tracked
   plans, docs, or further questions.
 - `/quick-fix` dispatches implementation only for already bounded fixes; unclear
@@ -205,6 +205,7 @@ Use the smallest command that owns the current job:
 | Start a normal chat and wait for the task | `/fresh-chat` |
 | Fix one bounded issue now | `/quick-fix` |
 | Shape rough direction into implementer-ready material | `/plan` |
+| Discover broad cleanup work through a configured app audit before planning fixes | `/review-app` |
 | Coordinate a broad change across planning, implementation, and review | `/orchestrate` |
 | Implement existing plan files | `/ship-plans` |
 | Verify shipped or in-progress plan work | `/review-shipped-work` |

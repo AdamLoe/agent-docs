@@ -743,13 +743,14 @@ while IFS=$'\t' read -r tag line_no name mode action worker_roles commits intake
 
   case "$mode" in
     bootstrap|planning|mutating|report-only|capture) ;;
-    "lifecycle orchestration"|"review with optional fixes"|"report-only by default") ;;
+    "lifecycle orchestration"|"review with optional fixes"|"review with approved planning"|"report-only by default") ;;
     *) fail "registry row for $name has invalid mode: $mode" ;;
   esac
 
   case "$commits" in
     no|"only through routed skills"|"only if it edits tracked docs/plans (via workers)") ;;
     "yes, via worker"|"yes, via workers"|"yes, via plan-maintenance worker"|"yes, via docs-maintenance worker") ;;
+    "yes, via plan-maintenance worker for opted-in run docs and approved plans") ;;
     "yes, only if a fix worker runs"|"only if user asks to apply edits"|"only if user asks to fix failures") ;;
     "no (writes the gitignored kit inbox)") ;;
     *) fail "registry row for $name has invalid commits metadata: $commits" ;;
