@@ -43,8 +43,10 @@ The verification worker confirms:
   a row in `v1/skills/registry.md`.
 - No stale live references remain to retired entry points or prose ownership
   guides.
-- The manifest `drift-gates` pass — `v1/verify-agent-docs.sh` is the standard
-  static gate for this kit; failures name the exact gate.
+- The manifest `drift-gates` pass. `v1/verify-agent-docs.sh` with no arguments
+  is the standard static gate for this kit; consuming-repo scaffold validation
+  uses `~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`. Failures
+  name the exact gate.
 
 ## Worker Phases
 
@@ -55,9 +57,12 @@ invocation; the two fix workers run only when the user asks to repair failures.
 - **Verification worker** (the health check). Pass the Verification worker
   bundle: `~/agent-docs/v1/rules/subagent/verification.md`,
   `~/agent-docs/v1/rules/repo-rules.md`. It runs the scaffold, manifest,
-  registry, and stale-reference checks above — typically by running
-  `v1/verify-agent-docs.sh` plus the manifest `drift-gates` — and reports each
-  failure with the exact file, path, or gate that failed. It stays read-only.
+  registry, and stale-reference checks above. In this kit repo, that typically
+  means `v1/verify-agent-docs.sh` plus the manifest `drift-gates`; in a
+  consuming repo, the scaffold portion is
+  `~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>` plus the target
+  manifest `drift-gates`. It reports each failure with the exact file, path, or
+  gate that failed. It stays read-only.
 - **Docs-maintenance worker** only when authorized to repair doc-scaffold
   failures (missing required files, manifest-slot or routing gaps, dead ownership
   paths). Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,

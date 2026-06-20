@@ -67,7 +67,7 @@ prior transcript.
 | `v1/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
 | `v1/skills/registry.md` | Skill inventory and mode/action metadata. |
 | `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
-| `v1/verify-agent-docs.sh` | Non-mutating drift gate for scaffold, manifest, ownership, registry, adapter, and stale-reference checks. |
+| `v1/verify-agent-docs.sh` | Non-mutating kit drift gate; `--scaffold <repo-root>` checks a target repo's docs scaffold. |
 | `v1/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
 | `v1/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
 | `v1/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
@@ -90,20 +90,36 @@ bash ~/agent-docs/v1/copy-skills.sh ~/agent-docs
 bash ~/agent-docs/v1/copy-skills.sh --check ~/agent-docs
 ```
 
-Before shipping repo changes, run:
+Before shipping agent-docs kit changes, run:
 
 ```sh
 bash ~/agent-docs/v1/verify-agent-docs.sh
 ```
 
-The verifier owns this repo's non-mutating drift gate and delegates copied
-adapter freshness to `v1/copy-skills.sh --check`.
+With no arguments, the verifier validates the `agent-docs` checkout that
+contains the script: this repo's docs, manifest, ownership data, skill registry,
+template scaffold, stale references, executable bits, and local copied adapter
+freshness. Its output labels the kit-repo checks, scaffold-template checks, and
+local adapter freshness check separately.
+
+For a consuming repo, run the target-aware scaffold check from that repo root or
+pass an explicit target:
+
+```sh
+bash ~/agent-docs/v1/verify-agent-docs.sh --scaffold .
+```
+
+That mode checks the target `docs/` scaffold, manifest slots, ownership paths,
+top-level routes, and unresolved seed placeholders. It does not validate the
+agent-docs kit checkout or copied local adapters. Copied adapter freshness stays
+owned by `v1/copy-skills.sh --check`.
 
 - `/start-session` checks local git state, active plans, shipped cleanup
   candidates, and orchestration run docs, then routes into the owning skill.
 - `/fresh-chat` starts ordinary work from the docs router.
 - `/doctor` validates scaffold, manifest, ownership, skill registry, and stale
-  reference health.
+  reference health; consuming-repo scaffold checks use
+  `v1/verify-agent-docs.sh --scaffold <repo-root>`.
 - `/orchestrate` coordinates the quick-fix or plan/review/implement/review
   lifecycle through specialist workers. Medium or unclear work goes through a
   planning-worker brief before implementation.
@@ -120,7 +136,8 @@ adapter freshness to `v1/copy-skills.sh --check`.
   orchestration run folders under `docs/plans/orchestrator/`.
 - `/review-skills` reviews this kit's skill suite for drift and lifecycle gaps.
 - `/ship-current-work` finishes ordinary work and commits if gates pass.
-- `/rebuild-agent-docs` adopts or repairs a repo's docs tree.
+- `/rebuild-agent-docs` adopts or repairs a repo's docs tree, then verifies the
+  target scaffold with `v1/verify-agent-docs.sh --scaffold <repo-root>`.
 - `/wrap-up-current-chat` captures chat-only durable context.
 - `/clear-plans` cleans shipped or abandoned plans and orchestration run docs
   after migration.

@@ -15,6 +15,7 @@ code_root: v1/
 | Skill registry and shared skill contracts | v1/skills/registry.md, v1/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
 | Drift gates and agent-readiness verifier | docs/_meta/manifest.md, v1/verify-agent-docs.sh |
+| Docs scaffold template and consuming-repo scaffold checks | v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Doc-authoring rules and adapter-file policy | v1/rules/authoring-rules.md |
 | Orchestrator workflow control, dispatch, run docs, and dials | v1/rules/orchestrator/, v1/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Subagent worker-role rules | v1/rules/subagent/, docs/architecture/workflow-kit.md |

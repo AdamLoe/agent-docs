@@ -26,6 +26,11 @@
       "owns": ["drift gate entry point", "agent-readiness checks", "stale reference detection"]
     },
     {
+      "surface": "docs-scaffold-template",
+      "paths": ["v1/template/docs/", "v1/verify-agent-docs.sh", "v1/skills/rebuild-agent-docs/SKILL.md", "v1/skills/doctor/SKILL.md", "v1/agent-docs-guide.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["docs scaffold seed set", "consuming-repo scaffold verification boundary", "placeholder gate"]
+    },
+    {
       "surface": "workflow-lifecycle",
       "paths": ["docs/architecture/workflow-kit.md", "v1/agent-docs-guide.md"],
       "owns": ["fresh-chat workflow", "orchestrate workflow", "plan workflow", "ship-current-work", "wrap-up-current-chat", "rebuild-agent-docs"]

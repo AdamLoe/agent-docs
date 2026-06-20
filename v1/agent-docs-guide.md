@@ -312,7 +312,10 @@ it checks skill registry drift, duplicate policy, adapter leakage, and
 lifecycle gaps.
 
 Use `/doctor` for a mechanical health check of the scaffold,
-manifest slots, ownership JSON, skill registry, and stale references.
+manifest slots, ownership JSON, skill registry, and stale references. In a
+consuming repo, the scaffold portion uses
+`~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`; the verifier
+without `--scaffold` checks the shared kit checkout.
 
 ## When not to use agent-docs
 
@@ -334,7 +337,9 @@ Use `/rebuild-agent-docs` when a repo is adopting this kit for the first
 time or repairing a drifted docs tree. It inventories the current docs,
 compares them to this guide, seeds missing files from
 `~/agent-docs/v1/template/`, migrates durable facts into the right owners,
-and ends with `/ship-current-work` semantics.
+checks the rebuilt target with
+`~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`, and ends with
+`/ship-current-work` semantics.
 
 `v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the
 reusable entry point.

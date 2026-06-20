@@ -23,7 +23,7 @@ for workflow surfaces, use
 | `v1/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
 | `v1/install.sh` | Installer for the neutral checkout and copied skill adapters. |
 | `v1/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
-| `v1/verify-agent-docs.sh` | Non-mutating drift gate for this repo. |
+| `v1/verify-agent-docs.sh` | Non-mutating kit drift gate, plus targetable docs scaffold checks with `--scaffold`. |
 
 ## See also
 

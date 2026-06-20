@@ -6,9 +6,14 @@
       "owns": ["repo path inventory", "top-level directory purposes"]
     },
     {
-      "surface": "fill",
-      "paths": ["fill"],
-      "owns": ["fill"]
+      "surface": "agent-docs-bindings",
+      "paths": ["docs/_meta/manifest.md", "docs/_meta/ownership.json"],
+      "owns": ["manifest bindings", "concept ownership data"]
+    },
+    {
+      "surface": "docs-routing",
+      "paths": ["docs/index.md", "docs/overview.md"],
+      "owns": ["top-level docs routing", "one-screen repo overview"]
     }
   ]
 }

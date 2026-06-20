@@ -67,8 +67,10 @@ phases the repo's state needs.
 - **Verification worker** for the scaffold gate. Pass
   `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`; have it run
-  `~/agent-docs/v1/verify-agent-docs.sh` against the rebuilt tree plus any
-  manifest `drift-gates`, and paste the result.
+  `~/agent-docs/v1/verify-agent-docs.sh --scaffold <target-repo-root>` against
+  the rebuilt tree plus any target manifest `drift-gates`, and paste the
+  result. The verifier without `--scaffold` checks the shared kit checkout, not
+  the consuming repo.
 - **Plan-maintenance worker** only when the rebuild creates or retires plan
   material under `docs/plans/`. Pass
   `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
@@ -81,7 +83,8 @@ Record from worker reports:
 
 - scaffold files created or updated (seeded vs. adapted)
 - manifest and ownership state after repair, and any stale prose guide retired
-- gates run (`verify-agent-docs.sh` plus manifest drift gates) and result
+- gates run (`verify-agent-docs.sh --scaffold <target-repo-root>` plus target
+  manifest drift gates) and result
 - commit hash(es)
 - assumptions made and any follow-up that remains
 

@@ -1,7 +1,5 @@
 # Repository layout
 
-<!-- fill -->
-
 Use this file as the concise inventory of important repo paths. Keep it to
 stable directories, owned config files, generated-artifact boundaries, and
 entry-point scripts that a fresh agent must recognize.
@@ -15,7 +13,6 @@ entry-point scripts that a fresh agent must recognize.
 | `docs/decisions/` | Current architecture decisions. |
 | `docs/agent-context/` | Repo-local operating rules. |
 | `docs/plans/` | Plan router and lifecycle status area. |
-| <!-- fill --> | <!-- fill --> |
 
 ## See also
 

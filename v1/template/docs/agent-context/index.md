@@ -1,7 +1,8 @@
 # Agent Context Index
 
-<!-- fill -->
+Route to repo-local procedures that agents need while working in this codebase.
+Add rows as operating rules are created.
 
 | Need | Read |
 |---|---|
-| <!-- fill --> | <!-- fill --> |
+| Generic repo rules | `~/agent-docs/v1/rules/repo-rules.md` |

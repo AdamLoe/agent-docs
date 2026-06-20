@@ -99,6 +99,19 @@ validate.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md).
 
+## Verifier modes are explicit
+
+**Decision.** `v1/verify-agent-docs.sh` with no arguments validates the
+agent-docs kit checkout that contains the script. Consuming repos use the
+target-aware scaffold mode:
+`v1/verify-agent-docs.sh --scaffold <repo-root>`.
+
+**Why.** A script reached through `~/agent-docs` resolves to the kit checkout,
+not automatically to the caller's repository. Making the target explicit
+prevents a rebuild from appearing verified when only the shared kit was checked.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh), [`../../v1/skills/rebuild-agent-docs/SKILL.md`](../../v1/skills/rebuild-agent-docs/SKILL.md), [`../../v1/skills/doctor/SKILL.md`](../../v1/skills/doctor/SKILL.md).
+
 ## Startup checks route to existing skills
 
 **Decision.** `/start-session` is the local beginning-of-day/session check for

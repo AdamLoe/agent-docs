@@ -6,6 +6,22 @@ fail() {
   exit 1
 }
 
+usage() {
+  cat <<'EOF'
+Usage:
+  bash v1/verify-agent-docs.sh
+  bash v1/verify-agent-docs.sh --scaffold <repo-root>
+
+Default mode validates the agent-docs kit checkout that contains this script.
+The --scaffold mode validates only the target repo's docs/ scaffold, manifest,
+ownership JSON, routing, and unresolved scaffold placeholders.
+EOF
+}
+
+section() {
+  printf '== %s ==\n' "$*"
+}
+
 resolve_repo_root() {
   local script_dir
   script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -29,6 +45,22 @@ require_file() {
 require_dir() {
   local path=$1
   [ -d "$repo_root/$path" ] || fail "missing required directory: $path"
+}
+
+require_file_under() {
+  local root=$1
+  local path=$2
+  local label=$3
+
+  [ -f "$root/$path" ] || fail "$label missing required file: $path"
+}
+
+require_dir_under() {
+  local root=$1
+  local path=$2
+  local label=$3
+
+  [ -d "$root/$path" ] || fail "$label missing required directory: $path"
 }
 
 require_executable() {
@@ -63,7 +95,16 @@ require_doc_route() {
   local target=$2
   local label=$3
 
-  grep -Fq "[\`$target\`]($target)" "$repo_root/$index_path" ||
+  require_doc_route_under "$repo_root" "$index_path" "$target" "$label"
+}
+
+require_doc_route_under() {
+  local root=$1
+  local index_path=$2
+  local target=$3
+  local label=$4
+
+  grep -Fq "[\`$target\`]($target)" "$root/$index_path" ||
     fail "$label index missing route to $target"
 }
 
@@ -73,7 +114,18 @@ require_manifest_change_to_doc() {
   local owning_doc=$3
   local label=$4
 
-  grep -Fq "| $surface | $owning_doc |" "$repo_root/$manifest_path" ||
+  require_manifest_change_to_doc_under \
+    "$repo_root" "$manifest_path" "$surface" "$owning_doc" "$label"
+}
+
+require_manifest_change_to_doc_under() {
+  local root=$1
+  local manifest_path=$2
+  local surface=$3
+  local owning_doc=$4
+  local label=$5
+
+  grep -Fq "| $surface | $owning_doc |" "$root/$manifest_path" ||
     fail "$label missing change-to-doc row for $surface"
 }
 
@@ -82,12 +134,23 @@ require_ownership_surface_path() {
   local surface=$2
   local owner_path=$3
   local label=$4
+
+  require_ownership_surface_path_under \
+    "$repo_root" "$ownership_path" "$surface" "$owner_path" "$label"
+}
+
+require_ownership_surface_path_under() {
+  local root=$1
+  local ownership_path=$2
+  local surface=$3
+  local owner_path=$4
+  local label=$5
   local python_cmd
 
   if command -v jq >/dev/null 2>&1; then
     jq -e --arg surface "$surface" --arg owner_path "$owner_path" '
       any(.owners[]?; .surface == $surface and ((.paths // []) | index($owner_path) != null))
-    ' "$repo_root/$ownership_path" >/dev/null ||
+    ' "$root/$ownership_path" >/dev/null ||
       fail "$label ownership missing surface '$surface' path '$owner_path'"
     return
   fi
@@ -96,7 +159,7 @@ require_ownership_surface_path() {
   [ -n "$python_cmd" ] ||
     fail "cannot validate $label ownership; install jq or python"
 
-  if ! "$python_cmd" - "$repo_root/$ownership_path" "$surface" "$owner_path" <<'PY'
+  if ! "$python_cmd" - "$root/$ownership_path" "$surface" "$owner_path" <<'PY'
 import json
 import sys
 
@@ -122,6 +185,191 @@ PY
   fi
 }
 
+require_manifest_scalar_under() {
+  local root=$1
+  local manifest_path=$2
+  local scalar_slot=$3
+  local label=$4
+  local value
+
+  value=$(
+    awk -v slot="$scalar_slot" '
+      $0 ~ "^" slot ":" {
+        sub(/^[^:]*:[[:space:]]*/, "", $0)
+        sub(/[[:space:]]+$/, "", $0)
+        print
+        found = 1
+        exit
+      }
+      END { if (!found) exit 2 }
+    ' "$root/$manifest_path"
+  ) || fail "$label manifest missing slot '$scalar_slot'"
+
+  [ -n "$value" ] ||
+    fail "$label manifest slot '$scalar_slot' must not be empty"
+
+  case "$value" in
+    '<!-- fill -->'|fill|'"fill"'|'""'|"''")
+      fail "$label manifest slot '$scalar_slot' has unresolved placeholder value"
+      ;;
+  esac
+}
+
+require_manifest_section_under() {
+  local root=$1
+  local manifest_path=$2
+  local section_slot=$3
+  local label=$4
+
+  grep -Eq "^## ${section_slot}[[:space:]]*$" "$root/$manifest_path" ||
+    fail "$label manifest missing section '$section_slot'"
+}
+
+validate_ownership_paths_under() {
+  local root=$1
+  local ownership_path=$2
+  local label=$3
+  local ownership_paths
+  local owner_path
+  local normalized_path
+  local python_cmd
+
+  ownership_paths=$(mktemp "${TMPDIR:-/tmp}/agent-docs-ownership.XXXXXX")
+
+  if command -v jq >/dev/null 2>&1; then
+    jq -e '.owners | type == "array"' "$root/$ownership_path" >/dev/null ||
+      fail "$label ownership.json missing owners array"
+    jq -r '.owners[].paths[]?' "$root/$ownership_path" > "$ownership_paths" ||
+      fail "$label ownership.json failed to parse"
+  else
+    python_cmd=$(find_python_cmd)
+
+    [ -n "$python_cmd" ] ||
+      fail "cannot validate $label ownership.json; install jq or python"
+
+    if ! "$python_cmd" - "$root/$ownership_path" > "$ownership_paths" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+
+owners = data.get("owners")
+if not isinstance(owners, list):
+    raise SystemExit("owners must be an array")
+
+for index, owner in enumerate(owners):
+    if not isinstance(owner, dict):
+        raise SystemExit(f"owner {index} must be an object")
+    paths = owner.get("paths")
+    if not isinstance(paths, list):
+        raise SystemExit(f"owner {index} paths must be an array")
+    for owner_path in paths:
+        if not isinstance(owner_path, str) or not owner_path:
+            raise SystemExit(f"owner {index} has an invalid path")
+        print(owner_path)
+PY
+    then
+      fail "$label ownership.json failed to parse"
+    fi
+  fi
+
+  [ -s "$ownership_paths" ] || fail "$label ownership.json has no owner paths"
+  while IFS= read -r owner_path; do
+    [ -n "$owner_path" ] || fail "$label ownership.json contains an empty owner path"
+    case "$owner_path" in
+      /*) fail "$label ownership path must be repo-relative: $owner_path" ;;
+    esac
+    normalized_path=${owner_path%/}
+    [ -e "$root/$normalized_path" ] ||
+      fail "$label ownership path does not exist: $owner_path"
+  done < "$ownership_paths"
+
+  rm -f "$ownership_paths"
+}
+
+require_no_scaffold_placeholders() {
+  local root=$1
+  local docs_path=$2
+  local label=$3
+  local match
+
+  match=$(grep -RIn -m 1 -- '<!-- fill -->' "$root/$docs_path" || true)
+  [ -z "$match" ] ||
+    fail "$label contains unresolved '<!-- fill -->' placeholder: ${match#$root/}"
+
+  match=$(grep -RIn -m 1 -- '"fill"' "$root/$docs_path" || true)
+  [ -z "$match" ] ||
+    fail "$label contains unresolved '\"fill\"' placeholder: ${match#$root/}"
+}
+
+check_scaffold_tree() {
+  local root=$1
+  local label=$2
+  local manifest_path=docs/_meta/manifest.md
+  local ownership_path=docs/_meta/ownership.json
+  local scalar_slot
+  local section_slot
+
+  require_file_under "$root" "docs/index.md" "$label"
+  require_file_under "$root" "docs/overview.md" "$label"
+  require_file_under "$root" "docs/repository-layout.md" "$label"
+  require_file_under "$root" "$manifest_path" "$label"
+  require_file_under "$root" "$ownership_path" "$label"
+  require_dir_under "$root" "docs/architecture" "$label"
+  require_dir_under "$root" "docs/decisions" "$label"
+  require_dir_under "$root" "docs/agent-context" "$label"
+  require_dir_under "$root" "docs/plans" "$label"
+
+  for scalar_slot in repo_name agent_docs_version code_root; do
+    require_manifest_scalar_under "$root" "$manifest_path" "$scalar_slot" "$label"
+  done
+
+  for section_slot in change-to-doc drift-gates drift-verification decisions-domains; do
+    require_manifest_section_under "$root" "$manifest_path" "$section_slot" "$label"
+  done
+
+  require_doc_route_under "$root" "docs/index.md" "overview.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "architecture/index.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "decisions/index.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "agent-context/index.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "plans/index.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "repository-layout.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "_meta/manifest.md" "$label"
+  require_doc_route_under "$root" "docs/index.md" "_meta/ownership.json" "$label"
+
+  validate_ownership_paths_under "$root" "$ownership_path" "$label"
+  require_ownership_surface_path_under \
+    "$root" "$ownership_path" "repository-layout" "docs/repository-layout.md" "$label"
+
+  require_no_scaffold_placeholders "$root" "docs" "$label"
+}
+
+case "${1:-}" in
+  "")
+    ;;
+  --scaffold)
+    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+    [ -d "$2" ] || fail "scaffold target is not a directory: $2"
+    target_root=$(cd "$2" && pwd)
+    section "consuming-repo scaffold checks: $target_root"
+    check_scaffold_tree "$target_root" "scaffold target"
+    printf 'SCAFFOLD GATES PASS\n'
+    exit 0
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+section "kit repository checks"
+
 manifest="$repo_root/docs/_meta/manifest.md"
 ownership="$repo_root/docs/_meta/ownership.json"
 
@@ -132,10 +380,6 @@ require_file "AGENTS.md"
 require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
-require_file "v1/template/docs/index.md"
-require_file "v1/template/docs/repository-layout.md"
-require_file "v1/template/docs/_meta/manifest.md"
-require_file "v1/template/docs/_meta/ownership.json"
 require_dir "docs/architecture"
 require_dir "docs/decisions"
 require_dir "docs/agent-context"
@@ -173,6 +417,11 @@ require_manifest_change_to_doc \
   "Router-only auto-loaded files" \
   "AGENTS.md, CLAUDE.md, README.md, docs/architecture/install-and-adapters.md" \
   "docs/_meta/manifest.md"
+require_manifest_change_to_doc \
+  "docs/_meta/manifest.md" \
+  "Docs scaffold template and consuming-repo scaffold checks" \
+  "v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md" \
+  "docs/_meta/manifest.md"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "repository-layout" \
@@ -188,70 +437,16 @@ require_ownership_surface_path \
   "auto-loaded-router-files" \
   "CLAUDE.md" \
   "docs/_meta/ownership.json"
-require_doc_route "v1/template/docs/index.md" "repository-layout.md" "template docs"
-require_manifest_change_to_doc \
-  "v1/template/docs/_meta/manifest.md" \
-  "Repository layout inventory" \
-  "docs/repository-layout.md" \
-  "v1/template/docs/_meta/manifest.md"
 require_ownership_surface_path \
-  "v1/template/docs/_meta/ownership.json" \
-  "repository-layout" \
-  "docs/repository-layout.md" \
-  "v1/template/docs/_meta/ownership.json"
+  "docs/_meta/ownership.json" \
+  "docs-scaffold-template" \
+  "v1/template/docs/" \
+  "docs/_meta/ownership.json"
 
-ownership_paths=$(mktemp "${TMPDIR:-/tmp}/agent-docs-ownership.XXXXXX")
-trap 'rm -f "$ownership_paths"' EXIT
+validate_ownership_paths_under "$repo_root" "docs/_meta/ownership.json" "docs/_meta"
 
-if command -v jq >/dev/null 2>&1; then
-  jq -e '.owners | type == "array"' "$ownership" >/dev/null ||
-    fail "ownership.json missing owners array"
-  jq -r '.owners[].paths[]?' "$ownership" > "$ownership_paths" ||
-    fail "ownership.json failed to parse"
-else
-  python_cmd=$(find_python_cmd)
-
-  [ -n "$python_cmd" ] ||
-    fail "cannot validate ownership.json; install jq or python"
-
-  if ! "$python_cmd" - "$ownership" > "$ownership_paths" <<'PY'
-import json
-import sys
-
-path = sys.argv[1]
-with open(path, "r", encoding="utf-8") as handle:
-    data = json.load(handle)
-
-owners = data.get("owners")
-if not isinstance(owners, list):
-    raise SystemExit("owners must be an array")
-
-for index, owner in enumerate(owners):
-    if not isinstance(owner, dict):
-        raise SystemExit(f"owner {index} must be an object")
-    paths = owner.get("paths")
-    if not isinstance(paths, list):
-        raise SystemExit(f"owner {index} paths must be an array")
-    for owner_path in paths:
-        if not isinstance(owner_path, str) or not owner_path:
-            raise SystemExit(f"owner {index} has an invalid path")
-        print(owner_path)
-PY
-  then
-    fail "ownership.json failed to parse"
-  fi
-fi
-
-[ -s "$ownership_paths" ] || fail "ownership.json has no owner paths"
-while IFS= read -r owner_path; do
-  [ -n "$owner_path" ] || fail "ownership.json contains an empty owner path"
-  case "$owner_path" in
-    /*) fail "ownership path must be repo-relative: $owner_path" ;;
-  esac
-  normalized_path=${owner_path%/}
-  [ -e "$repo_root/$normalized_path" ] ||
-    fail "ownership path does not exist: $owner_path"
-done < "$ownership_paths"
+section "scaffold template checks"
+check_scaffold_tree "$repo_root/v1/template" "template docs scaffold"
 
 require_file "v1/skills/registry.md"
 
@@ -399,6 +594,7 @@ for script_path in v1/install.sh v1/copy-skills.sh v1/verify-agent-docs.sh; do
   require_git_executable_mode "$script_path"
 done
 
+section "local adapter freshness checks"
 bash "$repo_root/v1/copy-skills.sh" --check "$repo_root" ||
   fail "copied skill adapters are stale"
 
