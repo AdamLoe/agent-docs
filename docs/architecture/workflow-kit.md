@@ -2,6 +2,8 @@
 
 `v1/` is the stable and active kit version. The workflow lowers context by
 routing work to focused roles, not by generating per-run context workspaces.
+The fixed startup runtime-card is `v1/rules/skill-contracts.md`; it stays short
+and points to lifecycle, dispatch, and registry owner docs for deeper policy.
 
 ## Orchestrator/worker model
 
