@@ -7,7 +7,7 @@ consuming repo supplies app-specific facts in its own `docs/_meta/`.
 ## Current layout
 
 ```text
-~/agent-docs/                  # real checkout
+~/agent-docs/                  # canonical self-reference path
   README.md                    # user-facing install summary
   AGENTS.md, CLAUDE.md         # router-only auto-loaded files
   docs/                        # this repo's dogfood docs

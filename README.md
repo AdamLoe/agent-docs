@@ -8,7 +8,7 @@ Repo: `github.com/AdamLoe/agent-docs`
 
 ## Install — REQUIRED
 
-Clone the repo anywhere, then run the installer from the checkout:
+Clone the repo, then run the installer from the checkout:
 
 ```sh
 git clone https://github.com/AdamLoe/agent-docs.git ~/agent-docs
@@ -18,21 +18,29 @@ bash ~/agent-docs/v1/install.sh
 `v1/install.sh` copies the agent-docs skills into the Claude and Codex user
 skill directories. It verifies that `~/agent-docs/v1/...` plus sample skills
 resolve through both tools.
-If the real checkout lives somewhere else, pass that path:
+If the physical checkout lives somewhere else, pass that path:
 
 ```sh
 bash /path/to/agent-docs/v1/install.sh /path/to/agent-docs
 ```
 
-Tool-owned paths are adapters only.
+Use `--dry-run` with the same arguments to inspect the canonical path and
+skill-copy actions before mutating `$HOME`. Tool-owned paths are adapters only.
 
 ## The three-layer model
 
-The real checkout lives at:
+There are three paths to keep separate:
 
 ```text
-~/agent-docs/
+physical checkout            # where the repo clone actually lives
+~/agent-docs/                 # canonical self-reference path
+~/.claude/skills/<name>       # copied Claude adapter
+~/.agents/skills/<name>       # copied Codex adapter
 ```
+
+The installer makes `~/agent-docs` resolve to the physical checkout when those
+paths differ. Docs and skills use `~/agent-docs/v1/...` as the stable way to
+refer back to the kit.
 
 Tools discover skills through their own adapter paths:
 
@@ -44,7 +52,9 @@ Tools discover skills through their own adapter paths:
 The kit remains the source of truth. Tool discovery dirs get refreshed copies;
 run `bash ~/agent-docs/v1/copy-skills.sh` after adding, renaming, or deleting
 skills, then run `bash ~/agent-docs/v1/copy-skills.sh --check` to confirm the
-copied adapters match the source.
+copied adapters match the source. `v1/copy-skills.sh --dry-run` previews those
+changes, refuses symlinked skill roots, and preflights unmanaged skill-name
+conflicts before deleting stale managed children or refreshing copies.
 
 ## Reference convention
 
@@ -53,9 +63,9 @@ Anything that points at the kit uses the absolute path
 
 - Use `~/agent-docs/v1/rules/authoring-rules.md`.
 - Do not use relative paths like `../../rules/...` for kit references; a
-  skill may be read through a symlinked discovery path.
+  skill may be read through a copied adapter path.
 - Do not use tool-specific roots such as `${CLAUDE_PLUGIN_ROOT}` for the
-  standard symlinked install.
+  standard copied-adapter install.
 
 Relative links are still fine inside ordinary Markdown files when they
 link to neighboring files in the same repo.
@@ -81,7 +91,7 @@ repos adopt the latest.
 See [`docs/index.md`](docs/index.md) for the dogfood docs router:
 
 - [`docs/architecture/install-and-adapters.md`](docs/architecture/install-and-adapters.md)
-  covers the symlink contract and per-tool adapters.
+  covers the canonical path and per-tool adapters.
 - [`docs/architecture/workflow-kit.md`](docs/architecture/workflow-kit.md)
   covers skills, rules, templates, and workflow commands.
 - [`docs/decisions/agent-docs.md`](docs/decisions/agent-docs.md)

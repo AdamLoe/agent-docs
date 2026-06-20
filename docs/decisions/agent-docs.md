@@ -2,11 +2,13 @@
 
 ## Neutral checkout path
 
-**Decision.** The real checkout lives at `~/agent-docs`; versioned kit files
-live under `v1/`.
+**Decision.** `~/agent-docs` is the canonical self-reference path for the kit;
+the physical checkout may live elsewhere, and `v1/install.sh` makes the
+canonical path resolve to that checkout. Versioned kit files live under `v1/`.
 
 **Why.** The kit is shared by Claude, Codex, and future tools. A neutral
-checkout path keeps the source from appearing owned by one tool.
+canonical path keeps the source from appearing owned by one tool while still
+letting docs, skills, and copied adapters use stable absolute references.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../README.md`](../../README.md).
 
@@ -15,7 +17,8 @@ checkout path keeps the source from appearing owned by one tool.
 **Decision.** Claude and Codex both use copied user skill directories:
 `v1/copy-skills.sh` copies agent-docs skills into `~/.claude/skills/<name>`
 and `~/.agents/skills/<name>` and marks them with `.agent-docs-managed`.
-Claude plugin manifests are not a supported adapter path.
+The tool skill roots themselves stay tool-owned; symlinked roots are conflicts
+by default. Claude plugin manifests are not a supported adapter path.
 
 **Why.** Tools discover skills differently, but the command bodies should not
 fork. Using the same copy model for both tools avoids adapter-specific
@@ -29,6 +32,9 @@ surprises, while the marker lets refreshes update only agent-docs copies.
 refresh Claude's `~/.claude/skills` and Codex's `~/.agents/skills`
 directories with marked agent-docs-managed copies, then run
 `v1/copy-skills.sh --check` to prove those copies match the source.
+`copy-skills.sh` preflights unmanaged source-name conflicts before removing
+stale managed children or refreshing copied skills, and `--dry-run` previews the
+same mutation plan without writing.
 
 **Why.** Tool sessions may not notice newly-created source directories. A
 dedicated copy refresh makes the update step explicit while preserving
@@ -36,6 +42,19 @@ unrelated personal skills; the read-only check catches stale installed command
 bodies before a future agent starts from the wrong instructions.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/copy-skills.sh`](../../v1/copy-skills.sh).
+
+## Installer ignores copy test destinations
+
+**Decision.** `AGENT_DOCS_SKILLS_DEST` is a public testing hook for
+`v1/copy-skills.sh`, not installer configuration. `v1/install.sh` clears it when
+calling the copy script so installs always target the documented Claude and
+Codex skill roots.
+
+**Why.** A test-only destination is useful for isolated safety checks, but the
+installer's job is to make the canonical self-reference path and both tool
+adapters usable in `$HOME`.
+
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/install.sh`](../../v1/install.sh), [`../../v1/copy-skills.sh`](../../v1/copy-skills.sh).
 
 ## Router-only auto-loaded files
 

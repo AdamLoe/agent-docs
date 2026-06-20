@@ -2,7 +2,7 @@
 
 | Need | Read |
 |---|---|
-| Install location, symlink contract, Claude and Codex adapters | [`install-and-adapters.md`](install-and-adapters.md) |
+| Install location, canonical path, Claude and Codex adapters | [`install-and-adapters.md`](install-and-adapters.md) |
 | Versioned kit contents, skills, rules, templates, workflow lifecycle | [`workflow-kit.md`](workflow-kit.md) |
 
 ## See also

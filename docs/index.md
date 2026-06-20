@@ -6,7 +6,7 @@ Start here, then read only the smallest matching subtree.
 |---|---|
 | System shape in one screen | [`overview.md`](overview.md) |
 | File and directory inventory | [`repository-layout.md`](repository-layout.md) |
-| Install paths, symlinks, Claude/Codex adapters | [`architecture/install-and-adapters.md`](architecture/install-and-adapters.md) |
+| Install paths, canonical self-reference, Claude/Codex adapters | [`architecture/install-and-adapters.md`](architecture/install-and-adapters.md) |
 | Skills, rules, templates, and workflow command layout | [`architecture/workflow-kit.md`](architecture/workflow-kit.md) |
 | Why the kit uses neutral paths and adapters | [`decisions/agent-docs.md`](decisions/agent-docs.md) |
 | Repo-local working rules for agent-docs itself | [`agent-context/index.md`](agent-context/index.md) |

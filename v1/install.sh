@@ -24,6 +24,28 @@ require_resolves() {
   [ -n "$resolved" ] || die "$label did not resolve: $path"
 }
 
+dry_run=false
+while [ "${1:-}" != "" ]; do
+  case "$1" in
+    --dry-run)
+      dry_run=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      die "unknown option: $1"
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+[ "${2:-}" = "" ] || die "too many arguments"
+
 repo_root=$(resolve_repo_root "${1:-}")
 repo_root=${repo_root%/}
 
@@ -40,10 +62,20 @@ if [ "$repo_root" != "$home_agent_docs" ]; then
   if [ -e "$home_agent_docs" ] && [ ! -L "$home_agent_docs" ]; then
     die "$home_agent_docs exists and is not a symlink"
   fi
-  ln -sfnT "$repo_root" "$home_agent_docs"
+  if [ "$dry_run" = true ]; then
+    printf 'would point %s at %s\n' "$home_agent_docs" "$repo_root"
+  else
+    ln -sfnT "$repo_root" "$home_agent_docs"
+  fi
 fi
 
-"$repo_root/v1/copy-skills.sh" "$repo_root"
+if [ "$dry_run" = true ]; then
+  AGENT_DOCS_SKILLS_DEST= "$repo_root/v1/copy-skills.sh" --dry-run "$repo_root"
+  printf 'install dry run complete\n'
+  exit 0
+fi
+
+AGENT_DOCS_SKILLS_DEST= "$repo_root/v1/copy-skills.sh" "$repo_root"
 
 require_resolves "$home_agent_docs/v1/rules/authoring-rules.md" "authoring-rules"
 require_resolves "$home_dir/.claude/skills/fresh-chat/SKILL.md" "Claude fresh-chat"
