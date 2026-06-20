@@ -17,10 +17,10 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 two-question intake and wait.
 
 Once the problem is known, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Load
-task-specific architecture/decisions/agent-context docs only when classification
-needs them.
+`~/agent-docs/v1/rules/context-profiles.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md`. This fixed recipe does not
+load the generic classifier by default. Load task-specific
+architecture/decisions/agent-context docs only when the problem needs them.
 
 ## Scope Policy
 
@@ -39,34 +39,28 @@ needs them.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
-concurrency follow `orchestrator/dispatch.md`.
+Dials and model policy follow `skill-contracts.md`; dispatch shape, profiles,
+and commit concurrency follow `orchestrator/dispatch.md`.
 
 - **Planning worker** (only when the issue is still small but not bounded enough
-  to implement). Pass `~/agent-docs/v1/rules/subagent/planning.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`, and
-  `~/agent-docs/v1/plan-template.md`. It returns the implementer brief shape
-  from `subagent/planning.md`; then dispatch one implementation worker from that
-  brief.
-- **Implementation worker** (the bounded fix). Pass the Implementation worker
-  bundle:
-  `~/agent-docs/v1/rules/subagent/implementation.md`,
-  `~/agent-docs/v1/rules/coding-style.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. It implements, runs the cheapest
-  sufficient gate, migrates durable docs only if needed, and commits before
-  reporting.
+  to implement). Use profile `planning.brief`. It returns the implementer brief
+  shape from `subagent/planning.md`; then dispatch one implementation worker
+  from that brief.
+- **Implementation worker** (the bounded fix). Use profile
+  `implementation.code`, escalating to `implementation.code-docs` only when a
+  touched surface requires owning-doc migration. It implements, runs the
+  cheapest sufficient gate, migrates durable docs only if needed, and commits
+  before reporting.
 - **Verification worker** only when the implementation worker cannot run the
-  right gate or a final manifest gate is better isolated. Pass
-  `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  right gate or a final manifest gate is better isolated. Use profile
+  `verification.readonly`.
 - **Review worker** only when the fix touches user-facing, cross-cutting, or
-  correctness-sensitive behavior. Pass
-  `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. For
-  UI-facing fixes, ask the worker to do visual verification when practical.
+  correctness-sensitive behavior. Use profile `review.generic` plus the changed
+  source. For UI-facing fixes, ask the worker to do visual verification when
+  practical.
 
 A pure one-line change still goes through the implementation worker — that is the
-mutation/gate boundary in `orchestrator/lifecycle.md`, not an inline exception.
+mutation/gate boundary, not an inline exception.
 
 ## Closeout
 

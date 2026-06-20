@@ -318,6 +318,10 @@ consuming repo, the scaffold portion uses
 `~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`; the verifier
 without `--scaffold` checks the shared kit checkout.
 
+Use `~/agent-docs/v1/verify-agent-docs.sh --context-report` to inspect the
+read-only context-profile contract. Add `--profile <id>` to print one profile's
+exact rule files, conditions, word totals, and report-only budget exceptions.
+
 ## When not to use agent-docs
 
 This kit is probably more process than you need for a tiny throwaway script, a

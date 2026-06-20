@@ -42,9 +42,8 @@ concurrency follow `orchestrator/dispatch.md`.
 - **Review worker** for registry/skill consistency: directory name vs.
   frontmatter `name:` vs. registry row, mode/action/commit metadata, missing or
   stale skills, lifecycle gaps and confusing overlap, `$ARGUMENTS` and
-  missing-input behavior. Pass the Review worker bundle:
-  `~/agent-docs/v1/rules/subagent/review.md` plus `~/agent-docs/v1/skills/registry.md`
-  and the skill bodies under review.
+  missing-input behavior. Use profile `review.generic` plus
+  `~/agent-docs/v1/skills/registry.md` and the skill bodies under review.
 - **Docs-maintenance worker** for rule-doc shape and duplicated policy: bootstrap,
   shipping, commit, model-tier, or ownership instructions repeated across skills
   that should move into a shared rule, and rule-doc house-rule compliance. Pass
@@ -56,11 +55,10 @@ concurrency follow `orchestrator/dispatch.md`.
   `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`.
 
-Default is read-only review. If the user asks to apply fixes, the review worker
-must receive the fix-enabled review bundle from `orchestrator/dispatch.md`; a
-docs-maintenance worker must receive `repo-rules.md`. Fix workers make only
-obvious non-debatable corrections, verify, and commit their slice before
-reporting; substantial changes pivot to `/plan`.
+Default is read-only review. If the user asks to apply fixes, route them to a
+docs-maintenance or implementation worker with an appropriate mutating profile.
+Fix workers make only obvious non-debatable corrections, verify, and commit
+their slice before reporting; substantial changes pivot to `/plan`.
 
 ## Closeout
 

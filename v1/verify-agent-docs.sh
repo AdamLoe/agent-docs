@@ -10,14 +10,14 @@ usage() {
   cat <<'EOF'
 Usage:
   bash v1/verify-agent-docs.sh
-  bash v1/verify-agent-docs.sh --telemetry-jsonl <run-log.jsonl>
+  bash v1/verify-agent-docs.sh --context-report [--profile <id>]
   bash v1/verify-agent-docs.sh --scaffold <repo-root>
 
 Default mode validates the agent-docs kit checkout that contains this script.
+The --context-report mode prints the read-only context profile and scenario
+contract, including exact files, conditions, word totals, and budget exceptions.
 The --scaffold mode validates only the target repo's docs/ scaffold, manifest,
 ownership JSON, routing, and unresolved scaffold placeholders.
-The optional --telemetry-jsonl mode also validates raw token-usage JSONL when a
-runtime provided it; omitted telemetry is reported as unavailable, not failed.
 EOF
 }
 
@@ -350,6 +350,15 @@ require_text() {
   grep -Fq "$text" "$repo_root/$path" || fail "$message"
 }
 
+trim_field() {
+  local value=$1
+  value=${value#"${value%%[![:space:]]*}"}
+  value=${value%"${value##*[![:space:]]}"}
+  value=${value#\`}
+  value=${value%\`}
+  printf '%s' "$value"
+}
+
 require_layout_path() {
   local layout_path=$1
 
@@ -428,55 +437,180 @@ validate_word_budgets() {
   require_word_limit "docs/repository-layout.md" 350 "repository layout budget"
 }
 
-validate_usage_telemetry_jsonl() {
-  local telemetry_path=$1
+context_profile_rows() {
+  awk -F'|' '
+    /^\| `[^`]+` \|/ && NF == 9 {
+      for (i = 2; i <= 8; i++) {
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
+        gsub(/^`|`$/, "", $i)
+      }
+      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8
+    }
+  ' "$repo_root/v1/rules/context-profiles.md"
+}
+
+scenario_rows() {
+  awk -F'|' '
+    /^\| `[^`]+` \|/ && NF == 11 {
+      for (i = 2; i <= 10; i++) {
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
+        gsub(/^`|`$/, "", $i)
+      }
+      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8, $9, $10
+    }
+  ' "$repo_root/v1/rules/context-profiles.md"
+}
+
+profile_word_total() {
+  local core_paths=$1
+  local total=0
+  local path
+  local count
+
+  IFS=',' read -ra paths <<< "$core_paths"
+  for path in "${paths[@]}"; do
+    path=$(trim_field "$path")
+    path=${path#\`}
+    path=${path%\`}
+    [ -f "$repo_root/$path" ] || fail "context profile references missing path: $path"
+    count=$(wc -w < "$repo_root/$path")
+    count=${count//[[:space:]]/}
+    total=$((total + count))
+  done
+
+  printf '%s' "$total"
+}
+
+context_report() {
+  local profile_filter=${1:-}
+  local found=0
+  local id purpose core_paths overlays mutation budget status total exception
+
+  section "context profiles"
+  while IFS=$'\t' read -r id purpose core_paths overlays mutation budget status; do
+    [ -z "$profile_filter" ] || [ "$id" = "$profile_filter" ] || continue
+    found=1
+    total=$(profile_word_total "$core_paths")
+    exception="none"
+    if [ "$total" -gt "$budget" ]; then
+      exception="over budget in report-only status; correctness requires listed core files"
+    fi
+    printf 'PROFILE %s\n' "$id"
+    printf '  purpose: %s\n' "$purpose"
+    printf '  files: %s\n' "$core_paths"
+    printf '  conditions: %s\n' "$overlays"
+    printf '  mutation: %s\n' "$mutation"
+    printf '  words: %s/%s\n' "$total" "$budget"
+    printf '  enforcement: %s\n' "$status"
+    printf '  budget_exception: %s\n' "$exception"
+  done < <(context_profile_rows)
+
+  [ "$found" -eq 1 ] || fail "unknown context profile: $profile_filter"
+
+  section "scenario contract"
+  if [ -z "$profile_filter" ]; then
+    while IFS=$'\t' read -r id _ _ profiles phases mutators state final budget_expectation; do
+      printf 'SCENARIO %s profiles=%s phases=%s mutators=%s state=%s final=%s budget=%s\n' \
+        "$id" "$profiles" "$phases" "$mutators" "$state" "$final" "$budget_expectation"
+    done < <(scenario_rows)
+  else
+    printf 'SCENARIO CONTRACT AVAILABLE: rerun without --profile for all rows\n'
+  fi
+
+  printf 'CONTEXT REPORT PASS\n'
+}
+
+validate_context_profiles() {
   local python_cmd
 
   python_cmd=$(find_python_cmd)
   [ -n "$python_cmd" ] ||
-    fail "cannot validate usage telemetry JSONL; install python"
+    fail "cannot validate context profiles; install python"
 
-  if ! "$python_cmd" - "$telemetry_path" <<'PY'
-import json
+  if ! "$python_cmd" - "$repo_root/v1/rules/context-profiles.md" "$repo_root" <<'PY'
+import pathlib
+import re
 import sys
 
-path = sys.argv[1]
-count = 0
+profile_path = pathlib.Path(sys.argv[1])
+repo_root = pathlib.Path(sys.argv[2])
+text = profile_path.read_text(encoding="utf-8")
 
-with open(path, "r", encoding="utf-8") as handle:
-    for line_number, line in enumerate(handle, 1):
-        line = line.strip()
-        if not line:
-            continue
-        count += 1
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise SystemExit(f"line {line_number}: invalid JSON: {exc}") from exc
-        if not isinstance(record, dict):
-            raise SystemExit(f"line {line_number}: telemetry record must be an object")
+profile_rows = []
+scenario_rows = []
+for line in text.splitlines():
+    if not line.startswith("| `"):
+        continue
+    cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+    if len(cells) == 7:
+        profile_rows.append(cells)
+    elif len(cells) == 9:
+        scenario_rows.append(cells)
 
-        unavailable = record.get("unavailable_reason")
-        if unavailable is not None:
-            if not isinstance(unavailable, str) or not unavailable.strip():
-                raise SystemExit(f"line {line_number}: unavailable_reason must be non-empty")
-            continue
+required_profiles = {
+    "planning.brief", "planning.tracked", "implementation.code",
+    "implementation.code-docs", "implementation.tracked", "review.generic",
+    "review.docs", "review.plan", "maintenance.docs", "maintenance.plan",
+    "verification.readonly",
+}
+seen_profiles = {row[0] for row in profile_rows}
+missing = required_profiles - seen_profiles
+if missing:
+    raise SystemExit(f"missing context profiles: {sorted(missing)}")
 
-        for key in ("input_tokens", "cached_input_tokens", "output_tokens"):
-            value = record.get(key)
-            if not isinstance(value, int) or value < 0:
-                raise SystemExit(f"line {line_number}: {key} must be a non-negative integer")
-        source = record.get("usage_source")
-        if not isinstance(source, str) or not source.strip():
-            raise SystemExit(f"line {line_number}: usage_source must be non-empty")
-        if record["cached_input_tokens"] > record["input_tokens"]:
-            raise SystemExit(f"line {line_number}: cached_input_tokens exceeds input_tokens")
+for row in profile_rows:
+    profile_id, _, paths, _, mutation, budget, status = row
+    if mutation not in {"read-only", "mutating", "conditional"}:
+        raise SystemExit(f"{profile_id}: invalid mutation capability {mutation}")
+    if status not in {"report-only", "pilot-enforced", "enforced"}:
+        raise SystemExit(f"{profile_id}: invalid enforcement status {status}")
+    try:
+        budget_value = int(budget)
+    except ValueError as exc:
+        raise SystemExit(f"{profile_id}: invalid budget {budget}") from exc
+    total = 0
+    for raw_path in paths.split(","):
+        rule_path = raw_path.strip().strip("`")
+        target = repo_root / rule_path
+        if not target.is_file():
+            raise SystemExit(f"{profile_id}: missing rule path {rule_path}")
+        total += len(target.read_text(encoding="utf-8").split())
+    if status in {"pilot-enforced", "enforced"} and total > budget_value:
+        raise SystemExit(f"{profile_id}: word budget exceeded {total}>{budget_value}")
 
-if count == 0:
-    raise SystemExit("telemetry JSONL contains no records")
+required_scenarios = {
+    "bounded-quick-fix", "unclear-small-work", "medium-brief-plan",
+    "tracked-change-plan", "dirty-tree-shipping", "named-plan-shipping",
+    "docs-repair", "report-only-review", "configured-app-review",
+    "failed-verification", "resume-invalidated",
+}
+seen_scenarios = {row[0] for row in scenario_rows}
+missing = required_scenarios - seen_scenarios
+if missing:
+    raise SystemExit(f"missing scenario rows: {sorted(missing)}")
+
+checks = {
+    "bounded-quick-fix": ["no classifier", "implementation.code", "one implementation", "gate observes post-mutation"],
+    "unclear-small-work": ["one material task question", "no dial picker"],
+    "medium-brief-plan": ["planning.brief", "read-only"],
+    "tracked-change-plan": ["planning.tracked", "plan write"],
+    "dirty-tree-shipping": ["exact dirty paths", "owned staging"],
+    "named-plan-shipping": ["implementation.tracked", "closeout before final gate"],
+    "docs-repair": ["maintenance.docs", "docs maintenance"],
+    "report-only-review": ["review.generic", "review only"],
+    "configured-app-review": ["no reconfirmation", "approval before plans"],
+    "failed-verification": ["verification.readonly", "verifier never mutates"],
+    "resume-invalidated": ["intervening commit", "reread or respawn"],
+}
+row_text = {row[0]: " | ".join(row[1:]) for row in scenario_rows}
+for scenario_id, needles in checks.items():
+    haystack = row_text[scenario_id]
+    for needle in needles:
+        if needle not in haystack:
+            raise SystemExit(f"{scenario_id}: missing required check text {needle!r}")
 PY
   then
-    fail "usage telemetry JSONL invalid: $telemetry_path"
+    fail "context profile contract invalid"
   fi
 }
 
@@ -522,15 +656,25 @@ check_scaffold_tree() {
   require_no_scaffold_placeholders "$root" "docs" "$label"
 }
 
-telemetry_log=""
-
 case "${1:-}" in
   "")
     ;;
-  --telemetry-jsonl)
-    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
-    [ -f "$2" ] || fail "telemetry JSONL path is not a file: $2"
-    telemetry_log=$2
+  --context-report)
+    case "$#" in
+      1)
+        context_report
+        exit 0
+        ;;
+      3)
+        [ "$2" = "--profile" ] || { usage >&2; exit 2; }
+        context_report "$3"
+        exit 0
+        ;;
+      *)
+        usage >&2
+        exit 2
+        ;;
+    esac
     ;;
   --scaffold)
     [ "$#" -eq 2 ] || { usage >&2; exit 2; }
@@ -563,6 +707,7 @@ require_file "AGENTS.md"
 require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
+require_file "v1/rules/context-profiles.md"
 require_dir "docs/architecture"
 require_dir "docs/decisions"
 require_dir "docs/agent-context"
@@ -607,18 +752,18 @@ require_manifest_change_to_doc \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
-  "Drift gates, budget checks, optional telemetry validation, and agent-readiness verifier" \
+  "Drift gates, budget checks, context reports, and agent-readiness verifier" \
   "docs/_meta/manifest.md, v1/verify-agent-docs.sh" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
-  "Context efficiency and documentation budgets" \
-  "v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
+  "Context efficiency, profiles, and documentation budgets" \
+  "v1/rules/context-profiles.md, v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
-  "Worker report usage reporting and optional telemetry validation" \
-  "v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
+  "Runtime usage reporting when raw counts are exposed" \
+  "v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
@@ -662,7 +807,12 @@ require_ownership_surface_path \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
-  "usage-reporting" \
+  "context-profiles" \
+  "v1/rules/context-profiles.md" \
+  "docs/_meta/ownership.json"
+require_ownership_surface_path \
+  "docs/_meta/ownership.json" \
+  "runtime-usage-reporting" \
   "v1/rules/orchestrator/dispatch.md" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
@@ -691,19 +841,13 @@ require_text "v1/rules/authoring-rules.md" "Documentation class budgets" \
   "authoring rules missing documentation class budgets"
 require_text "docs/architecture/workflow-kit.md" "Context layers" \
   "workflow architecture missing context layer contract"
-require_text "v1/rules/orchestrator/dispatch.md" "Token usage:" \
-  "dispatch report shape missing Token usage block"
-require_text "v1/rules/orchestrator/dispatch.md" "unavailable_reason" \
-  "dispatch report shape missing usage unavailable_reason"
-require_text "v1/rules/skill-contracts.md" "Usage Reporting" \
-  "skill contracts missing usage reporting policy"
+require_text "v1/rules/context-profiles.md" "implementation.code" \
+  "context profile owner missing implementation.code"
+require_text "v1/rules/context-profiles.md" "bounded-quick-fix" \
+  "context scenario contract missing bounded-quick-fix"
 
-for worker_rule in planning implementation review docs-maintenance plan-maintenance verification; do
-  require_text "v1/rules/subagent/$worker_rule.md" "Token usage" \
-    "subagent report shape missing token usage policy: $worker_rule"
-  require_text "v1/rules/subagent/$worker_rule.md" "unavailable_reason" \
-    "subagent report shape missing usage unavailable_reason: $worker_rule"
-done
+section "context profile checks"
+validate_context_profiles
 
 section "documentation budget checks"
 validate_word_budgets
@@ -823,6 +967,18 @@ for dial in cost-low cost-medium cost-high cost-max review-none review-high; do
     fail "orchestration dial '$dial' missing"
 done
 
+for fixed_skill in quick-fix plan ship-current-work ship-plans review-app; do
+  match=$(grep -IEn -m 1 'v1/rules/orchestrator/lifecycle[.]md' "$repo_root/v1/skills/$fixed_skill/SKILL.md" || true)
+  [ -z "$match" ] ||
+    fail "fixed skill loads generic classifier by default: v1/skills/$fixed_skill/SKILL.md:$match"
+done
+
+for readonly_rule in review verification; do
+  match=$(grep -IEn -m 1 'fix-enabled|fix enabled|authorized fix|commit before reporting|made a fix|Stay read-only unless|may fix' "$repo_root/v1/rules/subagent/$readonly_rule.md" || true)
+  [ -z "$match" ] ||
+    fail "$readonly_rule rule grants mutation authority: $match"
+done
+
 # Every v1/rules path referenced in a skill body must resolve to a real file
 # or directory, so dispatch routes never point nowhere.
 while IFS= read -r skill_file; do
@@ -869,6 +1025,25 @@ reject_any_match() {
     [ -z "$match" ] ||
       fail "$message: ${file#$repo_root/}:$match"
   done < <(candidate_files)
+}
+
+policy_candidate_files() {
+  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/v1" \
+    \( -path "$repo_root/v1/verify-agent-docs.sh" -o -path "$repo_root/docs/plans" -o -path "$repo_root/v1/.claude-plugin" \) -prune -o \
+    -type f -print
+}
+
+reject_policy_match() {
+  local pattern=$1
+  local message=$2
+  local file
+  local match
+
+  while IFS= read -r file; do
+    match=$(grep -IEn -m 1 "$pattern" "$file" || true)
+    [ -z "$match" ] ||
+      fail "$message: ${file#$repo_root/}:$match"
+  done < <(policy_candidate_files)
 }
 
 allow_retired_reference() {
@@ -919,6 +1094,10 @@ reject_unapproved_retired_name '(^|[^-])review-docs([^a-z-]|$)' 'review-docs'
 reject_unapproved_retired_name '(^|[^-])review-work([^a-z-]|$)' 'review-work'
 reject_any_match 'docs/ownership[.]md' "ownership prose doc referenced instead of docs/_meta/ownership.json"
 reject_any_match 'v1/[.]claude-plugin' "retired Claude plugin path referenced"
+reject_policy_match 'Token usage:' "default token usage boilerplate remains"
+reject_policy_match 'unavailable_reason' "usage-unavailable boilerplate remains"
+reject_policy_match 'telemetry JSONL|--telemetry-jsonl' "telemetry JSONL policy remains"
+reject_policy_match 'fix-enabled|fix enabled' "fix-enabled review/verification path remains"
 [ ! -e "$repo_root/v1/.claude-plugin" ] ||
   fail "retired Claude plugin path exists: v1/.claude-plugin"
 
@@ -930,13 +1109,5 @@ done
 section "local adapter freshness checks"
 bash "$repo_root/v1/copy-skills.sh" --check "$repo_root" ||
   fail "copied skill adapters are stale"
-
-section "optional usage telemetry checks"
-if [ "$telemetry_log" = "" ]; then
-  printf 'USAGE TELEMETRY CHECK SKIPPED: unavailable_reason=no telemetry JSONL provided\n'
-else
-  validate_usage_telemetry_jsonl "$telemetry_log"
-  printf 'USAGE TELEMETRY JSONL PASS: %s\n' "$telemetry_log"
-fi
 
 printf 'ALL AGENT-DOCS GATES PASS\n'

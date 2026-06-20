@@ -17,27 +17,26 @@ Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
 request is the task; if it is missing, run the two-question intake and wait.
 
 Once substantive context exists, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md`,
+`~/agent-docs/v1/rules/context-profiles.md`,
 `~/agent-docs/v1/rules/orchestrator/dispatch.md`,
 `~/agent-docs/v1/rules/orchestrator/run-docs.md`, and
-`~/agent-docs/v1/plan-lifecycle.md`. Load task-specific architecture,
-decisions, agent-context docs, plans, and source only when the confirmed run
-configuration or worker phase needs them.
+`~/agent-docs/v1/plan-lifecycle.md`. This fixed recipe does not load the generic
+classifier by default. Load task-specific architecture, decisions, agent-context
+docs, plans, and source only when the confirmed run configuration or worker
+phase needs them.
 
 ## Required Configuration
 
-After Standard Intake has context, ask for the minimum run configuration that
-changes the work, then repeat the exact run shape and wait for approval before
-worker spend, app startup, screenshots, or run-doc writes. If the user supplied
-values in the original prompt, still confirm them.
+Accept values supplied in the original prompt. Ask only for configuration that
+is missing and changes the work, then repeat the exact run shape and wait for
+approval before worker spend, app startup, screenshots, or run-doc writes.
 
 Confirm:
 
 - target scope: whole app, subsystem, user journey, named files, or named docs
 - audit lenses to include or exclude
-- explicit `review-*` and `cost-*` dials; because this can spend significant
-  worker budget, omitted dials are incomplete until the user confirms default
-  or custom values
+- explicit `review-*` and `cost-*` dials, defaulting silently to medium when
+  omitted
 - run state: chat-only or committed run docs
 - whether best-effort app startup and screenshot inspection are allowed
 - areas to avoid, active work to respect, and existing plans already owning work
@@ -54,6 +53,7 @@ still decides.
 ## Audit Lenses
 
 Dispatch read-only review workers in parallel where scopes do not overlap. Use
+profile `review.generic`, `review.docs`, or `review.plan` as appropriate. Use
 only configured lenses from this set:
 
 - docs and scaffold health

@@ -57,13 +57,6 @@ Run relevant gates whenever practical. If a gate cannot run, report the command
 attempted, why it failed or was unavailable, what cheaper check you ran instead,
 and the residual risk. A skipped gate is not green.
 
-## Usage Reporting
-
-When a runtime exposes raw token counts, worker reports may include the optional
-usage block defined in `orchestrator/dispatch.md`. When it does not, reports use
-`unavailable_reason`. Do not invent counts, infer cache metrics, or translate
-usage into vendor pricing.
-
 ## Dials
 
 Two axes tune every skill. The user sets them by naming them; otherwise both
@@ -93,12 +86,14 @@ Skills may declare a non-`medium` default. Old tags map in: `skip-review` ->
 Use role-based names so adapters can map them locally: `cheap`, `mid-tier`,
 `strong`, `strongest`.
 
-- Planning and review use `strong`.
-- Implementation, bounded investigation, verification, mechanical docs, and
-  routine work use `mid-tier` by default.
+- Routine implementation, verification, mechanical docs, and bounded
+  investigation use `mid-tier` by default.
+- Escalate to `strong` or `strongest` for security/auth, migrations,
+  destructive behavior, public APIs, concurrency, hard algorithms, conflicting
+  sources, unclear acceptance, repeated failures, or weak verification.
 - `cost-low` pushes work down to `mid-tier`/`cheap`; `cost-max` permits strong
-  workers freely; `review-high`/`review-max` adds a strong red-team or second
-  opinion where useful.
+  workers freely; `review-high`/`review-max` adds stronger independent review
+  where useful.
 
 A skill's launch tier is recorded in `v1/skills/registry.md` as `cheap`, `mid`,
 `strong`, or `strongest`; `mid` maps to the `mid-tier` role above. Dispatched
@@ -111,6 +106,9 @@ workers follow the role mapping above regardless of launch tier.
   failure behavior, and commit concurrency live in
   [`orchestrator/lifecycle.md`](orchestrator/lifecycle.md) and
   [`orchestrator/dispatch.md`](orchestrator/dispatch.md).
+- **Context profiles.** Worker rule loads are owned by
+  [`context-profiles.md`](context-profiles.md). Skills name profile IDs and
+  task-routed overlays instead of copying rule lists.
 - **Modes and registry.** The skill inventory, mode/action names, worker roles,
   commit behavior, intake style, launch tier, and normal inputs live in
   [`../skills/registry.md`](../skills/registry.md).
@@ -120,11 +118,13 @@ workers follow the role mapping above regardless of launch tier.
   [`orchestrator/dispatch.md`](orchestrator/dispatch.md),
   [`repo-rules.md`](repo-rules.md), and [`subagent/`](subagent/).
 - **Generated context.** Dispatches stay plain text with exact rule links and
-  concise observed summaries; do not create packet helpers or generated context
-  bundles unless a future owner doc changes that policy.
+  concise observed summaries; do not create packet helpers, generated prompt
+  artifacts, or per-run context workspaces unless a future owner doc changes
+  that policy.
 
 ## See also
 
 - [`orchestrator/lifecycle.md`](orchestrator/lifecycle.md)
 - [`orchestrator/dispatch.md`](orchestrator/dispatch.md)
+- [`context-profiles.md`](context-profiles.md)
 - [`../skills/registry.md`](../skills/registry.md)

@@ -18,8 +18,10 @@ app-state thoughts; when launched without it, ask the two intake questions,
 batched, and wait — do not infer the task from an empty or generic invocation,
 and do not offer a menu of things to plan.
 
-Once intent is known, read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Then
+Once intent is known, read `~/agent-docs/v1/rules/context-profiles.md` and
+`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose a brief or tracked
+planning profile. This fixed recipe does not load the generic classifier by
+default. Then
 load only the smallest matching task route:
 
 - Current subsystem facts or code behavior → `docs/architecture/index.md`,
@@ -52,14 +54,13 @@ This is the orchestrator's own job, run inline before any worker:
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and the rule
-bundles follow `orchestrator/dispatch.md`. Planning and review workers run on a
-strong model.
+Dials and model policy follow `skill-contracts.md`; dispatch shape and profiles
+follow `orchestrator/dispatch.md`.
 
 - **Planning worker** per separable concern or workstream. Pass the Planning
-  worker bundle: `~/agent-docs/v1/rules/subagent/planning.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/plan-template.md`, plus
-  the task routes that concern needs. It investigates and returns a concrete
+  profile: `planning.brief` for inline implementer briefs, or
+  `planning.tracked` for explicit, broad, risky, multi-stream, or
+  resume-sensitive tracked plans. It investigates and returns a concrete
   recommendation and either a tracked plan or an implementer brief. When
   implementation should follow, require the brief shape from
   `subagent/planning.md` so the next implementation worker gets goal,
@@ -68,12 +69,10 @@ strong model.
   decisions. A read-only planning worker returns its plan inline — persisting it
   to disk needs a write-capable worker or the orchestrator.
 - **Review worker** only for broad, risky, or cross-cutting plan material. Pass
-  `~/agent-docs/v1/rules/subagent/review.md` plus the plan material to critique.
+  profile `review.plan` plus the plan material to critique.
 - **Docs-maintenance worker** only when planning creates or edits tracked docs
-  (durable architecture/decision facts, plan files). Pass
-  `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  (durable architecture/decision facts, plan files). Use profile
+  `maintenance.docs`.
 
 Read-only planning workers parallelize freely across disjoint concerns; any
 worker that writes tracked docs runs serially and commits its slice.

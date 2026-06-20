@@ -59,8 +59,7 @@ Per the worker report shape in
 - open assumptions and decisions that survived intake
 - files/areas the implementer will likely touch
 - blockers and residual risk
-- optional `Token usage` block per dispatch rules, with `unavailable_reason`
-  when runtime usage data is not exposed
+- raw runtime usage only when exposed by the runtime or requested
 
 Target `<=1,200` output tokens unless the requested artifact is the report. Keep
 evidence compact and source-backed; do not include full transcripts unless the

@@ -247,32 +247,30 @@ short saves output tokens without weakening evidence.
 **Tradeoffs.** Workers spend some input reading source docs directly, but the
 workflow avoids stale generated context and large prior-transcript handoffs.
 
-## Static budgets before usage gates
+## Context profiles before usage reports
 
-**Decision.** Agent-docs enforces context economy first with static layer
-contracts and word-count budgets: cache-stable startup inputs stay small,
-task-specific docs are routed by owner, and never-auto-loaded material stays out
-of startup. Worker reports may include raw token usage when the runtime exposes
-it, but unavailable usage is represented by `unavailable_reason`; vendor dollar
-pricing and runtime-specific cache scoring are not part of the contract.
+**Decision.** Agent-docs enforces context economy with static layer contracts,
+word-count budgets, a canonical `v1/rules/context-profiles.md` owner, and the
+read-only `v1/verify-agent-docs.sh --context-report` resolver. Worker reports
+include runtime usage counts only when raw counts are exposed by the runtime or
+explicitly requested.
 
-**Why.** Static budgets catch the cheap regressions without requiring every
-adapter to expose identical telemetry. Optional raw counts can inform later
-review, but gating on prices or one runtime's cache model would make the
-tool-neutral kit brittle.
+**Why.** Deterministic profile reports and scenario rows catch context drift
+without requiring every adapter to expose identical runtime metrics. Optional raw
+counts can inform later review, but they are not default boilerplate.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/context-profiles.md`](../../v1/rules/context-profiles.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh).
 
 ## Final-state shipping order
 
 **Decision.** Mutating workflows finish all code, docs, plan-frontmatter, and
 run-doc mutations before running the final consolidated drift gate, then report
-from that verified final state. Review and verification workers are read-only
-unless dispatched with implementation and repo rules plus a bounded fix scope.
+from that verified final state. Review and verification workers are read-only;
+findings route back to implementation, docs-maintenance, or plan-maintenance.
 
 **Why.** A gate run before plan status or doc migration does not prove the state
-the user receives. Mutation authority must match the rule bundle that tells a
-worker how to edit, verify, stage, and commit safely.
+the user receives. Mutation authority must match the context profile that tells
+a worker how to edit, verify, stage, and commit safely.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
 
@@ -321,7 +319,7 @@ making the handoff boundary explicit.
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/subagent/planning.md`](../../v1/rules/subagent/planning.md).
 
 **Alternatives considered.** Generated repo-local workspaces, metadata v2,
-packet helper scripts, static context bundles, and broader `docs/index.md`
+packet helper scripts, generated context artifacts, and broader `docs/index.md`
 skill routing.
 
 **Tradeoffs.** Orchestrators still need discipline to pass compact summaries and

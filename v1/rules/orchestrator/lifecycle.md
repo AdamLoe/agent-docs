@@ -4,7 +4,7 @@ GENERIC. App-independent. This is the workflow-control rule for **orchestrators*
 — the user-facing skills that classify a request, choose a lifecycle path, pick
 worker phases, and hold the coordination surface. It does not teach how to do any
 single role; that lives under [`../subagent/`](../subagent/). The dispatch packet,
-worker-report shape, rule bundles, and commit-concurrency rules live in
+worker-report shape, context-profile use, and commit-concurrency rules live in
 [`dispatch.md`](dispatch.md). Stateful run folders live in
 [`run-docs.md`](run-docs.md).
 
@@ -74,10 +74,10 @@ Pick the smallest lifecycle that can ship the change safely:
 - **Briefed implementation** — a planning worker produces an implementer brief,
   then an implementation worker ships from it. Review only if the change is
   user-facing, cross-cutting, or correctness-sensitive.
-- **Tracked plan lifecycle** — broad, risky, ambiguous, or durable work:
-  planning worker → tracked-plan persistence → review worker (plan) →
-  implementation worker(s) → review worker (shipped) → docs/plan maintenance →
-  final verification.
+- **Tracked plan lifecycle** — explicit, broad, risky, multi-stream, or
+  resume-sensitive work. The tracked planner may persist its own plan. One
+  primary implementation mutator normally owns code, associated docs, and
+  selected-plan closeout; review and final verification are read-only.
 - **Needs user decision** — a product/architecture/ownership/sequencing call
   changes what should be built and cannot be inferred. Batch the questions
   during intake (see Human stops in [`../skill-contracts.md`](../skill-contracts.md)).
@@ -88,10 +88,9 @@ Effort is governed by the kit's two shared dials, defined in
 [`../skill-contracts.md`](../skill-contracts.md) — there is no orchestration-only
 effort vocabulary. The concrete agent counts below are orchestration guidance,
 not a global per-tier spec; the dials stay "vibes, not a rulebook" elsewhere.
-Worker-output budgets are review heuristics until telemetry exists. When a
-runtime exposes raw input, cached-input, and output counts, worker reports use
-the optional usage block in [`dispatch.md`](dispatch.md); otherwise they record
-`unavailable_reason`. Do not translate usage into vendor dollars.
+Worker-output budgets are review heuristics. Runtime usage counts are reported
+only when raw counts are exposed by the runtime or explicitly requested; the
+default proof surface is context reports, scenario rows, and gate evidence.
 
 | Dial setting | Fan-out | Worker-output budget | Model spend |
 |---|---|---|---|
@@ -140,8 +139,8 @@ step:
    plan-maintenance worker, or orchestrator-owned persistence.
 4. Review plan material when the lifecycle calls for it.
 5. Implement the owned slice(s), serializing editing on the shared tree.
-6. Review the shipped outcome when risk warrants; route fixes to authorized
-   mutating workers.
+6. Review the shipped outcome when risk warrants; route fixes to mutating
+   workers.
 7. Finish all remaining mutations: code, docs, plan frontmatter, and run-doc
    status.
 8. Run one final consolidated drift gate after the last mutation.
@@ -204,9 +203,9 @@ Use only the phases the classification needs:
    tree (see [`dispatch.md`](dispatch.md)).
 5. **On each completion** — update the tracker from observed results, spot-check
    the high-risk bit, decide the next wave.
-6. **Closeout mutations** — docs-maintenance or plan-maintenance workers migrate
-   durable facts/rationale into architecture/decisions and update plan/run-doc
-   status.
+6. **Closeout mutations** — the primary implementation worker may close selected
+   plans when its profile grants that overlay; docs-maintenance or
+   plan-maintenance handle specialist or plan-only closeout.
 7. **Final consolidated gate** — the manifest drift gates plus any scarce-
    resource smoke, run once after closeout mutations.
 8. **Report** — hand the lead commits, gates, migrations, assumptions, residual
@@ -227,7 +226,7 @@ Use only the phases the classification needs:
 
 ## See also
 
-- [`dispatch.md`](dispatch.md) — dispatch packet, report shape, bundles, commit
+- [`dispatch.md`](dispatch.md) — dispatch packet, report shape, profiles, commit
   concurrency.
 - [`run-docs.md`](run-docs.md) — opt-in stateful run folders.
 - [`../skill-contracts.md`](../skill-contracts.md) — intake, dials, model policy,

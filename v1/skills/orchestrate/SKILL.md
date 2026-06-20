@@ -58,8 +58,8 @@ involving the user.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch packet shape, rule
-bundles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
+Dials and model policy follow `skill-contracts.md`; dispatch packet shape,
+profiles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
 phases the classification needs.
 
 - **Planning worker** (unclear, medium, broad, or durable work, or to produce a
@@ -84,8 +84,7 @@ phases the classification needs.
 - **Review worker — shipped** (nontrivial shipped work). Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. It verifies
   the shipped state and reports misses; route fixes to an implementation or
-  maintenance worker unless the dispatch explicitly grants the fix-enabled
-  review bundle from `orchestrator/dispatch.md`.
+  maintenance worker.
 - **Closeout worker** — a docs-maintenance worker
   (`~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
   `~/agent-docs/v1/rules/authoring-rules.md`,

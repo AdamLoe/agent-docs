@@ -54,8 +54,7 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - docs migrated or why none were needed
 - **commit hash**, or a clear blocker if it could not close
 - assumptions made and residual risk
-- optional `Token usage` block per dispatch rules, with `unavailable_reason`
-  when runtime usage data is not exposed
+- raw runtime usage only when exposed by the runtime or requested
 
 Target `<=600` output tokens. Do not include full diffs or gate transcripts
 unless the dispatch or user explicitly requests them.

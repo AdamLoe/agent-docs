@@ -2,8 +2,8 @@
 
 This is the shared inventory for `v1/skills/*/SKILL.md`. It keeps workflow facts
 out of individual skills when they apply to the suite as a whole. Every skill is
-an orchestrator entry point; see `v1/rules/skill-contracts.md` and
-`v1/rules/orchestrator/`.
+an orchestrator entry point; see `v1/rules/skill-contracts.md`,
+`v1/rules/context-profiles.md`, and `v1/rules/orchestrator/`.
 
 **Worker roles** names the subagent roles a skill normally dispatches
 (`planning`, `implementation`, `review`, `docs-maintenance`, `plan-maintenance`,
@@ -15,6 +15,8 @@ launched without context; `no-prompt` skills operate on existing disk/git state
 and run directly (honoring any dials passed in). **Launch tier** is the
 recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
 `strongest`. All are defined in `v1/rules/skill-contracts.md`.
+Context profile IDs and mutation capability are defined only in
+`v1/rules/context-profiles.md`; registry rows remain inventory metadata.
 
 ## Start and plan
 

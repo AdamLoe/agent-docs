@@ -46,8 +46,8 @@ Context is layered. Routers, manifest slots, the runtime card, indexes, and
 worker role cards stay cache-stable. Architecture leaves, decisions,
 agent-context procedures, selected plans, and source are task-routed. Plans,
 run docs, pitch material, full ownership JSON, verifier output, and source files
-are never auto-loaded. Static word budgets and optional raw usage reporting keep
-that shape enforceable.
+are never auto-loaded. Static word budgets and deterministic context reports
+keep that shape enforceable.
 
 ## See also
 
