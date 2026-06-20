@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         codex
 last_updated:  2026-06-20
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -14,19 +14,15 @@ owning_docs:
 
 ## Context Status
 
-This file is reference and migration context only. Do not dispatch
-implementation work from it, and do not treat it as a peer plan alongside
-`agent-docs-hardening.md` and `token-economy.md`.
+This file was reference and migration context only. The actionable work shipped
+through `agent-docs-hardening.md` and `token-economy.md`; do not dispatch new
+implementation work from this pitch.
 
-Implementation workers should use `agent-docs-hardening.md` as the active anchor
-and `token-economy.md` as the folded companion for token-economy scope. During
-the reader-path closeout, compare the pitch material below against the shipped
-system and migrate only still-true facts/rationale into architecture and
-decisions. After that migration, this file may be marked `shipped` and
-`okay_to_delete: true`.
-
-The current `draft` status is intentional: the material is useful context, but
-it is not itself an actionable implementation plan.
+The still-true facts and rationale below have durable homes in
+`docs/architecture/workflow-kit.md`,
+`docs/architecture/install-and-adapters.md`, `docs/overview.md`,
+`docs/plans/index.md`, and `docs/decisions/agent-docs.md`. This file is
+disposable coordination history.
 
 ## The Pitch
 
@@ -296,6 +292,21 @@ checkpoints, not a one-to-one list of spawned subagents:
 - Final verification reflects the actual final state.
 - The docs tree stays small because durable facts migrate out of plans and
   routers remain facts-free.
+
+## Migration Notes
+
+Pitch material is migrated as current-state docs, not as a historical pitch:
+
+- Operating model and command surfaces:
+  `docs/architecture/workflow-kit.md`.
+- Path model, install/copy behavior, and adapters:
+  `docs/architecture/install-and-adapters.md`.
+- First-reader summary: `docs/overview.md`.
+- Plan and run-folder lifecycle route: `docs/plans/index.md`.
+- Rationale for the workflow, adapter, verifier, budget, and handoff choices:
+  `docs/decisions/agent-docs.md`.
+
+No durable context remains only in this pitch file.
 
 ## See Also
 

@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         codex
 last_updated:  2026-06-20
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -358,25 +358,27 @@ The plan is done when:
 
 ## Migration Notes
 
-At ship time, migrate:
+Closeout migration targets:
 
-- Installer/copy behavior and adapter path model to
-  `docs/architecture/install-and-adapters.md`.
-- Workflow lifecycle, dispatch bundles, ship order, and plan persistence to
-  `docs/architecture/workflow-kit.md`.
-- Cache-stable startup, source-first dispatch, compact output, budget layers,
-  and telemetry defaults to `docs/architecture/workflow-kit.md`.
-- Subagent spawn topology and ship-order ownership to
-  `docs/architecture/workflow-kit.md` and, if it records a durable tradeoff,
-  `docs/decisions/agent-docs.md`.
-- Repository inventory and stable layout coverage to
-  `docs/repository-layout.md`.
-- Rationale for verifier split, mutation authority, adapter ownership, and
-  feedback/list-skills behavior to `docs/decisions/agent-docs.md`.
-- Rationale for overview route gating, static-vs-heuristic token caps, and
-  deferred per-skill budget/profile registry columns to
-  `docs/decisions/agent-docs.md`.
-- Ownership changes to `docs/_meta/ownership.json`.
+- `docs/architecture/install-and-adapters.md` carries installer/copy behavior,
+  adapter path ownership, conflict handling, dry-run/check behavior, and
+  `AGENT_DOCS_SKILLS_DEST` scope.
+- `docs/architecture/workflow-kit.md` carries the current workflow lifecycle,
+  subagent-first orchestration, reads-vs-dispatch, source-first handoffs,
+  ship order, commit-heavy worker model, verifier/scaffold boundary, static
+  budgets, and optional usage reporting.
+- `docs/overview.md` carries the compact reader-path working model.
+- `docs/plans/index.md` carries temporary plan and run-folder lifecycle routing.
+- `docs/repository-layout.md` carries stable path inventory.
+- `docs/decisions/agent-docs.md` carries rationale for adapter ownership,
+  verifier modes, overview route gating, mutation authority, source-first
+  handoffs, static budgets before usage gates, final-state shipping order,
+  and focused v1 handoffs over generated context.
+- `docs/_meta/manifest.md` and `docs/_meta/ownership.json` carry the current
+  routing and ownership coverage for the shipped surfaces.
+
+Useful pitch material was already migrated into those targets without
+historical framing; this plan no longer owns durable current-state context.
 
 ## See Also
 

@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         codex
 last_updated:  2026-06-20
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -337,16 +337,23 @@ serial points:
 - Preserve unrelated dirty work in this repo. Current planning observed
   pre-existing deleted `docs/plans/` files; this plan does not own them.
 
-## Migration Notes (filled in at ship time)
+## Migration Notes
 
-Before setting this plan to `shipped`, migrate:
+Closeout migration targets:
 
-- Current workflow facts into `architecture/workflow-kit.md`.
-- Rationale for cache-first startup, source-first dispatch, and compact output
-  into `decisions/agent-docs.md`.
-- Ownership for context efficiency, doc budgets, and usage reporting into
-  `_meta/ownership.json` if those concepts become first-class routes.
-- Any verifier ownership changes into `docs/_meta/manifest.md`.
+- `docs/architecture/workflow-kit.md` carries cache-first startup,
+  task-routed overview, source-first dispatch, compact handoffs and reports,
+  context layers, static budgets, optional raw usage reporting, and verifier
+  enforcement.
+- `docs/decisions/agent-docs.md` carries rationale for task-routed overview,
+  source-first compact handoffs, static budgets before usage gates, and focused
+  v1 handoffs over generated context.
+- `docs/_meta/manifest.md` routes context efficiency, documentation budgets,
+  and usage reporting to their owners and exposes the drift gate.
+- `docs/_meta/ownership.json` owns context-efficiency, documentation-budget,
+  and usage-reporting concepts.
+
+No durable token-economy context remains only in this plan.
 
 ## Worker Findings
 
