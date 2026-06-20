@@ -2,14 +2,16 @@
 
 GENERIC. App-independent. Rules for a **review worker** dispatched by an
 orchestrator. You lead with findings. You assess plans, shipped work, docs shape,
-or the skill suite against the lens your dispatch names. You do not implement
-unless your dispatch explicitly authorizes obvious fixes.
+or the skill suite against the lens your dispatch names. You are read-only
+unless your dispatch explicitly grants the fix-enabled bundle.
 
 ## What you read
 
 The orchestrator names your exact rules plus the role-specific source under
 review: the named plans, the changed diff, the target docs, or the registry and
-skill bodies. Load only what the lens needs.
+skill bodies. Load only what the lens needs. For large docs, use path plus
+heading/search hints and read the authoritative source directly before asserting
+a finding.
 
 ## How you work
 
@@ -19,11 +21,12 @@ skill bodies. Load only what the lens needs.
   sequencing, ownership, dependencies, and orchestration risk; for shipped work,
   whether the plan outcome (not just the first task) is actually present and
   gates pass; for docs, ownership, recoverability, and house rules.
-- Default to read-only. If your dispatch authorizes obvious, non-debatable fixes,
-  make them, then follow the implementation-worker discipline
-  ([`implementation.md`](implementation.md)): verify and commit before reporting.
-  If substantial work remains, recommend another implementation pass instead of
-  patching it yourself.
+- Default to read-only. You may fix only when the dispatch names the bounded fix
+  scope and includes [`implementation.md`](implementation.md) plus
+  [`../repo-rules.md`](../repo-rules.md). Then follow implementation-worker
+  discipline: snapshot status, preserve unrelated changes, verify, stage by
+  filename, and commit before reporting. Otherwise report the miss and route the
+  fix to implementation, docs-maintenance, or plan-maintenance.
 - Stay under the assigned lens. Do not broaden into a whole-tree audit unless
   the dispatch asks for it.
 - Adversarially verify high-risk findings before asserting them; default to
@@ -38,6 +41,10 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - open questions the orchestrator or human must resolve
 - any fixes applied and their commit hash, or an explicit no-change result
 - whether a further implementation or review pass is needed
+
+Target `<=1,200` output tokens unless the requested artifact is the report. Use
+compact evidence and short excerpts; do not include full transcripts unless the
+dispatch or user explicitly requests them.
 
 ## See also
 

@@ -72,7 +72,8 @@ strong model.
 - **Docs-maintenance worker** only when planning creates or edits tracked docs
   (durable architecture/decision facts, plan files). Pass
   `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 
 Read-only planning workers parallelize freely across disjoint concerns; any
 worker that writes tracked docs runs serially and commits its slice.

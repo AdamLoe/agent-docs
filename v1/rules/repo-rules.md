@@ -25,10 +25,18 @@ You are about to commit, push, or run a destructive command. Read first.
   app's `drift-gates` manifest slot.
 - **Never push without explicit instruction.** Local commits are fine;
   pushing is the user's call.
+- **Snapshot dirty state before mutating.** Check `git status --short` before
+  editing or committing. Preserve unrelated user changes and deletions; do not
+  restore, stage, or "clean up" paths outside your owned slice unless the user
+  explicitly asks.
 - **Stage by file name, not `git add -A` or `git add .`.** Avoids
   accidentally committing `.env`, large binaries, or in-progress scratch
   files.
-- **Don't commit `.claude/settings.local.json`.** It's user-local.
+- **Stop on blocking unrelated dirt.** If unrelated dirty state prevents a
+  coherent owned commit or makes a gate result ambiguous, stop and report the
+  exact blocker instead of force-fitting the slice.
+- **Don't commit tool-local settings files** such as
+  `.claude/settings.local.json`. They are user-local.
 
 ## Commit cadence
 

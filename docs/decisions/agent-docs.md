@@ -181,15 +181,47 @@ debate the docs spent context re-litigating.
 **Decision.** Editing workers commit their own completed slice before reporting;
 follow-up workers repair or revert through additional commits. Editing is serial
 per working tree because concurrent commits race the git index, and parallel
-editing uses worktree isolation or orchestrator-applied patches. The orchestrator
-records commit hashes and verifies the final observed state; the user squashes
-later if desired.
+editing uses worktree isolation or orchestrator-applied patches. Each mutating
+worker snapshots dirty state, preserves unrelated user changes and deletions,
+stages only owned paths by filename, and stops if unrelated dirty state blocks a
+coherent slice. The orchestrator records commit hashes and verifies the final
+observed state; the user squashes later if desired.
 
 **Why.** Workers own their slice end to end, so the commit belongs with the
 worker that verified it green. Serial-by-default editing avoids index races that
 file-ownership fences cannot prevent.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/), [`../../v1/rules/subagent/`](../../v1/rules/subagent/).
+
+## Source-first compact handoffs
+
+**Decision.** Worker dispatch is source-first and compact: orchestrators pass
+exact rule links and path plus heading/search hints, workers read authoritative
+docs/source directly for exact details, and carry-forward summaries contain only
+observed decisions, findings, touched files, gates, commits, blockers, and
+assumptions.
+
+**Why.** Summaries are useful continuity, but they become risky when they replace
+the document or source that owns the fact. Keeping dispatch packets and reports
+short saves output tokens without weakening evidence.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/subagent/`](../../v1/rules/subagent/).
+
+**Tradeoffs.** Workers spend some input reading source docs directly, but the
+workflow avoids stale generated context and large prior-transcript handoffs.
+
+## Final-state shipping order
+
+**Decision.** Mutating workflows finish all code, docs, plan-frontmatter, and
+run-doc mutations before running the final consolidated drift gate, then report
+from that verified final state. Review and verification workers are read-only
+unless dispatched with implementation and repo rules plus a bounded fix scope.
+
+**Why.** A gate run before plan status or doc migration does not prove the state
+the user receives. Mutation authority must match the rule bundle that tells a
+worker how to edit, verify, stage, and commit safely.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
 
 ## Orchestrate coordinates specialists
 

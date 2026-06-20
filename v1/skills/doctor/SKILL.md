@@ -66,7 +66,8 @@ invocation; the two fix workers run only when the user asks to repair failures.
 - **Docs-maintenance worker** only when authorized to repair doc-scaffold
   failures (missing required files, manifest-slot or routing gaps, dead ownership
   paths). Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`. It makes the smallest repair and
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. It makes the smallest repair and
   commits its slice.
 - **Implementation worker** only when authorized to repair a failing verifier or
   gate script. Pass `~/agent-docs/v1/rules/subagent/implementation.md`,

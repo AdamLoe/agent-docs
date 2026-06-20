@@ -96,8 +96,9 @@ read this first.
    `~/agent-docs/v1/plan-template.md`. A repo's `docs/plans/index.md`
    is only a router and reminder, not a live inventory. **Migrate as
    much context as possible into architecture/decisions before the plan
-   is closed** — the goal is for new chats to not need plan history to
-   understand the current system.
+   is closed**; `okay_to_delete: true` means shipped or abandoned and
+   durable context is migrated or absent. The goal is for new chats to not
+   need plan history to understand the current system.
 
 8. **No auto-loaded facts.** `CLAUDE.md`, `AGENTS.md`, and equivalent
    auto-loaded files may exist only as a router-only adapter: they point
@@ -119,17 +120,18 @@ you're unsure which doc owns it, query the ownership data
 ## Workflow when shipping a plan
 
 1. Make the code change.
-2. Run the per-commit gates (manifest `drift-gates` slot).
-3. **Update the architecture doc(s)** that own the touched surfaces.
+2. **Update the architecture doc(s)** that own the touched surfaces.
    Rewrite in place — don't append a version-flavoured section.
-4. **Update `decisions/<domain>.md`** if the change introduces a new
+3. **Update `decisions/<domain>.md`** if the change introduces a new
    decision. Use the three mandatory + four optional fields.
-5. **Migrate any plan-prose context worth preserving** into
+4. **Migrate any plan-prose context worth preserving** into
    architecture/decisions so the plan can be `okay_to_delete: true`.
-6. Commit code + doc updates together (or two adjacent commits in one
-   PR).
-7. Update the plan frontmatter: `status: shipped`, `okay_to_delete`
-   truthfully.
+5. Update the plan/run-doc frontmatter: `status`, `last_updated`, and
+   `okay_to_delete` truthfully.
+6. Run the final drift gate after all code, doc, plan-status, and run-doc
+   mutations (manifest `drift-gates` slot).
+7. Commit the verified final state. Report from that final state, not from a
+   pre-migration gate.
 
 ## Anti-patterns to refuse
 
@@ -156,10 +158,10 @@ you're unsure which doc owns it, query the ownership data
 ## See also (generic — resolved relative to this kit)
 
 - The maintenance skills that route into these rules — `fix-docs-drift`,
-  `check-docs`, `review-docs-shape` (each is a self-contained
-  skill under `~/.claude/skills/`; there is no separate prompt-body layer).
-- `./plan-lifecycle.md` — plan status metadata and migration rules.
-- `./agent-docs-guide.md` — why the system is shaped this way.
+  `check-docs`, `review-docs-shape` (each is a self-contained skill copied into
+  the active tool's skill directory; there is no separate prompt-body layer).
+- `../plan-lifecycle.md` — plan status metadata and migration rules.
+- `../agent-docs-guide.md` — why the system is shaped this way.
 
 ## App bindings this doc reads (from the manifest)
 

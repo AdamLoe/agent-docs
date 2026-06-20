@@ -42,8 +42,9 @@ run and how much they fan out.
   phase only if the change is user-facing, cross-cutting, or
   correctness-sensitive.
 - **Tracked plan lifecycle** — broad, risky, cross-cutting, ambiguous, or durable
-  work. Planning worker → review worker (plan) → implementation worker(s) →
-  review worker (shipped) → verification + plan-maintenance closeout.
+  work. Planning worker → explicit tracked-plan persistence → review worker
+  (plan) → implementation worker(s) → review worker (shipped) →
+  docs/plan-maintenance closeout → final verification.
 - **Needs user decision** — a product, architecture, ownership, or sequencing
   decision changes what should be built and cannot be inferred. Batch the
   questions during intake even at `review-none` (see Human Stops in
@@ -82,19 +83,23 @@ phases the classification needs.
   reporting.
 - **Review worker — shipped** (nontrivial shipped work). Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. It verifies
-  the shipped state and may fix and commit obvious missed shipping work; route
-  another implementation pass if substantial work remains.
+  the shipped state and reports misses; route fixes to an implementation or
+  maintenance worker unless the dispatch explicitly grants the fix-enabled
+  review bundle from `orchestrator/dispatch.md`.
+- **Closeout worker** — a docs-maintenance worker
+  (`~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`,
+  `~/agent-docs/v1/rules/repo-rules.md`) or plan-maintenance worker
+  (`~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`,
+  `~/agent-docs/v1/rules/repo-rules.md`) migrates durable facts into
+  architecture/decisions and sets plan or run-doc status.
 - **Verification worker** (final consolidated gate, or when an implementation
   worker cannot run the right gate). Pass
   `~/agent-docs/v1/rules/subagent/verification.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`.
-- **Closeout worker** — a docs-maintenance worker
-  (`~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`) or plan-maintenance worker
-  (`~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`) migrates durable facts into
-  architecture/decisions and sets plan or run-doc status.
+  `~/agent-docs/v1/rules/repo-rules.md`. Run the final gate after all
+  implementation, docs, plan-status, and run-doc mutations.
 
 **Commit concurrency: editing is serial by default.** Run at most one editing
 worker at a time on the shared tree; it commits its slice before the next editing

@@ -47,7 +47,8 @@ committing its slice before the next starts; aim for ~5–8 clusters in the
 - **Docs-maintenance workers**, one per architecture/decision subtree or
   ownership area, at the tier you assigned. Pass the Docs-maintenance worker
   bundle — `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md` — plus the cluster's doc paths, the
+  `~/agent-docs/v1/rules/authoring-rules.md`,
+  `~/agent-docs/v1/rules/repo-rules.md` — plus the cluster's doc paths, the
   `drift-verification` slot content (inline it; the worker starts cold), and the
   fix-vs-escalate boundary above. Each worker resolves every `path → symbol`
   pointer (match by name, never line number), scans for forbidden transcription

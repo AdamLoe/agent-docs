@@ -11,7 +11,9 @@ The orchestrator names your exact rules in the dispatch packet. For planning tha
 is normally [`../../plan-lifecycle.md`](../../plan-lifecycle.md) and
 [`../../plan-template.md`](../../plan-template.md), plus the task-specific
 architecture, decisions, agent-context, and source the concern needs. Load only
-what the assigned concern requires; do not sweep the whole tree.
+what the assigned concern requires; do not sweep the whole tree. If the
+orchestrator passes a large doc, use the heading/search hint and read the source
+section directly before making a judgment.
 
 ## How you work
 
@@ -27,7 +29,8 @@ what the assigned concern requires; do not sweep the whole tree.
   durable facts belong in architecture/decisions, not parked in the plan.
 - A read-only planning worker returns its plan inline; it does **not** assume the
   text landed on disk. If the plan must be persisted, say so — the orchestrator
-  or a write-capable worker writes it.
+  must name the persistence actor before review: a write-capable planning
+  worker, a plan-maintenance worker, or orchestrator-owned persistence.
 - When implementation should follow, return an implementer brief in this shape:
 
   ```text
@@ -56,6 +59,10 @@ Per the worker report shape in
 - open assumptions and decisions that survived intake
 - files/areas the implementer will likely touch
 - blockers and residual risk
+
+Target `<=1,200` output tokens unless the requested artifact is the report. Keep
+evidence compact and source-backed; do not include full transcripts unless the
+dispatch or user explicitly requests them.
 
 ## See also
 

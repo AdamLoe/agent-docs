@@ -37,6 +37,10 @@ The orchestrator is responsible for:
 Reading is not worker dispatch. The orchestrator may read and summarize
 coordination state directly — indexes, the manifest, the registry, plan
 metadata, `git status` — because that is routing work, not task execution.
+Authoritative docs and source stay authoritative: when exact details, judgment,
+or evidence matter, pass workers the path plus a heading, symbol, or search hint
+and have them read the source directly. Orchestrator summaries carry only
+observed facts from prior phases.
 
 **Dispatch a worker when the step does any of:**
 
@@ -71,8 +75,9 @@ Pick the smallest lifecycle that can ship the change safely:
   then an implementation worker ships from it. Review only if the change is
   user-facing, cross-cutting, or correctness-sensitive.
 - **Tracked plan lifecycle** — broad, risky, ambiguous, or durable work:
-  planning worker → review worker (plan) → implementation worker(s) → review
-  worker (shipped) → verification + plan-maintenance closeout.
+  planning worker → tracked-plan persistence → review worker (plan) →
+  implementation worker(s) → review worker (shipped) → docs/plan maintenance →
+  final verification.
 - **Needs user decision** — a product/architecture/ownership/sequencing call
   changes what should be built and cannot be inferred. Batch the questions
   during intake (see Human stops in [`../skill-contracts.md`](../skill-contracts.md)).
@@ -83,15 +88,17 @@ Effort is governed by the kit's two shared dials, defined in
 [`../skill-contracts.md`](../skill-contracts.md) — there is no orchestration-only
 effort vocabulary. The concrete agent counts below are orchestration guidance,
 not a global per-tier spec; the dials stay "vibes, not a rulebook" elsewhere.
+Worker-output budgets are review heuristics until telemetry exists, but
+orchestrators use them when shaping dispatches and accepting reports.
 
-| Dial setting | Fan-out | Model spend |
-|---|---|---|
-| `cost-low` | 0–1 workers; prefer the smallest phase set | cheap/mid-tier unless clearly needed |
-| `cost-medium` (default) | 2–4 workers | mid-tier implementers, strong only for hard review |
-| `cost-high` | 4–8 parallel workers | mid-tier implementers, strong planner/red-team |
-| `cost-max` | broad parallelism, bounded by overlap/resources | strongest planner/red-team where useful |
-| `review-high`/`max` | adds a dedicated red-team / second-opinion worker | strong reviewer |
-| `review-none` | — | skips human checkpoints only; gates still run |
+| Dial setting | Fan-out | Worker-output budget | Model spend |
+|---|---|---|---|
+| `cost-low` | 0-1 workers; prefer the smallest phase set | <=1.5k worker-output tokens | cheap/mid-tier unless clearly needed |
+| `cost-medium` (default) | 2-4 workers | <=5k worker-output tokens | mid-tier implementers, strong only for hard review |
+| `cost-high` | 4-8 parallel workers | <=10k worker-output tokens | mid-tier implementers, strong planner/red-team |
+| `cost-max` | broad parallelism, bounded by overlap/resources | no hard cap; record a budget-exception reason | strongest planner/red-team where useful |
+| `review-high`/`review-max` | adds a dedicated red-team / second-opinion worker | follows the selected `cost-*` budget | strong reviewer |
+| `review-none` | — | follows the selected `cost-*` budget | skips human checkpoints only; gates still run |
 
 Resolution: explicit wording wins; "cheap/quick/light" reads as `cost-low`;
 "thorough/deep/use subagents" floors at `cost-high`; "all out / max / spend
@@ -107,17 +114,40 @@ review → strong, implementation and routine → mid-tier.
    work; don't do it. Your scarcest resource is your own context window.
    Detailed implementer brief shaping belongs to a planning worker unless the
    task is already bounded enough to implement directly.
-2. **Verify outcomes, not steps.** Trust a worker's "gate green" when it pasted
-   the command output; spot-check the high-risk bits by *reading* the pasted
-   output, not by re-running the gate. A phase is not **done** until files
-   changed are listed, the gate command + result are pasted, deferrals are
-   named, and **you have recorded the observed outcome** in the coordination
+2. **Verify outcomes, not steps.** Trust a worker's "gate green" only when it
+   reports command, exit code, and compact evidence; spot-check high-risk bits
+   by reading that evidence, not by re-running the gate. A phase is not
+   **done** until files changed are listed, gate evidence is present, deferrals
+   are named, and **you have recorded the observed outcome** in the coordination
    surface (not the worker's optimism).
 3. **Keep notes a stranger could resume from.** Assume your context will be
    wiped; every decision and "why" goes in the coordination surface. Between
    worker phases, carry forward a concise observed summary: decisions, facts,
    evidence, commits, assumptions, blockers, and the next role's stop
    conditions.
+
+## Ship order checkpoints
+
+The canonical ship order is outcome checkpoints, not one subagent per numbered
+step:
+
+1. Classify the request and choose the smallest safe lifecycle.
+2. Plan or brief when needed.
+3. Persist tracked plan material before review when the plan lifecycle is
+   chosen. The actor must be explicit: a write-capable planning worker, a
+   plan-maintenance worker, or orchestrator-owned persistence.
+4. Review plan material when the lifecycle calls for it.
+5. Implement the owned slice(s), serializing editing on the shared tree.
+6. Review the shipped outcome when risk warrants; route fixes to authorized
+   mutating workers.
+7. Finish all remaining mutations: code, docs, plan frontmatter, and run-doc
+   status.
+8. Run one final consolidated drift gate after the last mutation.
+9. Report from the verified final state: commits, gates, migrations,
+   assumptions, blockers, and residual risk.
+
+No workflow is green until the final gate observes the state after docs,
+plan-status, and run-doc edits.
 
 ## Sequencing
 
@@ -167,16 +197,18 @@ Use only the phases the classification needs:
 3. **Plan** — a planning worker for unclear, medium, or meaty streams. The
    planning worker produces a tracked plan or implementation brief; the
    orchestrator does not spend its own context writing detailed implementation
-   instructions first.
+   instructions first. Persist tracked plans before plan review.
 4. **Implement in waves** grouped by file-disjointness; editing serial per
    tree (see [`dispatch.md`](dispatch.md)).
 5. **On each completion** — update the tracker from observed results, spot-check
    the high-risk bit, decide the next wave.
-6. **Final consolidated gate** — the manifest drift gates plus any scarce-
-   resource smoke, run once.
-7. **Closeout** — a plan-maintenance/docs-maintenance worker migrates durable
-   facts into architecture/decisions and sets plan status; hand the lead
-   commits, gates, assumptions, and remaining work.
+6. **Closeout mutations** — docs-maintenance or plan-maintenance workers migrate
+   durable facts/rationale into architecture/decisions and update plan/run-doc
+   status.
+7. **Final consolidated gate** — the manifest drift gates plus any scarce-
+   resource smoke, run once after closeout mutations.
+8. **Report** — hand the lead commits, gates, migrations, assumptions, residual
+   risk, and remaining work from the verified final state.
 
 ## What NOT to do
 

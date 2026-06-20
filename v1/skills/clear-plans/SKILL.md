@@ -41,7 +41,8 @@ the exact rule files to pass in the dispatch packet.
 - **Plan-maintenance worker** (the sweep and migration — the main job). Pass
   `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
   `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`. It sweeps top-level plan files
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. It sweeps top-level plan files
   (skipping `index.md` and `template.md`) and run folders, buckets each one
   (in-flight, ready-to-migrate, ready-to-delete, needs-human, long-lived),
   migrates durable facts and rationale into the owning docs **before** any status
@@ -69,7 +70,8 @@ the exact rule files to pass in the dispatch packet.
 - **Docs-maintenance worker** only when the migration targets need real
   architecture/decision edits beyond what the plan-maintenance worker handles
   cleanly. Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`. Architecture is rewritten in place;
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. Architecture is rewritten in place;
   decisions get the mandatory fields. Code paths in docs are relative to the
   manifest's `code_root`.
 - **Verification worker** only when files changed and a final drift gate is

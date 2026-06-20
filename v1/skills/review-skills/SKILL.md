@@ -49,15 +49,18 @@ concurrency follow `orchestrator/dispatch.md`.
   shipping, commit, model-tier, or ownership instructions repeated across skills
   that should move into a shared rule, and rule-doc house-rule compliance. Pass
   `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md` only when fixes are authorized.
 - **Verification worker** only when the user authorizes applying fixes and a
   static check (e.g. registry/skill cross-check) is better isolated. Pass
   `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`.
 
-Default is read-only review. If the user asks to apply fixes, the review or
-docs-maintenance worker makes only the obvious non-debatable corrections, verifies,
-and commits its slice before reporting; substantial changes pivot to `/plan`.
+Default is read-only review. If the user asks to apply fixes, the review worker
+must receive the fix-enabled review bundle from `orchestrator/dispatch.md`; a
+docs-maintenance worker must receive `repo-rules.md`. Fix workers make only
+obvious non-debatable corrections, verify, and commit their slice before
+reporting; substantial changes pivot to `/plan`.
 
 ## Closeout
 

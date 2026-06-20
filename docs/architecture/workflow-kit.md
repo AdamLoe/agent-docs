@@ -16,6 +16,9 @@ An orchestrator only does a step inline when it is pure routing or IO under the
 reads-vs-dispatch test: read across no more than a couple of files, no
 defensible judgment call, no mutation, and no gate. Worker dispatch is expected
 of the runtime; an adapter that cannot spawn a required worker reports an error.
+Workers read authoritative docs and source directly when exact details,
+judgment, or evidence matter. The orchestrator carries observed facts between
+workers; it does not rewrite authoritative docs into generated summaries.
 
 Rules live at the layer that owns them:
 
@@ -31,8 +34,10 @@ Rules live at the layer that owns them:
 
 The orchestrator is a knowledge intermediary, not the author of every
 implementation detail. It passes each worker a minimal dispatch: role, task,
-exact rule links, starting inputs, observed facts to preserve, expected
-checks/evidence, and report shape.
+exact rule links, starting inputs, path plus heading/search hints for large
+docs, observed facts to preserve, expected checks/evidence, and report shape.
+Dispatch packets stay compact: no copied rules, no generated context bundles,
+and no full prior transcripts by default.
 
 When work is ambiguous or medium-sized, a planning worker spends the context to
 investigate and return an implementation brief. That brief is plain Markdown,
@@ -60,6 +65,33 @@ decisions made, facts proven, files or docs touched, gates and outputs, commits,
 blockers, and assumptions. The next worker gets that summary instead of the full
 prior transcript.
 
+Worker reports are compact and self-contained. Routine reports name outcome,
+files, concise gate evidence, migrations, blockers/risk, and commit or
+no-change state. Planning and review reports can be longer, but still use short
+excerpts rather than transcripts unless the user asks for full output.
+
+## Ship order
+
+Mutating workflows converge on one final-state order:
+
+1. Classify the request and choose the smallest safe lifecycle.
+2. Plan or brief when needed; tracked plans are persisted by an explicit actor
+   before plan review.
+3. Implement owned slices, serializing editing on the shared tree.
+4. Review shipped outcomes when risk warrants and route fixes to authorized
+   mutating workers.
+5. Finish all mutations, including architecture/decisions, ownership metadata,
+   plan frontmatter, and run-doc status.
+6. Run the final consolidated drift gate after the last mutation.
+7. Report commits, gates, migrations, assumptions, blockers, and residual risk
+   from the verified final state.
+
+Ship order is checkpoints, not a one-worker-per-step template. Editing workers
+snapshot dirty state, preserve unrelated user changes and deletions, stage only
+owned paths by filename, and commit their completed slice before reporting.
+Review and verification workers are read-only unless dispatched with the
+fix-enabled bundle in `v1/rules/orchestrator/dispatch.md`.
+
 ## Main surfaces
 
 | Surface | Owns |
@@ -79,7 +111,7 @@ The workflow is commit-heavy: editing workers commit their own slice before
 reporting, follow-up workers repair or revert with further commits, editing is
 serial per working tree, and parallel editing uses worktree isolation or
 orchestrator-applied patches. The orchestrator records commit hashes and verifies
-the final observed state.
+the final observed state after docs, plan-status, and run-doc mutations.
 
 ## Workflow commands
 

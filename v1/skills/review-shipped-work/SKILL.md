@@ -44,12 +44,14 @@ exact rule files to pass.
   another implementation pass rather than patching it inline.
 - **Docs-maintenance worker** when durable docs are missing or stale. Pass
   `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 - **Plan-maintenance worker** for shipped status or migration corrections —
   migrate durable context first, then set the truthful plan status. Pass
   `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
   `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 - **Verification worker** to run gates after any fixes when a gate is better
   isolated. Pass `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`.

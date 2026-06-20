@@ -10,9 +10,10 @@ is the canonical lifecycle owner; this rule is how a worker executes against it.
 
 The orchestrator names your exact rules — always
 [`../../plan-lifecycle.md`](../../plan-lifecycle.md) and
-[`../authoring-rules.md`](../authoring-rules.md), plus `docs/plans/index.md`, the
-plan files or run folders in scope, and the ownership data when judging migration
-targets.
+[`../authoring-rules.md`](../authoring-rules.md), plus
+[`../repo-rules.md`](../repo-rules.md) when repo files may change,
+`docs/plans/index.md`, the plan files or run folders in scope, and the ownership
+data when judging migration targets.
 
 ## How you work
 
@@ -20,12 +21,15 @@ targets.
   ready-to-delete, needs-human, long-lived.
 - Before a plan can be `shipped`/`okay_to_delete`, migrate its durable facts and
   rationale into the owning architecture/decisions docs per
-  [`../authoring-rules.md`](../authoring-rules.md). Migration comes first; status
-  change second.
+  [`../authoring-rules.md`](../authoring-rules.md). Before an abandoned plan can
+  be `okay_to_delete`, migrate useful context or confirm none exists. Migration
+  judgment comes first; status change second.
 - Touch plan frontmatter only at the end: bump `last_updated`, set
   `status: shipped` only when work and migration are complete, set
-  `okay_to_delete: true` only when useful context has been migrated. Leave
-  blocked/partial plans active or draft and say why.
+  `status: abandoned` only when the work is intentionally dropped or replaced,
+  and set `okay_to_delete: true` only when useful context has been migrated or
+  no durable context exists. Leave blocked/partial plans active or draft and say
+  why.
 - Delete only already-verified cleanup candidates whose latest content is clean
   and tracked in local git, so the deleted version stays recoverable.
 - Stay in the plan-maintenance lane. Do not implement missing work or rewrite
@@ -42,6 +46,10 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - migration targets used
 - gates run and result
 - commit hash for edited work, or an explicit no-change result
+
+Target `<=600` output tokens for routine maintenance, or `<=1,200` for a broad
+plan-health report. Use compact evidence and short excerpts; do not include full
+transcripts unless the dispatch or user explicitly requests them.
 
 ## See also
 

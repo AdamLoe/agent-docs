@@ -50,8 +50,9 @@ phases the repo's state needs.
 
 - **Docs-maintenance worker** (scaffold inventory + migration — the core
   phase). Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`. It inventories the current docs
-  against the v1 scaffold, **seeds each missing file from
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. It inventories the current docs against
+  the v1 scaffold, **seeds each missing file from
   `~/agent-docs/v1/template/docs/` before adapting it** to the repo, applies the
   recoverability test (keep map/why/routing; collapse recoverable transcription
   to pointers), and repairs manifest and ownership state. If a stale prose
@@ -75,7 +76,8 @@ phases the repo's state needs.
   material under `docs/plans/`. Pass
   `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
   `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 
 ## Closeout
 

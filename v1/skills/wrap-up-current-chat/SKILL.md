@@ -59,15 +59,17 @@ on the shared tree. Use only the phases the chat needs.
 
 - **Docs-maintenance worker** (the durable-context migration). Pass
   `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, plus the candidate facts/rationale
-  and the owning docs from `ownership.json`. It decides what is durable, updates
-  the owning architecture/decisions docs in place, and commits its slice.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`, plus the candidate facts/rationale and
+  the owning docs from `ownership.json`. It decides what is durable, updates the
+  owning architecture/decisions docs in place, and commits its slice.
 - **Plan-maintenance worker** only when this chat wrapped a plan and its status
   should change. Pass `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
   `~/agent-docs/v1/plan-lifecycle.md`, and
-  `~/agent-docs/v1/rules/authoring-rules.md`. It migrates the plan's durable
-  context first, then sets `status`, `last_updated`, and `okay_to_delete`
-  truthfully per `docs/plans/index.md`.
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`. It migrates the plan's durable context
+  first, then sets `status`, `last_updated`, and `okay_to_delete` truthfully per
+  `docs/plans/index.md`.
 - **Verification worker** only if repo files changed and a gate is warranted.
   Pass `~/agent-docs/v1/rules/subagent/verification.md` and
   `~/agent-docs/v1/rules/repo-rules.md`.

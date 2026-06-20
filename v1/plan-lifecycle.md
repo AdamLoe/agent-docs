@@ -32,14 +32,15 @@ Field meanings:
     check it before assuming code state.
   - `shipped` — the work is done and the relevant architecture/decisions
     docs reflect the new state. Set `okay_to_delete` truthfully.
-  - `abandoned` — the work was scoped out or replaced. Set
-    `okay_to_delete: true` and let the user delete it.
+  - `abandoned` — the work was scoped out or replaced. Set `okay_to_delete`
+    truthfully after migrating any still-useful context, or after confirming
+    there is none.
 - **`owner`.** Who is driving. Used to know who to ping when status
   changes.
 - **`last_updated`.** Bump on every edit. Helps spot stale plans.
-- **`okay_to_delete`.** Set `true` when (a) the plan has shipped and (b)
-  all useful context has been migrated into architecture/decisions. The
-  user decides when to actually delete.
+- **`okay_to_delete`.** Set `true` only when the plan/run folder is shipped or
+  abandoned and all useful context has been migrated into architecture/decisions
+  or no durable context exists. The user decides when to actually delete.
 - **`long_lived`.** Default `false`. Set `true` only when the plan
   contains context that genuinely cannot be migrated elsewhere — e.g. a
   multi-month coordination doc that surfaces ongoing trade-offs. Most
@@ -54,15 +55,18 @@ Field meanings:
 1. Create the plan from [`plan-template.md`](plan-template.md). Set
    `status: draft`.
 2. When work starts: `status: active`.
-3. Ship the work — code + tests + drift gates green.
+3. Complete the implementation work and any targeted slice checks, keeping the
+   plan open until migration and final verification finish.
 4. **Migrate context.** Read through the plan; for every fact, decision,
    or trade-off in it, route it into the relevant architecture or
    decisions doc. Add an `_meta/ownership.json` entry if a new concept
    needs a canonical owner.
-5. Set `status: shipped`. If migration was complete, set
-   `okay_to_delete: true`. Leave it on disk for the user to delete on
-   their next cleanup pass.
-6. Only set `long_lived: true` if the migration in step 4 was truly
+5. Set `status: shipped`. If migration was complete, or there was no
+   durable context to migrate, set `okay_to_delete: true`. Leave it on disk
+   for the user to delete on their next cleanup pass.
+6. Run the final drift gate after all code, docs, plan-status, and run-doc
+   mutations before reporting the plan shipped.
+7. Only set `long_lived: true` if the migration in step 4 was truly
    impossible (escape hatch).
 
 The goal this enforces: *a fresh chat should never need to read plan
@@ -83,9 +87,10 @@ architecture. It may contain a required `hub.md`, stream notes under
 `streams/`, and optional read-only findings under `findings/`. The hub carries
 the same lifecycle frontmatter as a plan file (`status`, `owner`,
 `last_updated`, `okay_to_delete`, `long_lived`, `owning_docs`) and is the
-status source for cleanup. Once the run's work ships, migrate durable facts and
-rationale into architecture/decisions, record the migration targets in the hub,
-and set `okay_to_delete: true` only when the run is disposable.
+status source for cleanup. Once the run's work ships or is abandoned, migrate
+durable facts and rationale into architecture/decisions, record the migration
+targets in the hub, and set `okay_to_delete: true` only when the run is
+disposable.
 
 ## See also (resolved relative to this kit)
 

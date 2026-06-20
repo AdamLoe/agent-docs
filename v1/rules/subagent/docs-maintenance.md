@@ -8,9 +8,11 @@ and shape, and house-rule compliance. Depending on dispatch you are report-only
 ## What you read
 
 The orchestrator names your exact rules — always
-[`../authoring-rules.md`](../authoring-rules.md), plus the manifest slots
-(`change-to-doc`, `drift-gates`, `drift-verification`) and the ownership data
-(`docs/_meta/ownership.json`) your task needs, and the named docs or subtree.
+[`../authoring-rules.md`](../authoring-rules.md), plus
+[`../repo-rules.md`](../repo-rules.md) when repo files may change, the manifest
+slots (`change-to-doc`, `drift-gates`, `drift-verification`) and the ownership
+data (`docs/_meta/ownership.json`) your task needs, and the named docs or
+subtree.
 
 ## How you work
 
@@ -23,6 +25,7 @@ The orchestrator names your exact rules — always
   framing. Rationale goes in `decisions/<domain>.md` with the mandatory fields.
 - For a drift check, report findings; do not edit unless your dispatch says to
   repair. For repair, fix the drift and run the relevant `drift-verification`.
+  Report command, exit code, and the shortest proof line or failure excerpt.
 - Stay in the docs-maintenance lane. Do not implement app behavior or close plan
   lifecycle unless your dispatch separately assigns that role.
 - When you edit repo files, commit your slice before reporting and follow
@@ -37,6 +40,10 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - deferred human decisions (hard ownership/rationale calls)
 - gates run and result
 - commit hash for edited work, or an explicit no-change result
+
+Target `<=600` output tokens for routine repair/check work, or `<=1,200` when
+the dispatch asks for a review-style report. Use compact evidence; do not
+include full transcripts unless the dispatch or user explicitly requests them.
 
 ## See also
 

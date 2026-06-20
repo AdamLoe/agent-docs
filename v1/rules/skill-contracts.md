@@ -62,8 +62,8 @@ default to `medium`.
 
 - **`review-[none|low|medium|high|max]`** - how much the skill stops for human
   review and how hard review workers work.
-- **`cost-[low|medium|high|max]`** - how freely to spend on worker fan-out and
-  stronger models.
+- **`cost-[low|medium|high|max]`** - how freely to spend on worker fan-out,
+  stronger models, and worker-output budget.
 
 Only `review-none` has a hard meaning: skip human-review checkpoints. It never
 skips automated verification, drift gates, or the original questioning needed to
@@ -73,9 +73,11 @@ locally and stays cheaper. `cost-*` controls fan-out and model spend; `review-*`
 controls human and review-worker intensity. Neither dial decides whether workers
 are used.
 
-Skills may declare a non-`medium` default. Old tags map in:
-`skip-review` -> `review-none`, `heavy-review` -> `review-high`/`review-max`,
-`cheap-agents` -> `cost-low`, `no-cost-limit` -> `cost-max`.
+`cost-max` has no hard output cap, but every `cost-max` run records a
+budget-exception reason before spawning broad workers or accepting long reports.
+Skills may declare a non-`medium` default. Old tags map in: `skip-review` ->
+`review-none`, `heavy-review` -> `review-high`/`review-max`, `cheap-agents` ->
+`cost-low`, `no-cost-limit` -> `cost-max`.
 
 ## Model Policy
 

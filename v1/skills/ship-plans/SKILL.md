@@ -53,14 +53,17 @@ phases the plans need.
 - **Review worker** for broad, risky, or correctness-sensitive shipped work. Pass
   `~/agent-docs/v1/rules/subagent/review.md` plus the named plan paths and the
   changed source. For UI-facing work, ask for visual verification when practical.
-- **Verification worker** for the final consolidated gates (manifest
-  `drift-gates` plus any scarce-resource smoke), run once. Pass
-  `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
 - **Plan-maintenance worker** to migrate durable plan context into the owning
   architecture/decisions docs and then set plan status. Pass
   `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/agent-docs/v1/plan-lifecycle.md`,
+  `~/agent-docs/v1/rules/authoring-rules.md`, and
+  `~/agent-docs/v1/rules/repo-rules.md`.
+- **Verification worker** for the final consolidated gates (manifest
+  `drift-gates` plus any scarce-resource smoke), run once after implementation,
+  docs migration, plan-status, and run-doc mutations. Pass
+  `~/agent-docs/v1/rules/subagent/verification.md` and
+  `~/agent-docs/v1/rules/repo-rules.md`.
 
 Parallelize by plan/workstream disjointness; editing is serial on the shared
 tree. When parallel implementation workers are worth the cost, give each its own

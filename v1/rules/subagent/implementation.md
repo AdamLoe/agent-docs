@@ -11,7 +11,9 @@ The orchestrator names your exact rules — normally
 and [`../authoring-rules.md`](../authoring-rules.md), plus
 [`../../plan-lifecycle.md`](../../plan-lifecycle.md) when implementing a tracked
 plan. Load only the architecture, decisions, agent-context, and source the slice
-needs. Decide your own touched files from local investigation.
+needs. If the dispatch names a large doc, use its heading/search hint and read
+the authoritative section directly; do not rely on an orchestrator summary for
+exact details. Decide your own touched files from local investigation.
 
 ## How you work
 
@@ -19,9 +21,10 @@ needs. Decide your own touched files from local investigation.
   ([`../coding-style.md`](../coding-style.md)).
 - Verify shapes against the authoritative source of truth named in your dispatch,
   never a mock or fixture.
-- Run the cheapest sufficient gate for the slice and paste its result. Do not run
-  the full suite or a scarce-resource smoke unless your dispatch says to — those
-  are the orchestrator's consolidated end gate.
+- Run the cheapest sufficient gate for the slice and report command, exit code,
+  and the shortest proof line or failure excerpt. Do not run the full suite or a
+  scarce-resource smoke unless your dispatch says to — those are the
+  orchestrator's consolidated end gate.
 - Keep the slice bounded. If it grows past the assignment, stop and report rather
   than silently expanding scope.
 - Do not switch roles. You do not create broad plans, run review lifecycle,
@@ -33,12 +36,13 @@ needs. Decide your own touched files from local investigation.
 
 ## Commit before reporting
 
-You are commit-heavy by design. When your slice is green, **stage by filename and
-commit it before reporting** ([`../repo-rules.md`](../repo-rules.md)). Editing is
-serial on the shared tree — assume you are the only editing worker unless your
-dispatch gave you a worktree. Never push. If the slice cannot finish cleanly,
-leave the tree coherent, do not partial-commit an unfinished change, and report
-the blocker.
+You are commit-heavy by design. Snapshot `git status --short` before editing,
+preserve unrelated user changes and deletions, and stage only owned paths by
+filename. When your slice is green, **commit it before reporting**
+([`../repo-rules.md`](../repo-rules.md)). Editing is serial on the shared tree —
+assume you are the only editing worker unless your dispatch gave you a worktree.
+Never push. If the slice cannot finish cleanly, leave the tree coherent, do not
+partial-commit an unfinished change, and report the blocker.
 
 ## What you report
 
@@ -46,10 +50,13 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 
 - what changed and that the outcome is actually present
 - files changed
-- gate command(s) run and pasted result
+- gate command(s), exit code, and compact pass/fail evidence
 - docs migrated or why none were needed
 - **commit hash**, or a clear blocker if it could not close
 - assumptions made and residual risk
+
+Target `<=600` output tokens. Do not include full diffs or gate transcripts
+unless the dispatch or user explicitly requests them.
 
 ## See also
 

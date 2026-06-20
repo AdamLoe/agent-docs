@@ -9,18 +9,18 @@ Lifecycle and phase choice live in [`lifecycle.md`](lifecycle.md).
 
 Pass **exact rule-file links** to each worker. Do not copy full rules into the
 prompt, and do not tell a worker to discover the workflow system. Keep dispatch
-minimal; it routes work, it does not replace planning investigation. Fill every
-field:
+minimal; it routes work, it does not replace planning investigation. Target
+`<=350` output tokens for routine dispatch packets. Fill every field:
 
 ```text
 Role:                       (planning | implementation | review | docs-maintenance | plan-maintenance | verification)
 Task:                       (the one outcome this worker owns)
-Input docs/plans/context:   (paths and facts the worker starts from)
+Input docs/plans/context:   (paths, heading/search hints, and facts the worker starts from)
 Read these exact rules:
 - <rule file>
 - <rule file>
 Expected output:
-Expected checks/evidence:   (the cheapest sufficient gate; paste its result)
+Expected checks/evidence:   (the cheapest sufficient gate; command, exit code, shortest proof line/excerpt)
 Report back with:           (the worker report fields below)
 ```
 
@@ -31,14 +31,30 @@ Observed so far:
 - decisions made
 - facts proven
 - files/docs touched
-- gates run and pasted results
+- gates run with compact evidence
 - commits, blockers, assumptions
 ```
+
+Keep carry-forward summaries to `<=10` bullets or `<=300` output tokens. They
+carry observed facts only; they are not a replacement for the authoritative
+docs, source, plans, or gates.
 
 Avoid detailed file-ownership fences unless parallel workers are likely to
 collide; planning and implementation workers identify their own touched files
 after reading the task. Fences address read/analysis overlap, not commit safety
 — concurrent editing uses the serial-commit or worktree rule below.
+
+## Source-first handoffs
+
+Workers read authoritative docs and source directly when exact details,
+judgment, or evidence matter. The orchestrator summarizes only observed
+carry-forward facts: decisions made, findings proven, files touched, gate
+results, commits, blockers, assumptions, and human answers.
+
+For large docs or broad source areas, pass the path plus the relevant heading,
+symbol, or search hint instead of rewriting the material into the dispatch. Do
+not create generated summaries of authoritative docs, static context bundles, or
+packet helper outputs unless a future owner doc explicitly changes this policy.
 
 ## Planner-produced implementation briefs
 
@@ -71,10 +87,16 @@ Every worker report includes:
 
 - concise outcome
 - files/docs touched or inspected
-- checks run and result
+- checks run and result, with compact evidence
 - durable facts or decisions that need migration
 - blockers, assumptions, and residual risk
 - **commit hash for edited work, or a clear no-change report for read-only work**
+
+Routine worker reports target `<=600` output tokens. Planning and review reports
+target `<=1,200` output tokens unless the requested artifact is the report.
+Passing gates report command, exit code, and the shortest proof line. Failing
+gates include the shortest useful failure excerpt. Do not paste full transcripts
+unless the user explicitly requests them.
 
 ## Rule bundles
 
@@ -90,19 +112,34 @@ Universal rules ([`../skill-contracts.md`](../skill-contracts.md),
 | Stateful orchestration | Orchestrator core + `v1/rules/orchestrator/run-docs.md`, `v1/plan-lifecycle.md` |
 | Planning worker | `v1/rules/subagent/planning.md`, `v1/plan-lifecycle.md`, `v1/plan-template.md` |
 | Implementation worker | `v1/rules/subagent/implementation.md`, `v1/rules/coding-style.md`, `v1/rules/authoring-rules.md`, `v1/rules/repo-rules.md` |
-| Review worker | `v1/rules/subagent/review.md`, plus the role-specific source being reviewed |
-| Docs-maintenance worker | `v1/rules/subagent/docs-maintenance.md`, `v1/rules/authoring-rules.md` |
-| Plan-maintenance worker | `v1/rules/subagent/plan-maintenance.md`, `v1/plan-lifecycle.md`, `v1/rules/authoring-rules.md` |
+| Review worker | `v1/rules/subagent/review.md`, plus the role-specific source being reviewed; read-only unless the dispatch also grants the fix-enabled bundle |
+| Review worker, fix-enabled | Review worker + `v1/rules/subagent/implementation.md`, `v1/rules/coding-style.md`, `v1/rules/authoring-rules.md`, `v1/rules/repo-rules.md`, and an explicit fix scope |
+| Docs-maintenance worker, read-only | `v1/rules/subagent/docs-maintenance.md`, `v1/rules/authoring-rules.md` |
+| Docs-maintenance worker, mutating | Docs-maintenance read-only + `v1/rules/repo-rules.md` |
+| Plan-maintenance worker, read-only | `v1/rules/subagent/plan-maintenance.md`, `v1/plan-lifecycle.md`, `v1/rules/authoring-rules.md` |
+| Plan-maintenance worker, mutating | Plan-maintenance read-only + `v1/rules/repo-rules.md` |
 | Verification worker | `v1/rules/subagent/verification.md`, `v1/rules/repo-rules.md` |
+| Verification worker, fix-enabled | Verification worker + `v1/rules/subagent/implementation.md`, `v1/rules/coding-style.md`, `v1/rules/authoring-rules.md`, and an explicit fix scope |
+
+## Mutation authority
+
+Implementation, docs-maintenance, and plan-maintenance are the normal mutating
+roles, and all three receive `repo-rules.md` when repo files may change. Review
+and verification workers are read-only by default. They may fix only when the
+dispatch explicitly grants fix authority, includes `implementation.md` and
+`repo-rules.md`, names the bounded fix scope, and requires verify-and-commit
+discipline. Otherwise they report the miss and the orchestrator routes a new
+implementation, docs-maintenance, or plan-maintenance worker.
 
 ## Resuming vs. spawning
 
 - **You can't redirect a worker mid-run.** Get the dispatch right up front. If a
   decision changes while a worker is in flight, queue a follow-up worker rather
   than steering the running one.
-- **Once a worker returns, prefer resuming it** when the next task overlaps its
-  context — it saves ramp-up. But spawn fresh when its context is bloated or far
-  from the new task. Resume for continuity; spawn for a clean slate.
+- **Once a worker returns, prefer resuming it** when the next task overlaps the
+  same role and workstream — it saves ramp-up. Spawn fresh when the next task is
+  a new role, a new lens, adversarial review, or would inherit bloated context.
+  Resume for continuity; spawn for a clean slate.
 - **Background workers are the workhorse for long streams** — launch and get
   re-invoked on completion. Don't poll; don't read their transcripts.
 
@@ -117,10 +154,11 @@ Bake these into every worker prompt so you stop re-litigating them:
 - **New tests go in their own per-feature file**, never a shared one — two
   workers appending to one file is a merge hazard.
 - **State the cheapest sufficient gate** for the slice and require the worker to
-  paste its result. Forbid the full suite and scarce-resource smoke per phase;
-  those run once as the consolidated end gate.
+  report command, exit code, and the shortest useful proof line or failure
+  excerpt. Forbid the full suite and scarce-resource smoke per phase; those run
+  once as the consolidated end gate.
 - **Report format: tight and self-contained** — key finding, files changed, gate
-  result, deferrals. No big diffs.
+  result, deferrals. No big diffs or transcripts by default.
 - **Honesty clause:** if a decision turns out infeasible, implement the
   documented fallback and flag it — don't fake a value or silently descope.
 
@@ -138,6 +176,11 @@ their own completed slice before reporting**. Later workers may repair or revert
 earlier commits with additional commits. The orchestrator records commit hashes
 and verifies the final observed state; local history is allowed to be
 commit-heavy because the user can squash later.
+
+Before a mutating worker edits, it snapshots `git status --short`, preserves
+unrelated user changes and deletions, and stages only owned paths by filename.
+If unrelated dirty state blocks a coherent slice or clean gate result, the
+worker stops with the concrete blocker instead of restoring or staging it.
 
 **Editing is serial by default** because concurrent commits race the git index.
 Run at most one editing worker at a time on the shared working tree; it commits
