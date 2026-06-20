@@ -20,10 +20,11 @@ two-question intake and wait.
 Once the change is known, read
 `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
 `~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Read
+`~/agent-docs/v1/rules/context-profiles.md` for worker profile IDs. Read
 `~/agent-docs/v1/rules/orchestrator/run-docs.md` and
-`~/agent-docs/v1/plan-lifecycle.md` as well when run docs are requested or resume
-risk is high. Load task-specific architecture/decisions/agent-context docs and
-source only when classification needs them or to verify a worker report.
+`~/agent-docs/v1/plan-lifecycle.md` only when run docs are requested or resume
+risk is high. Load task-specific docs/source only when classification needs them
+or to verify a worker report.
 
 ## Classification
 
@@ -62,43 +63,34 @@ Dials and model policy follow `skill-contracts.md`; dispatch packet shape,
 profiles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
 phases the classification needs.
 
-- **Planning worker** (unclear, medium, broad, or durable work, or to produce a
-  brief).
-  Pass `~/agent-docs/v1/rules/subagent/planning.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/plan-template.md`. It investigates until the next phase is
-  implementation-ready, then returns the implementer brief shape from
-  `subagent/planning.md` or drafts one tracked plan per workstream.
-- **Review worker — plan** (tracked or risky plans, before implementation). Pass
-  `~/agent-docs/v1/rules/subagent/review.md` plus the plan files under review.
-  Apply or request plan changes before dispatching implementation.
-- **Implementation worker** (the change). Pass
-  `~/agent-docs/v1/rules/subagent/implementation.md`,
-  `~/agent-docs/v1/rules/coding-style.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. Dispatch it directly only for already
-  bounded tasks, or after passing through the planning worker's brief plus your
-  concise observed-so-far summary. It implements, runs the cheapest sufficient
-  gate, migrates durable docs when needed, and commits its slice before
-  reporting.
-- **Review worker — shipped** (nontrivial shipped work). Pass
-  `~/agent-docs/v1/rules/subagent/review.md` plus the changed source. It verifies
-  the shipped state and reports misses; route fixes to an implementation or
-  maintenance worker.
-- **Closeout worker** — a docs-maintenance worker
-  (`~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`) or plan-maintenance worker
-  (`~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`) migrates durable facts into
-  architecture/decisions and sets plan or run-doc status.
+- **Planning worker** (unclear, medium, broad, durable, or briefed work). Use
+  `planning.brief` for briefs and `planning.tracked` for persisted plans.
+  Overlay task-routed docs/source and lifecycle/template only as the
+  profile and task require. It investigates until the next phase is ready, then
+  returns the `subagent/planning.md` brief shape or drafts one tracked plan per
+  workstream.
+- **Review worker — plan** (tracked or risky plans, before implementation). Use
+  profile `review.plan` plus selected plan files and lens sources. Apply or
+  request plan changes before dispatching implementation.
+- **Implementation worker** (the change). Use `implementation.code` for code-only
+  bounded tasks, `implementation.code-docs` when owning docs may need migration,
+  and `implementation.tracked` when a selected plan coordinates or may close.
+  Overlay selected plans, owning docs, source/tests, manifest rows, and
+  ownership rows only when triggered. Dispatch directly only for bounded tasks,
+  or after the planning brief plus observed-so-far summary. It implements,
+  gates, migrates durable docs when needed, and commits before reporting.
+- **Review worker — shipped** (nontrivial shipped work). Use profile
+  `review.generic`, `review.docs`, or `review.plan` according to the lens, plus
+  changed source/docs/plans as task overlays. It verifies the shipped state and
+  reports misses; route fixes to a mutating worker.
+- **Closeout worker** — use profile `maintenance.docs` for architecture/decision
+  migration and `maintenance.plan` for plan or run-doc lifecycle closeout. The
+  selected implementation worker may own associated docs and selected-plan
+  closeout when `implementation.tracked` already grants those overlays.
 - **Verification worker** (final consolidated gate, or when an implementation
-  worker cannot run the right gate). Pass
-  `~/agent-docs/v1/rules/subagent/verification.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. Run the final gate after all
-  implementation, docs, plan-status, and run-doc mutations.
+  worker cannot run the right gate). Use profile `verification.readonly` with
+  manifest `drift-gates` and named command output as overlays. Run the final
+  gate after all implementation, docs, plan-status, and run-doc mutations.
 
 **Commit concurrency: editing is serial by default.** Run at most one editing
 worker at a time on the shared tree; it commits its slice before the next editing

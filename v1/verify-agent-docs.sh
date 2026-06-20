@@ -566,6 +566,8 @@ for row in profile_rows:
     profile_id, _, paths, _, mutation, budget, status = row
     if mutation not in {"read-only", "mutating", "conditional"}:
         raise SystemExit(f"{profile_id}: invalid mutation capability {mutation}")
+    if (profile_id.startswith("review.") or profile_id == "verification.readonly") and mutation != "read-only":
+        raise SystemExit(f"{profile_id}: read-only profile has mutation capability {mutation}")
     if status not in {"report-only", "pilot-enforced", "enforced"}:
         raise SystemExit(f"{profile_id}: invalid enforcement status {status}")
     try:
