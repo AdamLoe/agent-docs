@@ -16,11 +16,11 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The problem to fix is the task; if it is missing, run the
 two-question intake and wait.
 
-Once the problem is known, read
-`~/.agentdocs/rules/context-profiles.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md`. This fixed recipe does not
-load the generic classifier by default. Load task-specific
-architecture/decisions/agent-context docs only when the problem needs them.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Load task-specific architecture/decisions/agent-context docs only when
+the problem needs them. Dials, model policy, dispatch shape, profiles, and commit
+concurrency are covered by `skill-contracts.md` and `orchestrator/dispatch.md`
+(see References).
 
 ## Scope Policy
 
@@ -39,25 +39,25 @@ architecture/decisions/agent-context docs only when the problem needs them.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, profiles,
-and commit concurrency follow `orchestrator/dispatch.md`.
+Use only the phases the fix needs.
 
 - **Planning worker** (only when the issue is still small but not bounded enough
-  to implement). Use profile `planning.brief`. It returns the implementer brief
-  shape from `subagent/planning.md`; then dispatch one implementation worker
-  from that brief.
-- **Implementation worker** (the bounded fix). Use profile
-  `implementation.code`, escalating to `implementation.code-docs` only when a
-  touched surface requires owning-doc migration. It implements, runs the
-  cheapest sufficient gate, migrates durable docs only if needed, and commits
-  before reporting.
+  to implement). Profile: `planning.brief`. Returns the implementer brief shape;
+  then dispatch one implementation worker from that brief.
+- **Implementation worker** (the bounded fix). Profile: `implementation.code`,
+  escalating to `implementation.code-docs` only when a touched surface requires
+  owning-doc migration. Implements, runs the cheapest sufficient gate, migrates
+  durable docs only if needed, and commits before reporting.
 - **Verification worker** only when the implementation worker cannot run the
-  right gate or a final manifest gate is better isolated. Use profile
+  right gate or a final manifest gate is better isolated. Profile:
   `verification.readonly`.
 - **Review worker** only when the fix touches user-facing, cross-cutting, or
-  correctness-sensitive behavior. Use profile `review.generic` plus the changed
+  correctness-sensitive behavior. Profile: `review.generic` plus the changed
   source. For UI-facing fixes, ask the worker to do visual verification when
   practical.
+
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 A pure one-line change still goes through the implementation worker — that is the
 mutation/gate boundary, not an inline exception.
@@ -72,5 +72,9 @@ Record from worker reports:
 - docs updated or why none were needed
 - commit hash
 - any follow-up that remains
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 $ARGUMENTS

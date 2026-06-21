@@ -20,39 +20,33 @@ no two-question intake. Read `docs/_meta/ownership.json` and the current
 that is coordination routing, not worker dispatch. Honor any dials passed in
 `$ARGUMENTS`. If the tree is clean, say so and stop.
 
-Once you know what changed, read
-`~/.agentdocs/rules/context-profiles.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to choose worker phases and
-dispatch. Resolve owning docs from `change-to-doc` plus `ownership.json`.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Resolve owning docs from `change-to-doc` plus `ownership.json` once
+you know what changed.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, profiles, and
-commit concurrency follow `orchestrator/dispatch.md`. Editing workers are serial
-on the shared tree. Use only the phases the diff needs. Run final verification
-after all implementation, docs, plan-status, and run-doc mutations.
+Use only the phases the diff needs. Run final verification after all
+implementation, docs, plan-status, and run-doc mutations.
 
-- **Review worker** (inspect the diff). Pass
-  profile `review.generic` plus the changed source and the manifest/ownership
-  facts. It confirms the requested outcome is present and flags missing docs or
-  tests.
+- **Review worker** (inspect the diff). Profile: `review.generic` plus the
+  changed source and the manifest/ownership facts. Confirms the requested
+  outcome is present and flags missing docs or tests.
 - **Docs-maintenance worker** when the change carries durable facts or rationale.
-  Use profile `maintenance.docs`. It updates owning architecture/decisions docs
-  in place.
-- **Plan-maintenance worker** only when a plan was touched or completed. Pass
-  profile `maintenance.plan`. It migrates durable plan context first, then sets
-  `status`, `last_updated`, and `okay_to_delete` truthfully. Do not delete plans
-  here.
+  Profile: `maintenance.docs`. Updates owning architecture/decisions docs in
+  place.
+- **Plan-maintenance worker** only when a plan was touched or completed. Profile:
+  `maintenance.plan`. Migrates durable plan context first, then sets `status`,
+  `last_updated`, and `okay_to_delete` truthfully. Do not delete plans here.
 - **Implementation worker** only when the review surfaces obvious missing work
-  that must be fixed before shipping. Use profile `implementation.code-docs`.
-  It implements, gates, and commits its slice. Substantial new work is out of
+  that must be fixed before shipping. Profile: `implementation.code-docs`.
+  Implements, gates, and commits its slice. Substantial new work is out of
   scope — flag it for `/plan` or `/quick-fix` instead.
 - **Verification worker** to run the targeted gate plus the manifest
-  `drift-gates`. Use profile `verification.readonly`.
+  `drift-gates`. Profile: `verification.readonly`.
 
-Editing workers stage by filename and commit their own slice before reporting;
-record the hashes and verify the final green state. Never push unless explicitly
-told.
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Closeout
 
@@ -63,5 +57,9 @@ Record from worker reports:
 - gates run and result
 - commit hash(es)
 - any residual risk or follow-up that remains
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 $ARGUMENTS

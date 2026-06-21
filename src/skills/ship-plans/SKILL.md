@@ -16,45 +16,41 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The plan paths are the task; if none are given, run the
 two-question intake (ask which plans and the expected outcome) and wait.
 
-Once the plans are named, read:
+Once the plans are named, read each named plan in full. Ignore whether it is
+`draft` or `active`; explicit user selection is enough. Load
+`docs/plans/index.md` for sibling-plan context.
 
-- Each named plan in full. Ignore whether it is `draft` or `active`; explicit
-  user selection is enough.
-- `~/.agentdocs/plan-lifecycle.md` and `docs/plans/index.md` for status,
-  migration, and sibling-plan context.
-- `~/.agentdocs/rules/context-profiles.md` and
-  `~/.agentdocs/rules/orchestrator/dispatch.md` to resolve profiles, plus
-  `docs/agent-context/orchestrating.md` if it exists.
-- `~/.agentdocs/rules/orchestrator/run-docs.md` when multiple streams or run
-  docs are in play.
-
-Load task-specific architecture/decisions/agent-context docs and source only as
-the worker phases need them.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Load `~/.agentdocs/plan-lifecycle.md` only when plan status or
+migration decisions require it. Load `~/.agentdocs/rules/orchestrator/run-docs.md`
+only when multiple streams or run docs are in play. Load task-specific
+architecture/decisions/agent-context docs and source only as the worker phases
+need them.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, profiles,
-and commit concurrency follow `orchestrator/dispatch.md`. Use only the
-phases the plans need.
+Use only the phases the plans need.
 
 - **Planning worker** only when a named plan is not implementation-ready (stale,
-  contradictory, or under-specified). Use profile `planning.tracked`. It repairs
-  the plan into something an implementer can ship from.
-- **Implementation workers**, one primary mutator per shared tree. Use profile
-  `implementation.tracked`. The worker may implement, migrate associated docs,
-  close the selected plan, run the cheapest sufficient gate, and make multiple
-  coherent commits before reporting.
-- **Review worker** for broad, risky, or correctness-sensitive shipped work. Pass
-  profile `review.plan` or `review.generic` plus the named plan paths and the
+  contradictory, or under-specified). Profile: `planning.tracked`. Repairs the
+  plan into something an implementer can ship from.
+- **Implementation workers**, one primary mutator per shared tree. Profile:
+  `implementation.tracked` with `plan_closeout` grant. The worker may implement,
+  migrate associated docs, close the selected plan, run the cheapest sufficient
+  gate, and make multiple coherent commits before reporting.
+- **Review worker** for broad, risky, or correctness-sensitive shipped work.
+  Profile: `review.plan` or `review.generic` plus the named plan paths and the
   changed source. For UI-facing work, ask for visual verification when practical.
 - **Plan-maintenance worker** to migrate durable plan context into the owning
   architecture/decisions docs and then set plan status only when the
-  implementation worker did not own that closeout. Use profile
-  `maintenance.plan`.
+  implementation worker did not own that closeout. Profile: `maintenance.plan`.
 - **Verification worker** for the final consolidated gates (manifest
   `drift-gates` plus any scarce-resource smoke), run once after implementation,
-  docs migration, plan-status, and run-doc mutations. Use profile
+  docs migration, plan-status, and run-doc mutations. Profile:
   `verification.readonly`.
+
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 Parallelize by plan/workstream disjointness; editing is serial on the shared
 tree. When parallel implementation workers are worth the cost, give each its own
@@ -74,5 +70,10 @@ Record from worker reports:
 Never mark a plan shipped on optimism. If a plan cannot fully ship, keep it
 unshipped, commit only a coherent green checkpoint when that helps the user, and
 report the blocker and next step.
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
+- `~/.agentdocs/plan-lifecycle.md` — plan status, migration (load when needed)
 
 $ARGUMENTS

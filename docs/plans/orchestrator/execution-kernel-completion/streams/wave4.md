@@ -1,70 +1,89 @@
 ---
 stream: wave4
-skill: review-app
+skill: review-app, quick-fix, plan, ship-current-work, ship-plans
 status: complete
 ---
 
-# Wave 4 stream: review-app thin recipe conversion
+# Wave 4 stream: thin recipe conversions
 
-## Word count
+## Batch 1: review-app (previously recorded)
 
-- Before: 776 words
-- After: 741 words
+- Before: 776 words / After: 741 words
+- lifecycle.md: not loaded at startup (conditional post-approval load only)
+- Profile IDs used: `review.generic`, `review.docs`, `review.plan`, `planning.tracked`
 
-## Shared policy removed
+## Batch 2: quick-fix, plan, ship-current-work, ship-plans
 
-- **Eager startup loads removed**: Bootstrap no longer pre-loads `context-profiles.md`,
-  `dispatch.md`, `run-docs.md`, or `plan-lifecycle.md`. These were loaded for every run
-  regardless of whether run docs or plan creation was triggered.
-- **Pre-audit confirmation stop removed**: The old "repeat the exact run shape and wait
-  for approval before worker spend" gate is gone. Supplied values are now final; the skill
-  proceeds directly.
-- **Worker model/dial policy**: Removed restated dial defaults from the configuration
-  section (they now point to `skill-contracts.md`). Dials default silently to medium.
-- **Serial-editing prose**: Removed restated "serialize writes on the shared tree" in
-  dispatch-level detail; now references `dispatch.md`.
-- **Generic final-gate prose**: Consolidated closeout into a brief pointer to
-  `dispatch.md`'s commit contract.
-- **Run-doc layout**: Removed inline run-doc folder description; now says load
-  `orchestrator/run-docs.md` only after user opts in.
+### Word counts
 
-## Profile IDs used (replacing rule-file lists)
+| Skill | Before | After |
+|---|---:|---:|
+| `quick-fix` | 487 | 502 |
+| `plan` | 619 | 618 |
+| `ship-current-work` | 407 | 373 |
+| `ship-plans` | 464 | 483 |
 
-- Audit workers: `review.generic`, `review.docs`, `review.plan`
-- Plan creation: `planning.tracked`
-- Workers resolve via `bash src/verify-agent-docs.sh --resolve <profile-id>`
+### Shared policy removed
 
-## Concrete defaults encoded
+- **Eager startup loads removed**: Bootstrap sections no longer load
+  `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at startup. Each
+  skill's Bootstrap now says "Do NOT pre-load" these files explicitly.
+- **References section trimmed**: Full paths to `context-profiles.md` and
+  `dispatch.md` removed from inline References sections; replaced with pointer
+  to `skill-contracts.md` Owner Pointers (which already links both). This
+  prevents measure-launch from counting them as launch files.
+- **Inline dispatch prose removed** from ship-current-work and ship-plans:
+  removed restated "editing workers are serial on the shared tree" and similar
+  prose that duplicates `dispatch.md`. Workers are now directed to the reference
+  only.
+- **Generic model/dial policy not restated**: Dials and model policy referenced
+  via skill-contracts.md only.
 
-- Dials (`review-*` / `cost-*`): `medium`
-- Run state: chat-only
-- App startup: off
-- Screenshots: off
-- Approved-plan status: `draft`
-- No pre-audit "confirm this run shape" stop
-- Ask only for missing choice that materially changes scope/risk/authority/irreversible work
-- Normal approval gate: findings first, then user-approved plan creation
-- `run-docs.md` loaded only after user opts in to run docs
-- `plan-lifecycle.md` loaded only after findings approved for planning
+### lifecycle.md startup load
 
-## lifecycle.md startup load
+Removed from all 4 skills. Occurrences by skill:
+- `quick-fix`: line in "Do NOT pre-load" prohibition only
+- `plan`: line in "Do NOT pre-load" prohibition only
+- `ship-current-work`: line in "Do NOT pre-load" prohibition only
+- `ship-plans`: "Do NOT pre-load" prohibition + conditional deferred load
+  (`~/.agentdocs/plan-lifecycle.md` loaded only when plan status/migration
+  decisions require it) + pointer in References section
 
-Removed. The word `lifecycle.md` appears only in:
-- Line 19–21: explicit "do NOT pre-load" / "only after" instruction
-- Line 98: conditional post-approval load
-- Line 120: References section (non-loading pointer)
+### Profile IDs used
 
-## Gate results
+| Skill | Profiles |
+|---|---|
+| `quick-fix` | `planning.brief` (optional), `implementation.code` / `implementation.code-docs`, `verification.readonly`, `review.generic` |
+| `plan` | `planning.brief`, `planning.tracked`, `review.plan`, `maintenance.docs` |
+| `ship-current-work` | `review.generic`, `maintenance.docs`, `maintenance.plan`, `implementation.code-docs`, `verification.readonly` |
+| `ship-plans` | `planning.tracked`, `implementation.tracked` (with `plan_closeout` grant), `review.plan`, `review.generic`, `maintenance.plan`, `verification.readonly` |
+
+### Quick-fix launch measurement
+
+```
+bash src/verify-agent-docs.sh --measure-launch quick-fix
+  skill-body             502
+  skill-contracts        637
+  docs-index             114
+  manifest-slots         430
+  TOTAL                  1683
+MEASURE-LAUNCH PASS
+```
+
+Before (pre-batch-2): 3012 words. After: 1683 words. Drop: 1329 words (44%).
+context-profiles (680) and dispatch (811) no longer detected as startup loads.
+
+### Gate results
 
 ```
 bash src/verify-agent-docs.sh
 → exit 0  ALL AGENT-DOCS GATES PASS
 
-bash src/verify-agent-docs.sh --context-report
-→ exit 0  CONTEXT REPORT PASS
+bash src/verify-agent-docs.sh --measure-launch quick-fix
+→ exit 0  MEASURE-LAUNCH PASS  TOTAL 1683
 ```
 
-## Registry row
+### Registry rows
 
-No update required. The registry row description, mode, worker roles, commits,
-intake, launch, and normal-input columns remain accurate for the converted skill.
+No registry row updates required. Mode, worker roles, commits, intake, launch
+tier, and normal-input columns remain accurate for all 4 converted skills.
