@@ -48,7 +48,7 @@ context-report directly — Wave 0 measures them.
 | 1a | Scenario matrix → fixture + resolver modes + verifier reads fixture | done | context-profiles 892→503; launches −389 each (qf 3168, orch 5407); --resolve/--measure-launch added | fc07685 |
 | 1b | Role-card "what you read" rewrites (subagent/*.md) | done | all 6 defer to --resolve; See-also marked non-loading; cards grew slightly (Wave 3 compresses) | bf386b7 |
 | 2 | Align role + mutation contracts (closeout authority, remove fix-enabled review) | done | plan_closeout grant consistent profile/role/dispatch; review+verification read-only; report needs invalidation conds | ac67fb8 |
-| 3 | Meet worker + launch budgets (compress runtime rules, no correctness loss) | active-pilot | ALL 9 files 50–73% over (lifecycle 1826/500, dispatch 929/300, skill-contracts 831/250, authoring 1428/700); 8/11 profiles over. Pilot lifecycle.md to test reachability + reference-leaf pattern | — |
+| 3 | Meet worker + launch budgets (compress runtime rules, no correctness loss) | BLOCKED-decision | Pilot f3755f1: lifecycle 1826→1037 (floor, target 500) via reference-leaf; contract-dense files unreachable without cutting rules. Decision needed: accept measured floors vs hold targets. orchestrate launch 5542→4753 | f3755f1 |
 | 4 | Finish skill recipes (21 skills → profile IDs; review-app defaults) | pending | — | — |
 | 5 | Source-bound verifier gates + flip enforcement | pending | — | — |
 | 6 | Durable migration + closeout | pending | — | — |
@@ -69,4 +69,10 @@ budget compression). Final gate after the last mutation.
 
 ## Open questions / blockers
 
-- None yet.
+- **Wave 3 budgets unreachable for contract-dense files without deleting rules.**
+  Pilot proved lifecycle.md floor = 1037 (target 500) after relocating ALL
+  explanation to `lifecycle-reference.md`. Reference-leaf pattern works for
+  example-heavy files; contract-dense files (dispatch, skill-contracts, role-card
+  cores) will floor above target. Surfaced to user: accept measured floors (raise
+  those budgets w/ documented correctness reason, per plan) vs hold aggressive
+  targets and condense contract prose. Awaiting answer.
