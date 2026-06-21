@@ -11,6 +11,7 @@ usage() {
 Usage:
   bash src/verify-agent-docs.sh
   bash src/verify-agent-docs.sh --context-report [--profile <id>]
+  bash src/verify-agent-docs.sh --contract-check
   bash src/verify-agent-docs.sh --resolve <profile-id>
   bash src/verify-agent-docs.sh --measure-launch <skill-name>
   bash src/verify-agent-docs.sh --scaffold <repo-root>
@@ -20,6 +21,11 @@ The --context-report mode prints the read-only context profile and scenario
 contract, including exact files, conditions, word totals, and budget exceptions.
 Scenario rows are read from the never-auto-loaded fixture
 src/verify-fixtures/workflow-scenarios.json.
+The --contract-check mode runs the Wave-5a source-bound contract checks
+(launch budgets, lifecycle startup loads, subagent-bundle spell-outs, read-only
+role authority, plan_closeout consistency, review-app pre-audit/eager loads,
+scenario source-binding, report fields, and final-ordering). All checks are
+REPORT-ONLY: it warns and prints a violation count but exits 0.
 The --resolve mode prints one profile's core rule paths, conditional overlays,
 mutation capability, and budget so a skill can resolve a single profile without
 loading the whole table.
@@ -545,6 +551,10 @@ context_report() {
     printf 'SCENARIO CONTRACT AVAILABLE: rerun without --profile for all rows\n'
   fi
 
+  if [ -z "$profile_filter" ]; then
+    contract_check
+  fi
+
   printf 'CONTEXT REPORT PASS\n'
 }
 
@@ -631,6 +641,379 @@ measure_launch() {
 
   printf '  %-22s %s\n' "TOTAL" "$total"
   printf 'MEASURE-LAUNCH PASS\n'
+}
+
+# launch_total <skill-name>: print ONLY the controlled launch word total for one
+# skill, using the same Wave-0 formula as measure_launch (skill body +
+# skill-contracts + the orchestrator/role rules the skill names at startup +
+# docs/index + manifest slots). Quiet variant for the contract checks. Writes
+# nothing.
+launch_total() {
+  local skill_name=$1
+  local skill_file="$repo_root/src/skills/$skill_name/SKILL.md"
+  local total=0
+  local count rule
+
+  [ -f "$skill_file" ] || fail "unknown skill: $skill_name"
+
+  add_quiet() {
+    local file=$1
+    [ -f "$file" ] || fail "launch file missing for $skill_name: ${file#$repo_root/}"
+    count=$(wc -w < "$file")
+    count=${count//[[:space:]]/}
+    total=$((total + count))
+  }
+
+  add_quiet "$skill_file"
+  add_quiet "$repo_root/src/rules/skill-contracts.md"
+  for rule in context-profiles.md orchestrator/dispatch.md orchestrator/lifecycle.md; do
+    grep -Fq "rules/$rule" "$skill_file" && add_quiet "$repo_root/src/rules/$rule"
+  done
+  add_quiet "$repo_root/docs/index.md"
+  add_quiet "$repo_root/docs/_meta/manifest.md"
+
+  printf '%s' "$total"
+}
+
+# --contract-check: Wave-5a SOURCE-BOUND contract checks. Every check below is an
+# assertion over actual files (skill bodies, role cards, profile owner, scenario
+# fixture), NOT a phrase match over a self-authored table. They are REPORT-ONLY:
+# each prints a CLEAN line or one WARN line per violation (with file:line where
+# possible) and increments a violation counter. The function never exits nonzero,
+# never prints FAIL, and never changes enforcement_status. Flipping these to hard
+# gates is Wave 5b. Also surfaced as a section inside --context-report.
+#
+# Budgets (E3 floors, recorded as the report-only documented budgets):
+#   fixed skill controlled launch  <= 1800   (measured floor ~1683)
+#   classifier controlled launch   <= 3200   (allowlist: orchestrate, fresh-chat,
+#                                              start-session)
+contract_check() {
+  local fixed_budget=1800
+  local classifier_budget=3200
+  local classifier_allowlist=" orchestrate fresh-chat start-session "
+  local violations=0
+  local skill_dir skill_name skill_file total budget kind clean
+  local match python_cmd
+
+  section "wave-5a source-bound contract checks (report-only)"
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot run contract checks; install python"
+
+  # ---- Check 1: launch budgets -------------------------------------------
+  # For every skill, compute the controlled launch total and warn if a fixed
+  # skill exceeds 1800 or an allowlisted classifier exceeds 3200.
+  printf -- '-- check 1: controlled launch budgets --\n'
+  clean=1
+  for skill_dir in "$repo_root"/src/skills/*/; do
+    [ -d "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    [ -f "$skill_dir/SKILL.md" ] || continue
+    total=$(launch_total "$skill_name")
+    case "$classifier_allowlist" in
+      *" $skill_name "*) kind=classifier; budget=$classifier_budget ;;
+      *) kind=fixed; budget=$fixed_budget ;;
+    esac
+    if [ "$total" -gt "$budget" ]; then
+      printf 'WARN launch over budget: %s (%s) launch=%s > %s\n' \
+        "$skill_name" "$kind" "$total" "$budget"
+      violations=$((violations + 1))
+      clean=0
+    else
+      printf 'ok   %s (%s) launch=%s/%s\n' "$skill_name" "$kind" "$total" "$budget"
+    fi
+  done
+  [ "$clean" -eq 1 ] && printf 'CLEAN: all skill launches within budget\n'
+
+  # ---- Check 2: fixed skills must not load lifecycle.md at startup --------
+  # A startup load is a line that names the lifecycle.md rule path AS something
+  # the skill reads/loads, e.g. "read .../rules/orchestrator/lifecycle.md".
+  # Excluded so prohibitions and pointers don't false-positive:
+  #   - lines that prohibit loading ("do not", "never", "don't", "no pre-load");
+  #   - "References"/"See also" pointer lines (a leading "- " bullet that only
+  #     points at the file with a trailing em-dash gloss, not a read verb);
+  #   - the 3 allowlisted classifiers (which legitimately load it).
+  printf -- '-- check 2: fixed skills must not startup-load lifecycle.md --\n'
+  clean=1
+  for skill_dir in "$repo_root"/src/skills/*/; do
+    [ -d "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    skill_file="$skill_dir/SKILL.md"
+    [ -f "$skill_file" ] || continue
+    case "$classifier_allowlist" in *" $skill_name "*) continue ;; esac
+    # Startup-load line: contains lifecycle.md path AND a read/load verb, and is
+    # NOT a prohibition and NOT a "- ... — ..." reference-pointer bullet.
+    while IFS= read -r match; do
+      [ -n "$match" ] || continue
+      violations=$((violations + 1))
+      clean=0
+      printf 'WARN fixed skill startup-loads lifecycle.md: src/skills/%s/SKILL.md:%s\n' \
+        "$skill_name" "$match"
+    done < <(
+      grep -nE 'orchestrator/lifecycle\.md' "$skill_file" |
+        grep -iE 'read |load |open ' |
+        grep -ivE 'do not|don.t|never|no pre-load|not load|without loading' |
+        grep -vE '^[0-9]+:- `[^`]*` —'
+    )
+  done
+  [ "$clean" -eq 1 ] && printf 'CLEAN: no fixed skill startup-loads lifecycle.md\n'
+
+  # ---- Check 3: no spelled-out subagent bundles in skills ----------------
+  # Skills must name profile IDs + use --resolve, not list rules/subagent/ role
+  # cards. Warn on any literal rules/subagent/ path in a skill body.
+  printf -- '-- check 3: no spelled-out subagent bundle paths in skills --\n'
+  clean=1
+  while IFS= read -r skill_file; do
+    while IFS= read -r match; do
+      [ -n "$match" ] || continue
+      violations=$((violations + 1))
+      clean=0
+      printf 'WARN skill names a subagent role-card path: %s:%s\n' \
+        "${skill_file#$repo_root/}" "$match"
+    done < <(grep -nE 'rules/subagent/' "$skill_file" || true)
+  done < <(find "$repo_root"/src/skills -name SKILL.md | sort)
+  [ "$clean" -eq 1 ] && printf 'CLEAN: no skill spells out a subagent bundle path\n'
+
+  # ---- Check 4: review/verification are read-only ------------------------
+  # Warn if review.md or verification.md grants edit/stage/commit authority.
+  # Match AUTHORITY-GRANTING wording only; the prohibition "Never edit, stage,
+  # or commit" and the "commit/safety discipline" pointer must NOT false-positive.
+  printf -- '-- check 4: review/verification role cards stay read-only --\n'
+  clean=1
+  for readonly_rule in review verification; do
+    skill_file="$repo_root/src/rules/subagent/$readonly_rule.md"
+    [ -f "$skill_file" ] || { printf 'WARN missing role card: src/rules/subagent/%s.md\n' "$readonly_rule"; violations=$((violations + 1)); clean=0; continue; }
+    while IFS= read -r match; do
+      [ -n "$match" ] || continue
+      violations=$((violations + 1))
+      clean=0
+      printf 'WARN %s role card grants mutation authority: src/rules/subagent/%s.md:%s\n' \
+        "$readonly_rule" "$readonly_rule" "$match"
+    done < <(
+      grep -niE 'you (may|can) (edit|stage|commit)|commit before reporting|stage (only |)owned|may fix|authorized fix|fix-enabled|fix enabled|made a fix|apply the fix' \
+        "$skill_file" |
+        grep -ivE 'never (edit|stage|commit)|do not (edit|stage|commit)'
+    )
+  done
+  [ "$clean" -eq 1 ] && printf 'CLEAN: review and verification role cards are read-only\n'
+
+  # ---- Check 5: closeout authority consistency ---------------------------
+  # plan_closeout must appear consistently across implementation.md, the
+  # context-profiles owner (implementation.tracked row), and dispatch.md.
+  printf -- '-- check 5: plan_closeout authority consistency --\n'
+  clean=1
+  declare -A closeout_present=()
+  for pair in \
+    "src/rules/subagent/implementation.md" \
+    "src/rules/context-profiles.md" \
+    "src/rules/orchestrator/dispatch.md"; do
+    if grep -Fq 'plan_closeout' "$repo_root/$pair"; then
+      closeout_present[$pair]=1
+    else
+      closeout_present[$pair]=0
+    fi
+  done
+  for pair in "${!closeout_present[@]}"; do
+    if [ "${closeout_present[$pair]}" -eq 0 ]; then
+      violations=$((violations + 1))
+      clean=0
+      printf 'WARN plan_closeout absent where required: %s\n' "$pair"
+    fi
+  done
+  # Extra cross-check: context-profiles must carry it on the implementation.tracked row.
+  if ! grep -E '`implementation.tracked`' "$repo_root/src/rules/context-profiles.md" | grep -Fq 'plan_closeout'; then
+    violations=$((violations + 1))
+    clean=0
+    printf 'WARN context-profiles implementation.tracked row missing plan_closeout grant\n'
+  fi
+  [ "$clean" -eq 1 ] && printf 'CLEAN: plan_closeout authority is consistent across role/profile/dispatch\n'
+
+  # ---- Check 6: review-app no pre-audit stop / no eager run+plan load ----
+  # Warn if review-app/SKILL.md contains a positive pre-audit "confirm the run
+  # shape" stop, or a positive STARTUP load of run-docs/plan-lifecycle. The rule
+  # is sentence-aware (markdown wraps mid-sentence, so a line grep splits
+  # negations from their verb): a violation is a SENTENCE that both reads/loads
+  # the path (or confirms the run shape) AND carries no negation or gating
+  # phrase. Gating phrases ("only after/when", "after approval/findings",
+  # "before creating", "if chosen", "once") and prohibitions ("do not", "never",
+  # "n't") clear it, so the current skill's gated loads and "Do NOT pre-load"
+  # prohibition do not false-positive.
+  printf -- '-- check 6: review-app has no pre-audit confirm / eager load --\n'
+  clean=1
+  skill_file="$repo_root/src/skills/review-app/SKILL.md"
+  if [ ! -f "$skill_file" ]; then
+    printf 'WARN missing skill: src/skills/review-app/SKILL.md\n'
+    violations=$((violations + 1)); clean=0
+  else
+    local ra_out ra_violations
+    ra_out=$(
+      "$python_cmd" - "$skill_file" <<'PY' || true
+import re, sys, pathlib
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+# Drop the trailing "References (do not auto-load)" section: those are pointer
+# bullets, not startup-load instructions.
+body = re.split(r"^##\s+References", text, maxsplit=1, flags=re.MULTILINE)[0]
+
+# Unwrap soft line breaks so a sentence is contiguous, then split on sentence
+# enders. Markdown paragraphs are separated by blank lines.
+sentences = []
+for para in re.split(r"\n\s*\n", body):
+    flat = re.sub(r"\s+", " ", para).strip()
+    if not flat:
+        continue
+    sentences.extend(s.strip() for s in re.split(r"(?<=[.;])\s+", flat) if s.strip())
+
+NEGATION = re.compile(r"\bdo not\b|\bdon't\b|\bdon’t\b|\bnever\b|n't\b|n’t\b", re.I)
+GATING = re.compile(
+    r"only after|only when|only once|after approval|after findings|after the user|"
+    r"before creating|if chosen|opts? in|once the|once run|once findings",
+    re.I,
+)
+LOAD_VERB = re.compile(r"\b(load|pre-load|read|open)\b", re.I)
+PATH = re.compile(r"run-docs\.md|plan-lifecycle\.md")
+CONFIRM = re.compile(
+    r"confirm (the|this|a|that)? ?(run|audit)[ -]?(shape|config|configuration|plan)|"
+    r"reconfirm|present (a|the)? ?(full )?run-?shape summary|"
+    r"confirm (the )?run shape|stop to confirm",
+    re.I,
+)
+
+violations = 0
+for s in sentences:
+    low = s.lower()
+    negated = bool(NEGATION.search(s)) or bool(GATING.search(s))
+    # Eager startup load of run-docs/plan-lifecycle.
+    if PATH.search(s) and LOAD_VERB.search(s) and not negated:
+        print(f"WARN review-app eager run-doc/plan startup load: {s}")
+        violations += 1
+    # Positive pre-audit confirmation stop.
+    if CONFIRM.search(s) and not (NEGATION.search(s)):
+        print(f"WARN review-app pre-audit confirmation stop: {s}")
+        violations += 1
+print(f"__VIOLATIONS__ {violations}")
+PY
+    )
+    ra_violations=$(printf '%s\n' "$ra_out" | awk '/^__VIOLATIONS__/{print $2}')
+    printf '%s\n' "$ra_out" | grep -v '^__VIOLATIONS__' | grep -E '^WARN' || true
+    violations=$((violations + ${ra_violations:-0}))
+    [ "${ra_violations:-0}" -ne 0 ] && clean=0
+  fi
+  [ "$clean" -eq 1 ] && printf 'CLEAN: review-app has no pre-audit confirm stop or eager run-doc/plan load\n'
+
+  # ---- Check 7: scenario source-binding ----------------------------------
+  # For each scenario row whose scenario_id maps cleanly to a skill, assert the
+  # profile IDs named in expected_profiles are actually named in that skill body.
+  # Unmappable scenarios are listed as "unmapped" rather than failing.
+  printf -- '-- check 7: scenario expected_profiles named in mapped skill --\n'
+  local scenario_out
+  scenario_out=$(
+    "$python_cmd" - "$(scenario_fixture)" "$repo_root" <<'PY'
+import json, re, sys, pathlib
+
+fixture = pathlib.Path(sys.argv[1])
+repo_root = pathlib.Path(sys.argv[2])
+data = json.loads(fixture.read_text(encoding="utf-8"))
+
+# scenario_id -> skill whose body must name the scenario's expected profiles.
+# Only clean, unambiguous mappings; everything else is reported "unmapped".
+mapping = {
+    "bounded-quick-fix": "quick-fix",
+    "medium-brief-plan": "plan",
+    "tracked-change-plan": "plan",
+    "dirty-tree-shipping": "ship-current-work",
+    "named-plan-shipping": "ship-plans",
+    "docs-repair": "fix-docs-drift",
+    "configured-app-review": "review-app",
+}
+
+profile_re = re.compile(
+    r"\b(?:planning|implementation|review|maintenance|verification)\."
+    r"[a-z][a-z-]*\b"
+)
+
+violations = 0
+for row in data.get("scenarios", []):
+    sid = row.get("scenario_id", "")
+    expected = row.get("expected_profiles", "")
+    want = sorted(set(profile_re.findall(expected)))
+    skill = mapping.get(sid)
+    if skill is None:
+        print(f"UNMAPPED {sid}: expected_profiles={expected!r} (no clean skill mapping)")
+        continue
+    body_path = repo_root / "src" / "skills" / skill / "SKILL.md"
+    if not body_path.is_file():
+        print(f"WARN {sid}: mapped skill missing: src/skills/{skill}/SKILL.md")
+        violations += 1
+        continue
+    body = body_path.read_text(encoding="utf-8")
+    missing = [p for p in want if p not in body]
+    if missing:
+        print(
+            f"WARN {sid}->{skill}: expected profiles not named in skill body: "
+            f"{missing}"
+        )
+        violations += 1
+    else:
+        print(f"ok   {sid}->{skill}: profiles {want} all named")
+print(f"__VIOLATIONS__ {violations}")
+PY
+  )
+  local sc_violations
+  sc_violations=$(printf '%s\n' "$scenario_out" | awk '/^__VIOLATIONS__/{print $2}')
+  printf '%s\n' "$scenario_out" | grep -v '^__VIOLATIONS__'
+  violations=$((violations + ${sc_violations:-0}))
+  [ "${sc_violations:-0}" -eq 0 ] && printf 'CLEAN: all mapped scenarios name their expected profiles\n'
+
+  # ---- Check 8: report-field + final-ordering presence -------------------
+  # Warn if dispatch.md Worker Reports lacks any required field, or lifecycle.md
+  # lacks the "final gate after last mutation" rule.
+  printf -- '-- check 8: report fields + final-ordering presence --\n'
+  clean=1
+  local dispatch_file="$repo_root/src/rules/orchestrator/dispatch.md"
+  local lifecycle_file="$repo_root/src/rules/orchestrator/lifecycle.md"
+  # Required Worker Report fields (observed commit/dirty, sources+precedence,
+  # evidence, touched paths, commits/no-change, invalidation conditions).
+  declare -A report_fields=(
+    ["observed commit and dirty"]="observed commit/dirty state"
+    ["sources inspected and precedence"]="sources + precedence"
+    ["evidence"]="evidence"
+    ["touched paths"]="touched paths"
+    ["commits"]="commits / no-change"
+    ["invalidation conditions"]="invalidation conditions"
+  )
+  if [ ! -f "$dispatch_file" ]; then
+    printf 'WARN missing dispatch.md\n'; violations=$((violations + 1)); clean=0
+  else
+    for needle in \
+      "observed commit and dirty" \
+      "sources inspected and precedence" \
+      "evidence" \
+      "touched paths" \
+      "commits" \
+      "invalidation conditions"; do
+      if ! grep -Fq "$needle" "$dispatch_file"; then
+        printf 'WARN dispatch.md Worker Reports missing field: %s (%s)\n' \
+          "$needle" "${report_fields[$needle]}"
+        violations=$((violations + 1)); clean=0
+      fi
+    done
+  fi
+  if [ ! -f "$lifecycle_file" ]; then
+    printf 'WARN missing lifecycle.md\n'; violations=$((violations + 1)); clean=0
+  else
+    # The "final gate after the last mutation" rule, expressed either as the
+    # ship-order checkpoint or the green-gate invariant.
+    if ! grep -qiE 'final (consolidated |)(drift |)gate after the last mutation|final gate observes the state after' "$lifecycle_file"; then
+      printf 'WARN lifecycle.md missing "final gate after last mutation" rule\n'
+      violations=$((violations + 1)); clean=0
+    fi
+  fi
+  [ "$clean" -eq 1 ] && printf 'CLEAN: report fields and final-ordering rule present\n'
+
+  # ---- Total -------------------------------------------------------------
+  printf 'CONTRACT-CHECK TOTAL VIOLATIONS: %s (report-only; not gating)\n' "$violations"
+  printf 'CONTRACT-CHECK PASS\n'
 }
 
 validate_context_profiles() {
@@ -805,6 +1188,11 @@ case "${1:-}" in
         exit 2
         ;;
     esac
+    ;;
+  --contract-check)
+    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+    contract_check
+    exit 0
     ;;
   --resolve)
     [ "$#" -eq 2 ] || { usage >&2; exit 2; }
