@@ -338,6 +338,12 @@ One larger direction is intentionally not part of the current workflow:
 
 ## Adopting / repairing agent-docs
 
+> **Agent rule:** never run an agent-docs installer autonomously. Both
+> installers replace `~/.agentdocs/` and refresh or delete managed skill copies
+> under `~/.claude/skills/` and `~/.agents/skills/`. Propose it; wait for
+> confirmation. See `~/.agentdocs/rules/repo-rules.md` → Destructive command
+> checklist.
+
 Use `/rebuild-agent-docs` when a repo is adopting this kit for the first
 time or repairing a drifted docs tree. It inventories the current docs,
 compares them to this guide, seeds missing files from

@@ -72,6 +72,14 @@ are refused.
 the skill-refresh logic embedded in both installers. Run the appropriate
 installer after skill changes; the manifest gate checks freshness.
 
+## Agent permission policy
+
+An agent must never run an install or update without explicit user confirmation.
+Both installers atomically replace `~/.agentdocs/` and then refresh managed skill
+copies — deleting stale `.agent-docs-managed` skills from `~/.claude/skills/` and
+`~/.agents/skills/`. This is destructive to the user's home environment. Propose
+the install command and wait for approval; do not run it autonomously.
+
 ## See also
 
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)

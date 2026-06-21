@@ -33,6 +33,20 @@ path without hiding it behind a flag.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../install-agentdocs-local.sh`](../../install-agentdocs-local.sh), [`../../src/install-agentdocs.sh`](../../src/install-agentdocs.sh).
 
+## Agent install/update requires explicit user permission
+
+**Decision.** An agent must not run any agent-docs installer
+(`install-agentdocs-local.sh`, `src/install-agentdocs.sh`, or
+`~/.agentdocs/install-agentdocs.sh`) without first proposing it and receiving
+explicit user confirmation.
+
+**Why.** Running an installer atomically replaces `~/.agentdocs/` and refreshes
+or deletes managed skill copies under `~/.claude/skills/` and
+`~/.agents/skills/`. This is a destructive operation against the user's home
+environment; autonomous execution is not recoverable without a re-install.
+
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../src/rules/repo-rules.md`](../../src/rules/repo-rules.md).
+
 ## Tool paths are adapters
 
 **Decision.** Claude and Codex both use copied user skill directories: the

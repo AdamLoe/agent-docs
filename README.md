@@ -52,6 +52,11 @@ Both installers then refresh the managed Claude and Codex skill copies from
 `~/.agentdocs/skills/` into `~/.claude/skills/<name>` and
 `~/.agents/skills/<name>`.
 
+> **Note for agents:** always propose an install or update and wait for
+> explicit user confirmation before running any installer. Install and update
+> replace `~/.agentdocs/` and refresh or delete managed skill copies; they
+> are not safe to run autonomously.
+
 ## After skill changes (dogfood workflow)
 
 After editing source skills, republish and verify:

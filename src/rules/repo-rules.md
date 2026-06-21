@@ -86,6 +86,10 @@ Before running any of these, confirm with the user:
 - `rm -rf` on any path outside `/tmp/`.
 - `git reset --hard`, `git checkout .`, `git clean -fd`, `git branch -D`.
 - `git push --force` (and **never** `--force` to `main`).
+- **Any agent-docs installer** (`install-agentdocs-local.sh`, `src/install-agentdocs.sh`,
+  or `~/.agentdocs/install-agentdocs.sh`). Running an installer replaces
+  `~/.agentdocs/` and refreshes or deletes managed skill copies under
+  `~/.claude/skills/` and `~/.agents/skills/`. Propose it and wait for confirmation.
 
 ## What stays per-app (in `docs/agent-context/repo-rules.md`)
 
