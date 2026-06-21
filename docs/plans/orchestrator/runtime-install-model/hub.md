@@ -76,7 +76,8 @@ skill copies mid-run.
 | 1 Plan review | review.plan (read-only) | done | yes-with-changes; D7a–e adopted | — |
 | 2 WS1 rename + mechanical v1→src | implementation.code-docs (mid) | done | git mv done; `bash src/verify-agent-docs.sh` exit 0; profile table now routes to `src/rules/...` | c54fe23 |
 | 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | done | both installers + verifier split landed; `bash src/verify-agent-docs.sh` exit 0 (orch-confirmed at committed state) | c02e2af |
-| 4 WS5 docs & decisions | implementation.code-docs (mid) | done | 6 owned docs + overview.md rewritten to new model; gate exit 0 | a022d2a |
+| 4 WS5 docs & decisions | implementation.code-docs (mid) | done | 6 owned docs + overview.md rewritten; committed a022d2a was RED (stream-note tripped sweep), fixed by 4b | a022d2a |
+| 4b Verifier hardening | implementation.code (mid) | done | retired-name sweep now skips `docs/plans/orchestrator/**`; gate exit 0 (orch-confirmed) | b2c5c5e |
 | 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | pending | — | — |
 | 6 Shipped review | review.generic (read-only) | pending | — | — |
 | 7 Live install + verify | implementation (mutates $HOME) | pending | — | — |
