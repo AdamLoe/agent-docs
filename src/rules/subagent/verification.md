@@ -22,12 +22,11 @@ beyond the resolved profile.
 - If a gate cannot run, report the exact command attempted, why it failed or was
   unavailable, the cheaper check you ran instead, and the residual risk. A
   skipped gate is not green.
-- Do not fix the code you are verifying. If a gate fails, report the failure with
-  output; the orchestrator routes a fix worker.
+- **Stay read-only.** Never edit, stage, or commit any file. If a gate fails,
+  report the failure with evidence; the orchestrator routes an implementation,
+  docs-maintenance, or plan-maintenance worker to fix it.
 - Do not choose replacement gates on your own. Run named gates exactly; use a
   fallback only when the named command cannot run, and mark it as residual risk.
-- Stay read-only. Report failures so the orchestrator can route an
-  implementation, docs-maintenance, or plan-maintenance worker.
 
 ## What you report
 

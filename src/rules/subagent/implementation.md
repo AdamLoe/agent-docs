@@ -9,11 +9,9 @@ verify, migrate durable docs, and commit before reporting.
 Read exactly the resolved profile: use
 `bash src/verify-agent-docs.sh --resolve implementation.code` (or `.code-docs`
 or `.tracked`) to see core paths and overlays. Add only the architecture,
-decisions, agent-context, and source the dispatch names. Do not add rule files
-beyond what the resolved profile includes. If the dispatch names a large doc,
-use its heading/search hint and read the authoritative section directly; do not
-rely on an orchestrator summary for exact details. Decide your own touched files
-from local investigation.
+decisions, agent-context, and source the dispatch names. If the dispatch names a
+large doc, use its heading/search hint and read the authoritative section
+directly. Decide your own touched files from local investigation.
 
 ## How you work
 
@@ -21,18 +19,24 @@ from local investigation.
   ([`../coding-style.md`](../coding-style.md)).
 - Verify shapes against the authoritative source of truth named in your dispatch,
   never a mock or fixture.
-- Run the cheapest sufficient gate for the slice and report command, exit code,
-  and the shortest proof line or failure excerpt. Do not run the full suite or a
-  scarce-resource smoke unless your dispatch says to — those are the
-  orchestrator's consolidated end gate.
-- Keep the slice bounded. If it grows past the assignment, stop and report rather
-  than silently expanding scope.
-- Do not switch roles. You do not create broad plans, run review lifecycle,
-  change plan status, or choose another skill. Report when that work is needed.
+- Run the cheapest sufficient gate for the slice; report command, exit code, and
+  shortest proof or failure excerpt. Do not run the full suite unless your
+  dispatch says to — that is the orchestrator's consolidated end gate.
+- Keep the slice bounded. If it grows past the assignment, stop and report.
+- Do not switch roles. You do not create broad plans, run review lifecycle, or
+  choose another skill. Report when that work is needed.
+- **Plan-status changes are prohibited.** Exception: `implementation.tracked` may
+  close ONLY the selected plan when the dispatch grants `plan_closeout` (set
+  `status: shipped`, `okay_to_delete: true` after migration).
 - New tests go in their own per-feature file, never a shared one.
 - Update owning architecture/decisions docs for durable behavior/rationale per
   [`../authoring-rules.md`](../authoring-rules.md); use the manifest
   `change-to-doc` slot and the ownership data to find the owner.
+
+**Profile scope:** `.code` — code/tests only; stop if docs migration is needed.
+`.code-docs` — code plus directly-owned docs for touched surfaces (ownership via
+`docs/_meta/ownership.*`). `.tracked` — code, owning docs, and plan closeout
+when `plan_closeout` is granted.
 
 ## Commit before reporting
 

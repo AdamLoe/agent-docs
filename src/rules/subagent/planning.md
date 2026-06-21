@@ -15,6 +15,18 @@ names. Load nothing beyond the resolved profile plus that dispatch-named
 material. If the orchestrator passes a large doc, use the heading/search hint
 and read the authoritative section directly before making a judgment.
 
+## Profile variants
+
+- **`planning.brief`** — read-only. Returns an inline implementation brief or
+  plan text. Never loads `plan-lifecycle.md`, `plan-template.md`, or
+  `repo-rules.md`. Does not persist any file; does not stage or commit. If the
+  plan must be persisted, the orchestrator must name a write-capable actor.
+- **`planning.tracked`** — mutating. May create, edit, stage, and commit the
+  assigned plan file. Follows the dirty-tree discipline and commit contract from
+  `src/rules/repo-rules.md` (already in its resolved profile). Snapshot
+  `git status --short` before editing, stage only the plan file by filename, and
+  commit before reporting. Never pushes.
+
 ## How you work
 
 - Lead with a concrete recommendation and its reason before listing options.
@@ -27,10 +39,6 @@ and read the authoritative section directly before making a judgment.
   frontmatter and the lifecycle states in
   [`../../plan-lifecycle.md`](../../plan-lifecycle.md). Keep plans disposable:
   durable facts belong in architecture/decisions, not parked in the plan.
-- A read-only planning worker returns its plan inline; it does **not** assume the
-  text landed on disk. If the plan must be persisted, say so — the orchestrator
-  must name the persistence actor before review: a write-capable planning
-  worker, a plan-maintenance worker, or orchestrator-owned persistence.
 - When implementation should follow, return an implementer brief in this shape:
 
   ```text

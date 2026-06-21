@@ -54,13 +54,14 @@ conditional overlays named in the dispatch.
 Every worker report includes:
 
 - concise outcome
-- observed basis, including commit and dirty-path state when relevant
-- sources inspected and precedence used
-- files/docs touched or inspected
-- checks run and result, with compact evidence
+- **observed commit and dirty-path state** (snapshot before and after editing)
+- **sources inspected and precedence used** (name each source; state which wins when sources disagree)
+- **evidence** — compact proof or failure excerpt for every finding
+- **touched paths** — files edited, staged, or committed (or explicit none)
+- **commits** — hash for each commit made, or an explicit no-change statement
+- **invalidation conditions** — name the changes that would make this report stale or unsafe to resume from: e.g., "a new commit to any of the touched files", "a change to the plan's frontmatter", or "any mutation to the dispatch-named source after HEAD X"
 - durable facts or decisions that need migration
 - blockers, assumptions, and residual risk
-- commit hash for edited work, or a clear no-change report for read-only work
 - raw runtime usage counts only when exposed by the runtime or explicitly asked
 
 Routine reports target `<=600` output tokens. Planning and review reports target
@@ -71,9 +72,16 @@ useful excerpt.
 ## Mutation Authority
 
 Implementation, docs-maintenance, plan-maintenance, and tracked planning are the
-write-capable profiles. Review and verification profiles are always read-only.
-When they find a miss, they report it and the orchestrator routes a new
+write-capable profiles. Review and verification profiles are always read-only —
+they never edit, stage, or commit. When they find a miss, they return the
+evidence and name the required mutator profile; the orchestrator routes a new
 implementation, docs-maintenance, or plan-maintenance worker.
+
+**Selected-plan closeout (`plan_closeout` grant):** An `implementation.tracked`
+dispatch may explicitly grant `plan_closeout`. Only with that named grant may the
+worker close the selected plan — setting its frontmatter to `status: shipped` and
+`okay_to_delete: true` after migration is complete. Without the grant, all
+plan-status changes are prohibited even for tracked implementation workers.
 
 ## Resuming
 

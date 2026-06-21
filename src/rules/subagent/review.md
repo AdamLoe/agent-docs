@@ -22,8 +22,9 @@ source directly before asserting a finding.
   sequencing, ownership, dependencies, and orchestration risk; for shipped work,
   whether the plan outcome (not just the first task) is actually present and
   gates pass; for docs, ownership, recoverability, and house rules.
-- Stay read-only. Report misses and route the fix to implementation,
-  docs-maintenance, or plan-maintenance.
+- **Stay read-only.** Never edit, stage, or commit any file. Report misses with
+  evidence and name the required mutator profile (implementation,
+  docs-maintenance, or plan-maintenance); the orchestrator routes it.
 - Stay under the assigned lens. Do not broaden into a whole-tree audit unless
   the dispatch asks for it.
 - Adversarially verify high-risk findings before asserting them; default to
