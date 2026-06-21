@@ -25,19 +25,12 @@ status: complete
 
 ### Shared policy removed
 
-- **Eager startup loads removed**: Bootstrap sections no longer load
-  `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at startup. Each
-  skill's Bootstrap now says "Do NOT pre-load" these files explicitly.
-- **References section trimmed**: Full paths to `context-profiles.md` and
-  `dispatch.md` removed from inline References sections; replaced with pointer
-  to `skill-contracts.md` Owner Pointers (which already links both). This
-  prevents measure-launch from counting them as launch files.
-- **Inline dispatch prose removed** from ship-current-work and ship-plans:
-  removed restated "editing workers are serial on the shared tree" and similar
-  prose that duplicates `dispatch.md`. Workers are now directed to the reference
-  only.
-- **Generic model/dial policy not restated**: Dials and model policy referenced
-  via skill-contracts.md only.
+- Eager startup loads of `context-profiles.md`/`dispatch.md`/`lifecycle.md`
+  removed; Bootstrap now says "Do NOT pre-load" them.
+- References trimmed to a `skill-contracts.md` Owner Pointers reference (so
+  measure-launch stops counting context-profiles/dispatch as launch files).
+- Inline serial-editing/dispatch prose in ship-current-work/ship-plans and the
+  restated model/dial policy removed — pointer to the reference only.
 
 ### lifecycle.md startup load
 
@@ -196,3 +189,33 @@ bash src/verify-agent-docs.sh --context-report  → exit 0  CONTEXT REPORT PASS
 ```
 
 Registry rows: no updates required for all 8 skills.
+
+## Batch 5 (orchestrate)
+
+Central Class-A classifier, converted last. Words 900 → 900 (body held at cap;
+cuts paid for explicit profile IDs + References).
+
+- **Copied policy removed**: dispatch-packet/worker-report fields, model/dial
+  policy, profile tables, spelled-out subagent bundles, and restated
+  worker-internal behavior — all replaced by pointers to the dispatch contract /
+  `skill-contracts.md`. Commit-concurrency cut to one pointer line.
+- **Profile IDs (all 11, no bundles)**: `planning.brief`/`.tracked`,
+  `review.plan`, `implementation.code`/`.code-docs`/`.tracked` (`plan_closeout`
+  grant), `review.generic`/`.docs`/`.plan`, `maintenance.docs`/`.plan`,
+  `verification.readonly`. Workers self-resolve via `--resolve`.
+
+**Launch**: 4609 (run start) → 3118 (−1491). Counts 5 files: skill-body 900,
+skill-contracts 637, lifecycle 1037, docs-index 114, manifest-slots 430.
+
+- **dispatch.md (811) deferred**: yes — off startup; no literal
+  `rules/orchestrator/dispatch.md` string, so measure-launch drops it.
+- **context-profiles.md (680) deferred**: yes — resolved via `--resolve`; no
+  literal `rules/context-profiles.md` string.
+- **lifecycle.md (1037) retained**: yes — classifier needs the ladder at startup.
+  Launch floor = 637+1037+114+430+900 = 3118; lifecycle is irreducible.
+
+**Gate**: `verify-agent-docs.sh` exit 0 ALL PASS; `--context-report` exit 0
+CONTEXT REPORT PASS; `--measure-launch orchestrate` exit 0 TOTAL 3118.
+
+Registry row: no update — roles, intake `asks`, launch tier `strong`, commits
+unchanged.
