@@ -32,28 +32,22 @@ the skills and role cards.
 
 ## Current baseline
 
-The June 20 implementation landed useful provenance, read-only review and
-verification, one-primary-mutator guidance, and worker profiles. It did not
-finish the prior plan's exit gate.
-
-*The figures below are pre-refactor measurements taken against the old `v1/`
-tree. Re-measure against the current `src/` tree in Wave 0 before acting on
-these numbers.*
+Measured at Wave 0 against the current `src/` tree (post v1→src rename, post
+`~/.agentdocs/` relocation). Frozen in `src/verify-fixtures/baseline.md`.
 
 Controlled startup loads, excluding task-routed source/tests:
 
-| Load | Pre-refactor | Target |
+| Load | Measured | Target |
 |---|---:|---:|
-| `quick-fix` fixed launch | 3,532 words | <=1,200 |
-| `orchestrate` classifier launch | 5,771 words | <=2,000 |
+| `quick-fix` fixed launch | 3,557 words | <=1,200 |
+| `orchestrate` classifier launch | 5,796 words | <=2,000 |
 
-Current contract drift (pre-refactor inventory — re-verify in Wave 0):
+Contract drift (measured inventory):
 
-- Seven of eleven worker profiles exceed their declared budgets.
-- Every profile remains `report-only`.
-- Sixteen of twenty-one skills still load `lifecycle.md`.
-- Fifteen skills still spell out subagent rule bundles instead of using profile
-  IDs.
+- 7 of 11 worker profiles exceed their declared budgets; 4 within.
+- All 11 profiles remain `report-only`.
+- 18 of 21 skills still load `lifecycle.md` at startup.
+- 15 of 21 skills still spell out subagent rule bundles instead of using profile IDs.
 - Scenario checks validate phrases in the scenario table, not behavior encoded
   by the actual skills and role cards.
 - Role cards independently add rules that profiles intentionally omit.
@@ -61,8 +55,8 @@ Current contract drift (pre-refactor inventory — re-verify in Wave 0):
   while the implementation role card prohibits plan-status changes.
 - `review-app` still inserts a pre-audit confirmation stop and eagerly loads
   run-doc and plan context.
-- The previous overhaul plan is marked shipped even though these exit conditions
-  are unmet.
+- The previous overhaul plan was deleted during refactor cleanup — its durable
+  facts were migrated. No prior plan to reopen. (Wave 0 item: already handled.)
 
 ## Settled decisions
 
