@@ -35,6 +35,12 @@ split the verifier, and migrate docs/decisions.
 | D4 | In-repo refs split: source-path files → `src/...`; runtime refs in skill/rule/template bodies + consuming docs → `~/.agentdocs/...`. All **sibling-repo** refs are runtime → `~/.agentdocs/...`. | plan §Reference Migration |
 | D5 | Codex skill destination = `~/.agents/skills/` (already the path in manifest drift-verification); installer may override only if it verifies a newer correct path. | plan + manifest |
 | D6 | Open Decisions in the plan (GitHub latest-version resolution, verifier-split location, force-flag) are delegated to implementation ("simplest reliable option first"), not user stops. | plan §Open Decisions |
+| D7 | **Plan review = yes-with-changes.** Adopted fixes below. | phase 1 review |
+| D7a | `verify-agent-docs.sh` hardcodes ~77 `v1/` literals, depends on `install.sh`/`copy-skills.sh` existing, AND hardcodes the manifest change-to-doc rows → install↔verify are circularly coupled. **Merge installer (WS2) + verifier (WS4) into one "Install+Verify machinery" phase.** | B1/B2/B3 |
+| D7b | WS1 must also rewrite the mechanical `v1/`→`src/` path literals **inside** `verify-agent-docs.sh` (incl its hardcoded manifest expectations) and `manifest.md`, keeping script names `install.sh`/`copy-skills.sh` (still exist post-rename), so `bash src/verify-agent-docs.sh` stays green right after the rename. | B1 |
+| D7c | Stale-skill deletion authority = the existing per-skill `.agent-docs-managed` marker logic in `copy-skills.sh` (reuse it). The new `.agentdocs-install-manifest` records bundle provenance (source kind/tag) only — it is NOT the deletion authority. Same-name unmanaged collision → stop with error. | A1 |
+| D7d | **GitHub install path is `bash -n` + `--dry-run` only this run** (no published tag; tag-push out of scope per Discipline Rules). Exit-gate bullet "installs from GitHub tag/latest" is accepted as dry-run-only — recorded limitation, not a silent descope. Live install (phase 7) exercises the LOCAL path only (matches D1). | A2 |
+| D7e | WS3 sweeps SOURCE (`src/**`, `docs/**`, plans) + sibling repos only — NOT the installed `~/.claude/skills`/`~/.agents/skills` copies (phase 7 live install refreshes those from swept `src/`). Don't weaken the verifier's `[.]agent-docs/(current\|src)` reject regex; `~/.agentdocs/` (no hyphen) is safe. Preserve an adapter-freshness check in the runtime verifier. | A3 + gaps |
 
 ## Sequencing hazard (carry forward every phase)
 
@@ -62,20 +68,20 @@ skill copies mid-run.
 
 | Phase | Role / profile | Status | Last observed fact | Commit |
 |---|---|---|---|---|
-| 0 Coordination setup | orchestrator inline | active | hub created | — |
-| 1 Plan review | review.plan (read-only) | pending | — | — |
-| 2 WS1 rename + metadata | implementation.code-docs | pending | — | — |
-| 3 WS2 installer rewrite | implementation.code | pending | — | — |
-| 4 WS4 verifier split | implementation.code-docs | pending | — | — |
-| 5 WS5 docs & decisions | implementation.code-docs | pending | — | — |
-| 6 WS3 global ref sweep | implementation.code-docs | pending | — | — |
-| 7 Shipped review | review.generic (read-only) | pending | — | — |
-| 8 Live install + verify | implementation (mutates $HOME) | pending | — | — |
-| 9 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
-| 10 Final drift gate + report | verification.readonly | pending | — | — |
+| 0 Coordination setup | orchestrator inline | done | hub created | 310f764 |
+| 1 Plan review | review.plan (read-only) | done | yes-with-changes; D7a–e adopted | — |
+| 2 WS1 rename + mechanical v1→src | implementation.code-docs (mid) | pending | — | — |
+| 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | pending | — | — |
+| 4 WS5 docs & decisions | implementation.code-docs (mid) | pending | — | — |
+| 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | pending | — | — |
+| 6 Shipped review | review.generic (read-only) | pending | — | — |
+| 7 Live install + verify | implementation (mutates $HOME) | pending | — | — |
+| 8 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
+| 9 Final drift gate + report | verification.readonly | pending | — | — |
 
-Editing is serial on the shared tree; phases 2→6 run one at a time, each
-committing before the next. Phases 1 and 7 are read-only.
+Editing is serial on the shared tree; phases 2→5 run one at a time, each
+committing before the next. Phases 1 and 6 are read-only. WS2+WS4 merged per
+D7a (install↔verify circular coupling).
 
 ## Streams
 
