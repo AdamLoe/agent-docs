@@ -9,9 +9,9 @@ die() {
 usage() {
   cat <<'EOF'
 Usage:
-  bash src/export-chatgpt-context.sh [--output-dir <dir>]
-  bash src/export-chatgpt-context.sh --stdout
-  bash src/export-chatgpt-context.sh --list-groups
+  bash export-chatgpt-context.sh [--output-dir <dir>]
+  bash export-chatgpt-context.sh --stdout
+  bash export-chatgpt-context.sh --list-groups
 
 Exports this repo as Markdown chunks that can be pasted into ChatGPT for
 planning. By default, files are written under chatgpt-context-export/.

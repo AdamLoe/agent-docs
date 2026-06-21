@@ -54,7 +54,6 @@ bundle_files=(
   agent-docs-guide.md
   plan-lifecycle.md
   plan-template.md
-  export-chatgpt-context.sh
   install-agentdocs.sh
   verify-agent-docs.sh
 )

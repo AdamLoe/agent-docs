@@ -1771,7 +1771,7 @@ reject_policy_match 'fix-enabled|fix enabled' "fix-enabled review/verification p
 for script_path in \
   install-agentdocs-local.sh \
   src/install-agentdocs.sh \
-  src/export-chatgpt-context.sh \
+  export-chatgpt-context.sh \
   src/verify-agent-docs.sh; do
   require_executable "$script_path"
   require_git_executable_mode "$script_path"

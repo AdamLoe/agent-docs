@@ -14,7 +14,7 @@ code_root: src/
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, src/agent-docs-guide.md |
 | Skill registry, command bodies, and shared skill contracts | src/skills/, src/skills/registry.md, src/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
 | Repository layout inventory | docs/repository-layout.md |
-| ChatGPT context export utility | docs/repository-layout.md, src/export-chatgpt-context.sh |
+| ChatGPT context export utility | docs/repository-layout.md, export-chatgpt-context.sh |
 | Drift gates, budget checks, context reports, and agent-readiness verifier | docs/_meta/manifest.md, src/verify-agent-docs.sh |
 | Verifier modes: --resolve, --measure-launch, --contract-check | src/verify-agent-docs.sh, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Verifier-only fixtures (scenario contract, launch baseline) | src/verify-fixtures/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |

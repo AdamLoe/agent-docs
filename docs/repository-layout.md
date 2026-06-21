@@ -26,9 +26,9 @@ for workflow surfaces, use
 | `src/skills/` | Reusable workflow skill directories plus the shared registry. |
 | `src/rules/` | Generic rules shared by every consuming repo. |
 | `src/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
+| `export-chatgpt-context.sh` | Top-level source-repo tool: exports this repo as grouped Markdown chunks for ChatGPT planning. Not bundled into the runtime. |
 | `src/install.sh` | Installer for the neutral checkout and copied skill adapters. |
 | `src/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
-| `src/export-chatgpt-context.sh` | Repo exporter that writes grouped Markdown chunks for ChatGPT planning. |
 | `src/verify-agent-docs.sh` | Non-mutating kit drift gate, plus targetable docs scaffold checks with `--scaffold`. |
 
 ## See also
