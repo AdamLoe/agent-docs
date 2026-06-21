@@ -78,8 +78,8 @@ skill copies mid-run.
 | 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | done | both installers + verifier split landed; `bash src/verify-agent-docs.sh` exit 0 (orch-confirmed at committed state) | c02e2af |
 | 4 WS5 docs & decisions | implementation.code-docs (mid) | done | 6 owned docs + overview.md rewritten; committed a022d2a was RED (stream-note tripped sweep), fixed by 4b | a022d2a |
 | 4b Verifier hardening | implementation.code (mid) | done | retired-name sweep now skips `docs/plans/orchestrator/**`; gate exit 0 (orch-confirmed) | b2c5c5e |
-| 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | pending | — | — |
-| 6 Shipped review | review.generic (read-only) | pending | — | — |
+| 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | done | 30 files this repo (725eb01) + 7 sibling repos committed; orch-verified ZERO active stale refs anywhere | 725eb01 + 7 siblings |
+| 6 Shipped review | review.generic (read-only, strong) | pending | — | — |
 | 7 Live install + verify | implementation (mutates $HOME) | pending | — | — |
 | 8 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
 | 9 Final drift gate + report | verification.readonly | pending | — | — |
@@ -122,6 +122,13 @@ D7a (install↔verify circular coupling).
   phase 7 so this check actually executes.
 - `docs/_meta/ownership.json` install/adapter `paths` already updated to the two
   new installers (phase 3 forced cross-file fix).
+- **Sibling-repo commits (WS3)** — each on its own branch: brain_visualizer
+  fdaf512 (ship-visual-polish-and-plan-sweep), evosim 26619a3 (feat/v2.0.0),
+  fluid-simulation a54afae (agent-docs-workspace-proof), incremental 944db00
+  (main), llmrpg 6a096c6 (master), quoridor-ml-studio c262d1f
+  (codex/implement-threaded-plans), traffic 70170d4 (grid-road-game-rewrite).
+  None pushed. quoridor untracked `audit-2026-06-19.raw-*.json` artifacts skipped
+  (contain old path in quoted strings; untracked).
 
 ## Follow-ups (out of scope this run — surface in final report)
 
