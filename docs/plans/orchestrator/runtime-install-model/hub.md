@@ -81,7 +81,7 @@ skill copies mid-run.
 | 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | done | 30 files this repo (725eb01) + 7 sibling repos committed; orch-verified ZERO active stale refs anywhere | 725eb01 + 7 siblings |
 | 6 Shipped review | review.generic (read-only, strong) | done | VERDICT safe-with-fixes; live install confirmed SAFE (deletion + dry-run + atomic-replace traced); 1 real miss: bare `v1/` refs | fe20142 (read) |
 | 6b Bare-v1 active-files cleanup | maintenance.docs (strong) | done | 29 refs fixed across 13 files (docs→src/, src bodies→~/.agentdocs/); verifier:1007 tightened; gate exit 0 | c3712af |
-| 7 Live install + verify | implementation (mutates $HOME) | pending | baseline: ~/.agentdocs absent, 21 managed skills each tool, 21 src/skills | — |
+| 7 Live install + verify | implementation (mutates $HOME) | done | ~/.agentdocs created (manifest kind=local); 21/21 skills refreshed both tools, markers→~/.agentdocs path; adapter-freshness now RUNS + passes; github --dry-run ok | no repo commit |
 | 8 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
 | 9 Final drift gate + report | verification.readonly | pending | — | — |
 
