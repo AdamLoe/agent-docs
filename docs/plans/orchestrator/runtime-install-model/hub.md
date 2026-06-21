@@ -41,6 +41,9 @@ split the verifier, and migrate docs/decisions.
 | D7c | Stale-skill deletion authority = the existing per-skill `.agent-docs-managed` marker logic in `copy-skills.sh` (reuse it). The new `.agentdocs-install-manifest` records bundle provenance (source kind/tag) only — it is NOT the deletion authority. Same-name unmanaged collision → stop with error. | A1 |
 | D7d | **GitHub install path is `bash -n` + `--dry-run` only this run** (no published tag; tag-push out of scope per Discipline Rules). Exit-gate bullet "installs from GitHub tag/latest" is accepted as dry-run-only — recorded limitation, not a silent descope. Live install (phase 7) exercises the LOCAL path only (matches D1). | A2 |
 | D7e | WS3 sweeps SOURCE (`src/**`, `docs/**`, plans) + sibling repos only — NOT the installed `~/.claude/skills`/`~/.agents/skills` copies (phase 7 live install refreshes those from swept `src/`). Don't weaken the verifier's `[.]agent-docs/(current\|src)` reject regex; `~/.agentdocs/` (no hyphen) is safe. Preserve an adapter-freshness check in the runtime verifier. | A3 + gaps |
+| D8 | **Verifier split = LANDED** as ONE guarded script (no top-level `scripts/`): default mode = source-repo self-consistency gate, guarded by source-repo detection (`src/skills/registry.md` present + manifest `repo_name: agent-docs`); `--scaffold <target>` = consuming-repo runtime mode; `--context-report`. Ships in bundle; degrades to a `--scaffold` directive (exit 0) outside the source repo. | phase 3 |
+| D9 | **GitHub install** = codeload tarball: default `archive/refs/heads/main.tar.gz`, tag arg `archive/refs/tags/<tag>.tar.gz`. No GitHub API, no published release needed. Slug `AdamLoe/agent-docs`. `--dry-run` fully offline. | phase 3 |
+| D10 | **No force flag.** Unmanaged same-name skill collision STOPS with error; skill-root symlinks refused. Refresh logic INLINED into both installers (self-contained). | phase 3 |
 
 ## Sequencing hazard (carry forward every phase)
 
@@ -71,7 +74,7 @@ skill copies mid-run.
 | 0 Coordination setup | orchestrator inline | done | hub created | 310f764 |
 | 1 Plan review | review.plan (read-only) | done | yes-with-changes; D7a–e adopted | — |
 | 2 WS1 rename + mechanical v1→src | implementation.code-docs (mid) | done | git mv done; `bash src/verify-agent-docs.sh` exit 0; profile table now routes to `src/rules/...` | c54fe23 |
-| 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | pending | — | — |
+| 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | done | both installers + verifier split landed; `bash src/verify-agent-docs.sh` exit 0 (orch-confirmed at committed state) | c02e2af |
 | 4 WS5 docs & decisions | implementation.code-docs (mid) | pending | — | — |
 | 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | pending | — | — |
 | 6 Shipped review | review.generic (read-only) | pending | — | — |
@@ -103,7 +106,20 @@ D7a (install↔verify circular coupling).
   `~/agent-docs/src`). Also re-grep `~/agent-docs/src` in shipped review.
 - `manifest.md` `## drift-verification` block still has old install commands
   (`bash v1/install.sh`, `bash v1/copy-skills.sh`, `~/agent-docs/v1` readlinks)
-  — owned by the Install+Verify phase (3).
+  — owned by the Install+Verify phase (3). ✅ done in c02e2af.
+- **Residual risk — brittle retired-name sweep.** The verifier flags any tracked
+  file mentioning retired names (e.g. `new-project-prompt`, possibly
+  `copy-skills.sh`/`install.sh`) unless allowlisted. WS1's stream notes already
+  tripped it once (phase 3 extended `allow_retired_reference`). WS5/WS3/closeout
+  workers that write prose mentioning retired scripts may re-trip it — each must
+  run the gate and extend the allowlist for its own owned lines, or avoid the
+  exact token. Final gate (phase 9) is the backstop.
+- **Adapter-freshness check skips until runtime installed.** `~/.agentdocs/skills`
+  does not exist yet, so "installed skills match runtime" is unobservable until
+  phase 7 live install. ⇒ the FINAL consolidated gate (phase 9) MUST run AFTER
+  phase 7 so this check actually executes.
+- `docs/_meta/ownership.json` install/adapter `paths` already updated to the two
+  new installers (phase 3 forced cross-file fix).
 
 ## Open questions / blockers
 
