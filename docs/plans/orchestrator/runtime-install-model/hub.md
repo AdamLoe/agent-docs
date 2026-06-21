@@ -79,7 +79,8 @@ skill copies mid-run.
 | 4 WS5 docs & decisions | implementation.code-docs (mid) | done | 6 owned docs + overview.md rewritten; committed a022d2a was RED (stream-note tripped sweep), fixed by 4b | a022d2a |
 | 4b Verifier hardening | implementation.code (mid) | done | retired-name sweep now skips `docs/plans/orchestrator/**`; gate exit 0 (orch-confirmed) | b2c5c5e |
 | 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | done | 30 files this repo (725eb01) + 7 sibling repos committed; orch-verified ZERO active stale refs anywhere | 725eb01 + 7 siblings |
-| 6 Shipped review | review.generic (read-only, strong) | pending | — | — |
+| 6 Shipped review | review.generic (read-only, strong) | done | VERDICT safe-with-fixes; live install confirmed SAFE (deletion + dry-run + atomic-replace traced); 1 real miss: bare `v1/` refs | fe20142 (read) |
+| 6b Bare-v1 active-files cleanup | maintenance.docs (strong) | pending | — | — |
 | 7 Live install + verify | implementation (mutates $HOME) | pending | — | — |
 | 8 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
 | 9 Final drift gate + report | verification.readonly | pending | — | — |
@@ -130,18 +131,40 @@ D7a (install↔verify circular coupling).
   None pushed. quoridor untracked `audit-2026-06-19.raw-*.json` artifacts skipped
   (contain old path in quoted strings; untracked).
 
+## Shipped-review findings (phase 6)
+
+- **VERDICT: safe-with-fixes.** `bash install-agentdocs-local.sh` is SAFE to run
+  live: reviewer traced deletion path against the real `$HOME` (all 21 managed
+  dirs carry the marker, none symlinks, zero unmanaged conflicts), confirmed
+  dry-run mutates nothing in both installers, and confirmed atomic temp-dir+mv
+  replace with bundle-shape validation BEFORE touching the live runtime. No
+  blocking installer defect.
+- **Real miss (→ phase 6b): bare `v1/` source-path refs** in ~21 files. Active
+  kit/doc files MUST be fixed (they are copied into the runtime by the live
+  install): `src/rules/skill-contracts.md`, `src/rules/authoring-rules.md`,
+  `src/rules/orchestrator/dispatch.md`, `src/skills/registry.md`,
+  `src/skills/{fresh-chat,feedback-agent-docs,doctor}/SKILL.md`,
+  `docs/agent-context/{index,orchestrating,collaboration-style}.md`,
+  `docs/architecture/{index,workflow-kit}.md`, `docs/plans/index.md`.
+- **Verifier finding (#2, optional):** `src/verify-agent-docs.sh:1007` still
+  strips a `~/agent-docs/` prefix; harmless now, tighten to `~/.agentdocs/` so a
+  stray old ref fails. Folded into 6b as optional.
+- **Benign (#3):** existing `.agent-docs-managed` markers hold the old
+  `…/agent-docs/v1/skills/<name>` path; overwritten on the next install (phase 7
+  self-heals). No action.
+- **Confirmed dry-run-only:** GitHub-tag install exit bullet stays dry-run-only
+  (D7d). Retired-name run-doc skip (b2c5c5e) hid nothing real.
+
 ## Follow-ups (out of scope this run — surface in final report)
 
-- **Feedback inbox location.** `~/agent-docs/feedback/inbox.jsonl` stays (D11).
-  A future decision should give it a stable home that survives the atomic
-  `~/.agentdocs/` replace, and that works for GitHub-install users with no
-  `~/agent-docs` source checkout.
-- **Retired-name sweep vs run-doc prose.** The verifier's retired-name
-  production sweep (only token: the rebuild-retired prompt name) scans
-  `docs/plans/orchestrator/**` run-doc files, so working notes that discuss the
-  retirement must be hand-allowlisted (already done for a few lines). Consider
-  excluding orchestrator run-docs from that sweep. Routed to the shipped-review
-  lens (phase 6); fix only if it recommends it.
+- **Disposable historical plans still hold bare `v1/` refs**:
+  `docs/plans/{agent-docs-hardening,token-economy,review-app-skill,agent-docs-context-simplification-plan-revised,agent-docs-new-system-pitch}.md`.
+  Not loaded as guidance; deletion candidates (11 siblings already deleted by the
+  user). Scoped OUT of 6b. Recommend deletion or a low-priority sweep.
+- **Feedback inbox location** — `~/agent-docs/feedback/inbox.jsonl` stays (D11);
+  needs a stable, install-survivable home in a future decision.
+- **Retired-name sweep vs run-doc prose** — resolved (b2c5c5e); review confirmed
+  the narrow exclusion hid nothing.
 
 ## Open questions / blockers
 
