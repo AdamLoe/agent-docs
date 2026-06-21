@@ -47,6 +47,9 @@ Source edits do not affect other projects until this runs intentionally.
 bash install-agentdocs-local.sh
 ```
 
+Both installers preserve `~/.agentdocs/feedback.jsonl` across the atomic
+runtime replace: the file is saved before `rm -rf` and restored immediately
+after. This means accumulated feedback survives install and update runs.
 Both installers write `.agentdocs-install-manifest` at the runtime root
 (provenance only: source kind, path or tag, and timestamp), then refresh the
 managed skill copies.

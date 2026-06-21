@@ -211,17 +211,20 @@ installed copy from being mistaken for the authoritative inventory.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/list-skills/SKILL.md`](../../src/skills/list-skills/SKILL.md), [`../../src/skills/registry.md`](../../src/skills/registry.md).
 
-## Feedback inbox is gitignored
+## Feedback inbox lives in the runtime and survives installs
 
 **Decision.** `/feedback-agent-docs` appends kit-level feedback to
-`~/agent-docs/feedback/inbox.jsonl`, and the agent-docs checkout ignores that
-inbox file.
+`~/.agentdocs/feedback.jsonl`. Both installers save this file before the atomic
+runtime replace and restore it afterward, so a feedback log is never wiped by
+an install or update.
 
-**Why.** The inbox should be a low-friction capture queue, including while
-dogfooding inside the kit repo, without creating accidental untracked source
-changes or a required commit for every note.
+**Why.** The inbox must be a low-friction capture queue — including while
+dogfooding inside the kit repo — without creating accidental untracked source
+changes. Moving it into `~/.agentdocs/` (the runtime, outside any source
+checkout) removes the need for a `.gitignore` entry. Preserving it across
+installs means accumulated feedback survives a `main`-branch update.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/feedback-agent-docs/SKILL.md`](../../src/skills/feedback-agent-docs/SKILL.md), [`../../.gitignore`](../../.gitignore).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../src/skills/feedback-agent-docs/SKILL.md`](../../src/skills/feedback-agent-docs/SKILL.md), [`../../install-agentdocs-local.sh`](../../install-agentdocs-local.sh), [`../../src/install-agentdocs.sh`](../../src/install-agentdocs.sh).
 
 ## Subagent-first orchestration
 

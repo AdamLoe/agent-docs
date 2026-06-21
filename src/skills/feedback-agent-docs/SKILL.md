@@ -42,11 +42,9 @@ Then read, against the task:
   the repo's own review skills. This skill commits nothing and edits no tracked
   kit source/docs.
 
-The kit checkout is `~/agent-docs`; feedback lands as one JSON line in
-`~/agent-docs/feedback/inbox.jsonl`. In the agent-docs checkout this path is
-intentionally ignored by git. If `~/agent-docs` does not exist, the kit may be
-checked out elsewhere — ask the user for the checkout path. If you cannot locate
-it, report that and stop; do not invent a destination.
+Feedback lands as one JSON line in `~/.agentdocs/feedback.jsonl`. This file
+lives in the installed runtime, outside the source checkout, so it is never an
+untracked source change and survives installer runs.
 
 ## Worker Phases
 
@@ -82,7 +80,7 @@ the issue is clear and kit-level. Fields:
 Prefer `jq` for safe quoting (substitute the real values for each `<...>`):
 
 ```sh
-mkdir -p ~/agent-docs/feedback
+mkdir -p ~/.agentdocs
 jq -cn \
   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --arg repo "$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")")" \
@@ -93,7 +91,7 @@ jq -cn \
   --arg severity "<severity>" \
   '{ts:$ts, source_repo:$repo, scope:$scope, surface:$surface,
     observation:$observation, suggestion:$suggestion, severity:$severity}' \
-  >> ~/agent-docs/feedback/inbox.jsonl
+  >> ~/.agentdocs/feedback.jsonl
 ```
 
 If `jq` is unavailable, append a single hand-built JSON line with the same keys,
@@ -105,9 +103,9 @@ Report:
 
 - the feedback **category** (`scope`) and **surface** recorded
 - the inbox record appended — echo the lodged line and the inbox path
-- **no tracked repo change result**: the append targets a gitignored inbox, so
-  there is no commit for normal capture; surface a commit hash **only** if a
-  worker changed repo files
+- **no tracked repo change result**: the append targets `~/.agentdocs/feedback.jsonl`
+  which lives outside any source checkout, so there is no commit for normal
+  capture; surface a commit hash **only** if a worker changed repo files
 
 Do not commit, do not edit kit source/docs, and do not modify tracked repo
 files — triage of the inbox happens later inside the agent-docs repo.

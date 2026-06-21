@@ -201,7 +201,8 @@ and unresolved placeholders. It does not validate the source checkout.
 - `/clear-plans` cleans shipped or abandoned plans and orchestration run docs
   after migration.
 - `/feedback-agent-docs` records a kit-level comment or request into the
-  gitignored upstream inbox at `~/agent-docs/feedback/inbox.jsonl`.
+  runtime inbox at `~/.agentdocs/feedback.jsonl`, which is preserved across
+  installer runs.
 - `/list-skills` reports the canonical source skill inventory, project-local
   skill directories, and Claude/Codex adapter freshness.
 

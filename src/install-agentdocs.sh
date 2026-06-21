@@ -139,9 +139,19 @@ replace_runtime() {
     die "$runtime_root exists and is not a directory"
   fi
 
+  local feedback_backup=""
+  if [ -f "$runtime_root/feedback.jsonl" ]; then
+    feedback_backup=$(mktemp "${TMPDIR:-/tmp}/agentdocs-feedback.XXXXXX")
+    cp -a "$runtime_root/feedback.jsonl" "$feedback_backup"
+  fi
+
   rm -rf "$runtime_root"
   mkdir -p "$(dirname "$runtime_root")"
   mv "$staging" "$runtime_root"
+
+  if [ -n "$feedback_backup" ]; then
+    mv "$feedback_backup" "$runtime_root/feedback.jsonl"
+  fi
 }
 
 write_install_manifest() {
@@ -237,6 +247,9 @@ if [ "$dry_run" = true ]; then
   printf 'would validate bundle shape: %s + %s\n' \
     "${bundle_dirs[*]}" "${bundle_files[*]}"
   printf 'would replace runtime bundle at %s\n' "$runtime_root"
+  if [ -f "$runtime_root/feedback.jsonl" ]; then
+    printf 'would preserve feedback.jsonl across runtime replace\n'
+  fi
   printf 'would write install manifest %s (source kind: github, ref: %s)\n' \
     "$manifest_file" "$source_label"
   printf 'would refresh managed skills in %s and %s from %s/skills\n' \

@@ -89,11 +89,20 @@ replace_runtime() {
 
   if [ "$dry_run" = true ]; then
     printf 'would replace runtime bundle at %s with %s\n' "$runtime_root" "$src_root"
+    if [ -f "$runtime_root/feedback.jsonl" ]; then
+      printf 'would preserve feedback.jsonl across runtime replace\n'
+    fi
     return
   fi
 
-  local staging
+  local staging feedback_backup=""
   staging=$(mktemp -d "${TMPDIR:-/tmp}/agentdocs-local.XXXXXX")
+
+  if [ -f "$runtime_root/feedback.jsonl" ]; then
+    feedback_backup=$(mktemp "${TMPDIR:-/tmp}/agentdocs-feedback.XXXXXX")
+    cp -a "$runtime_root/feedback.jsonl" "$feedback_backup"
+  fi
+
   local dir file
   for dir in "${bundle_dirs[@]}"; do
     cp -a "$src_root/$dir" "$staging/$dir"
@@ -105,6 +114,10 @@ replace_runtime() {
   rm -rf "$runtime_root"
   mkdir -p "$(dirname "$runtime_root")"
   mv "$staging" "$runtime_root"
+
+  if [ -n "$feedback_backup" ]; then
+    mv "$feedback_backup" "$runtime_root/feedback.jsonl"
+  fi
 }
 
 write_install_manifest() {
