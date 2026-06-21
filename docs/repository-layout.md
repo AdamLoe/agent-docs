@@ -19,21 +19,21 @@ for workflow surfaces, use
 | `docs/decisions/` | Current rationale for agent-docs architecture choices. |
 | `docs/agent-context/` | Repo-local operating rules for agents working here. |
 | `docs/plans/` | Plan router and lifecycle status area. |
-| `v1/` | Current versioned agent-docs kit. |
-| `v1/agent-docs-guide.md` | Narrative guide for adopting or repairing the docs workflow. |
-| `v1/plan-lifecycle.md` | Generic plan and run-doc lifecycle rules. |
-| `v1/plan-template.md` | Generic tracked-plan skeleton. |
-| `v1/skills/` | Reusable workflow skill directories plus the shared registry. |
-| `v1/rules/` | Generic rules shared by every consuming repo. |
-| `v1/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
-| `v1/install.sh` | Installer for the neutral checkout and copied skill adapters. |
-| `v1/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
-| `v1/export-chatgpt-context.sh` | Repo exporter that writes grouped Markdown chunks for ChatGPT planning. |
-| `v1/verify-agent-docs.sh` | Non-mutating kit drift gate, plus targetable docs scaffold checks with `--scaffold`. |
+| `src/` | Current versioned agent-docs kit. |
+| `src/agent-docs-guide.md` | Narrative guide for adopting or repairing the docs workflow. |
+| `src/plan-lifecycle.md` | Generic plan and run-doc lifecycle rules. |
+| `src/plan-template.md` | Generic tracked-plan skeleton. |
+| `src/skills/` | Reusable workflow skill directories plus the shared registry. |
+| `src/rules/` | Generic rules shared by every consuming repo. |
+| `src/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
+| `src/install.sh` | Installer for the neutral checkout and copied skill adapters. |
+| `src/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
+| `src/export-chatgpt-context.sh` | Repo exporter that writes grouped Markdown chunks for ChatGPT planning. |
+| `src/verify-agent-docs.sh` | Non-mutating kit drift gate, plus targetable docs scaffold checks with `--scaffold`. |
 
 ## See also
 
 - [`index.md`](index.md)
 - [`overview.md`](overview.md)
 - [`architecture/workflow-kit.md`](architecture/workflow-kit.md)
-- [`../v1/rules/authoring-rules.md`](../v1/rules/authoring-rules.md)
+- [`../src/rules/authoring-rules.md`](../src/rules/authoring-rules.md)

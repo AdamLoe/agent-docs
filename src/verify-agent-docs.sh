@@ -9,9 +9,9 @@ fail() {
 usage() {
   cat <<'EOF'
 Usage:
-  bash v1/verify-agent-docs.sh
-  bash v1/verify-agent-docs.sh --context-report [--profile <id>]
-  bash v1/verify-agent-docs.sh --scaffold <repo-root>
+  bash src/verify-agent-docs.sh
+  bash src/verify-agent-docs.sh --context-report [--profile <id>]
+  bash src/verify-agent-docs.sh --scaffold <repo-root>
 
 Default mode validates the agent-docs kit checkout that contains this script.
 The --context-report mode prints the read-only context profile and scenario
@@ -377,15 +377,15 @@ validate_word_budgets() {
     docs/decisions/index.md \
     docs/agent-context/index.md \
     docs/plans/index.md \
-    v1/template/docs/index.md \
-    v1/template/docs/architecture/index.md \
-    v1/template/docs/decisions/index.md \
-    v1/template/docs/agent-context/index.md \
-    v1/template/docs/plans/index.md; do
+    src/template/docs/index.md \
+    src/template/docs/architecture/index.md \
+    src/template/docs/decisions/index.md \
+    src/template/docs/agent-context/index.md \
+    src/template/docs/plans/index.md; do
     require_word_limit "$file" 250 "router/index budget"
   done
 
-  for file in docs/overview.md v1/template/docs/overview.md; do
+  for file in docs/overview.md src/template/docs/overview.md; do
     require_word_limit "$file" 350 "overview budget"
   done
 
@@ -415,25 +415,25 @@ validate_word_budgets() {
     require_file_word_limit "$file" 1200 "agent-context budget"
   done
 
-  for file in "$repo_root"/v1/skills/*/SKILL.md; do
+  for file in "$repo_root"/src/skills/*/SKILL.md; do
     require_file_word_limit "$file" 900 "skill body budget"
   done
 
-  for file in "$repo_root"/v1/rules/subagent/*.md; do
+  for file in "$repo_root"/src/rules/subagent/*.md; do
     require_file_word_limit "$file" 500 "subagent role-card budget"
   done
 
-  for file in "$repo_root"/v1/rules/*.md; do
+  for file in "$repo_root"/src/rules/*.md; do
     require_file_word_limit "$file" 1800 "generic rule budget"
   done
 
-  for file in "$repo_root"/v1/rules/orchestrator/*.md; do
+  for file in "$repo_root"/src/rules/orchestrator/*.md; do
     require_file_word_limit "$file" 2200 "orchestrator rule budget"
   done
 
-  require_word_limit "v1/plan-lifecycle.md" 900 "plan lifecycle budget"
-  require_word_limit "v1/plan-template.md" 500 "plan template budget"
-  require_word_limit "v1/agent-docs-guide.md" 3500 "adoption guide budget"
+  require_word_limit "src/plan-lifecycle.md" 900 "plan lifecycle budget"
+  require_word_limit "src/plan-template.md" 500 "plan template budget"
+  require_word_limit "src/agent-docs-guide.md" 3500 "adoption guide budget"
   require_word_limit "docs/repository-layout.md" 350 "repository layout budget"
 }
 
@@ -446,7 +446,7 @@ context_profile_rows() {
       }
       printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8
     }
-  ' "$repo_root/v1/rules/context-profiles.md"
+  ' "$repo_root/src/rules/context-profiles.md"
 }
 
 scenario_rows() {
@@ -458,7 +458,7 @@ scenario_rows() {
       }
       printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8, $9, $10
     }
-  ' "$repo_root/v1/rules/context-profiles.md"
+  ' "$repo_root/src/rules/context-profiles.md"
 }
 
 profile_word_total() {
@@ -531,7 +531,7 @@ validate_context_profiles() {
   [ -n "$python_cmd" ] ||
     fail "cannot validate context profiles; install python"
 
-  if ! "$python_cmd" - "$repo_root/v1/rules/context-profiles.md" "$repo_root" <<'PY'
+  if ! "$python_cmd" - "$repo_root/src/rules/context-profiles.md" "$repo_root" <<'PY'
 import pathlib
 import re
 import sys
@@ -713,7 +713,7 @@ require_file "AGENTS.md"
 require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
-require_file "v1/rules/context-profiles.md"
+require_file "src/rules/context-profiles.md"
 require_dir "docs/architecture"
 require_dir "docs/decisions"
 require_dir "docs/agent-context"
@@ -729,8 +729,8 @@ for section_slot in change-to-doc drift-gates drift-verification decisions-domai
     fail "manifest missing slot '$section_slot'"
 done
 
-grep -Fq 'bash v1/verify-agent-docs.sh' "$manifest" ||
-  fail "manifest drift-gates must call bash v1/verify-agent-docs.sh"
+grep -Fq 'bash src/verify-agent-docs.sh' "$manifest" ||
+  fail "manifest drift-gates must call bash src/verify-agent-docs.sh"
 
 require_doc_route "docs/index.md" "repository-layout.md" "docs"
 for router_file in AGENTS.md CLAUDE.md; do
@@ -754,27 +754,27 @@ require_manifest_change_to_doc \
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Docs scaffold template and consuming-repo scaffold checks" \
-  "v1/template/docs/, v1/verify-agent-docs.sh, v1/skills/rebuild-agent-docs/SKILL.md, v1/skills/doctor/SKILL.md, v1/agent-docs-guide.md, docs/architecture/workflow-kit.md" \
+  "src/template/docs/, src/verify-agent-docs.sh, src/skills/rebuild-agent-docs/SKILL.md, src/skills/doctor/SKILL.md, src/agent-docs-guide.md, docs/architecture/workflow-kit.md" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Drift gates, budget checks, context reports, and agent-readiness verifier" \
-  "docs/_meta/manifest.md, v1/verify-agent-docs.sh" \
+  "docs/_meta/manifest.md, src/verify-agent-docs.sh" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Context efficiency, profiles, and documentation budgets" \
-  "v1/rules/context-profiles.md, v1/rules/authoring-rules.md, v1/rules/skill-contracts.md, v1/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, v1/verify-agent-docs.sh" \
+  "src/rules/context-profiles.md, src/rules/authoring-rules.md, src/rules/skill-contracts.md, src/rules/orchestrator/dispatch.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md, src/verify-agent-docs.sh" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Runtime usage reporting when raw counts are exposed" \
-  "v1/rules/orchestrator/dispatch.md, v1/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md" \
+  "src/rules/orchestrator/dispatch.md, src/rules/subagent/, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md" \
   "docs/_meta/manifest.md"
 require_manifest_change_to_doc \
   "docs/_meta/manifest.md" \
   "Command families and skill inventory" \
-  "v1/skills/registry.md, docs/architecture/workflow-kit.md" \
+  "src/skills/registry.md, docs/architecture/workflow-kit.md" \
   "docs/_meta/manifest.md"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
@@ -794,62 +794,62 @@ require_ownership_surface_path \
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "docs-scaffold-template" \
-  "v1/template/docs/" \
+  "src/template/docs/" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "agent-readiness-verifier" \
-  "v1/verify-agent-docs.sh" \
+  "src/verify-agent-docs.sh" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "context-efficiency" \
-  "v1/rules/authoring-rules.md" \
+  "src/rules/authoring-rules.md" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "documentation-budgets" \
-  "v1/verify-agent-docs.sh" \
+  "src/verify-agent-docs.sh" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "context-profiles" \
-  "v1/rules/context-profiles.md" \
+  "src/rules/context-profiles.md" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "runtime-usage-reporting" \
-  "v1/rules/orchestrator/dispatch.md" \
+  "src/rules/orchestrator/dispatch.md" \
   "docs/_meta/ownership.json"
 require_ownership_surface_path \
   "docs/_meta/ownership.json" \
   "command-families" \
-  "v1/skills/registry.md" \
+  "src/skills/registry.md" \
   "docs/_meta/ownership.json"
 
 validate_ownership_paths_under "$repo_root" "docs/_meta/ownership.json" "docs/_meta"
 
 for layout_path in \
   ".gitattributes" \
-  "v1/agent-docs-guide.md" \
-  "v1/plan-lifecycle.md" \
-  "v1/plan-template.md"; do
+  "src/agent-docs-guide.md" \
+  "src/plan-lifecycle.md" \
+  "src/plan-template.md"; do
   require_layout_path "$layout_path"
 done
 
-require_text "v1/rules/authoring-rules.md" "Cache-stable layer" \
+require_text "src/rules/authoring-rules.md" "Cache-stable layer" \
   "authoring rules missing cache-stable layer policy"
-require_text "v1/rules/authoring-rules.md" "Task-specific layer" \
+require_text "src/rules/authoring-rules.md" "Task-specific layer" \
   "authoring rules missing task-specific layer policy"
-require_text "v1/rules/authoring-rules.md" "Never-auto-loaded layer" \
+require_text "src/rules/authoring-rules.md" "Never-auto-loaded layer" \
   "authoring rules missing never-auto-loaded layer policy"
-require_text "v1/rules/authoring-rules.md" "Documentation class budgets" \
+require_text "src/rules/authoring-rules.md" "Documentation class budgets" \
   "authoring rules missing documentation class budgets"
 require_text "docs/architecture/workflow-kit.md" "Context layers" \
   "workflow architecture missing context layer contract"
-require_text "v1/rules/context-profiles.md" "implementation.code" \
+require_text "src/rules/context-profiles.md" "implementation.code" \
   "context profile owner missing implementation.code"
-require_text "v1/rules/context-profiles.md" "bounded-quick-fix" \
+require_text "src/rules/context-profiles.md" "bounded-quick-fix" \
   "context scenario contract missing bounded-quick-fix"
 
 section "context profile checks"
@@ -859,9 +859,9 @@ section "documentation budget checks"
 validate_word_budgets
 
 section "scaffold template checks"
-check_scaffold_tree "$repo_root/v1/template" "template docs scaffold"
+check_scaffold_tree "$repo_root/src/template" "template docs scaffold"
 
-require_file "v1/skills/registry.md"
+require_file "src/skills/registry.md"
 
 declare -A registry_seen=()
 registry_row_count=0
@@ -888,7 +888,7 @@ while IFS=$'\t' read -r tag line_no name mode action worker_roles commits intake
   registry_seen[$name]=1
   registry_row_count=$((registry_row_count + 1))
 
-  [ -d "$repo_root/v1/skills/$name" ] ||
+  [ -d "$repo_root/src/skills/$name" ] ||
     fail "registry has stale skill row with no directory: $name"
 
   case "$mode" in
@@ -929,12 +929,12 @@ done < <(
       gsub(/^`|`$/, "", name)
       printf "ROW\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", NR, name, $3, $4, $5, $6, $7, $8, $9
     }
-  ' "$repo_root/v1/skills/registry.md"
+  ' "$repo_root/src/skills/registry.md"
 )
 [ "$registry_row_count" -gt 0 ] || fail "registry has no skill rows"
 
 skill_count=0
-for skill_file in "$repo_root"/v1/skills/*/SKILL.md; do
+for skill_file in "$repo_root"/src/skills/*/SKILL.md; do
   [ -e "$skill_file" ] || continue
   skill_count=$((skill_count + 1))
   skill_dir=$(basename "$(dirname "$skill_file")")
@@ -946,46 +946,46 @@ for skill_file in "$repo_root"/v1/skills/*/SKILL.md; do
   )
 
   [ "$frontmatter_name" = "$skill_dir" ] ||
-    fail "name mismatch in v1/skills/$skill_dir/SKILL.md"
-  grep -Fq "| \`$skill_dir\` |" "$repo_root/v1/skills/registry.md" ||
+    fail "name mismatch in src/skills/$skill_dir/SKILL.md"
+  grep -Fq "| \`$skill_dir\` |" "$repo_root/src/skills/registry.md" ||
     fail "registry missing skill: $skill_dir"
 done
-[ "$skill_count" -gt 0 ] || fail "no skill definitions found under v1/skills"
+[ "$skill_count" -gt 0 ] || fail "no skill definitions found under src/skills"
 
-require_file "v1/rules/skill-contracts.md"
-grep -Fq 'review-[none|low|medium|high|max]' "$repo_root/v1/rules/skill-contracts.md" ||
+require_file "src/rules/skill-contracts.md"
+grep -Fq 'review-[none|low|medium|high|max]' "$repo_root/src/rules/skill-contracts.md" ||
   fail "review dial vocabulary missing"
-grep -Fq 'cost-[low|medium|high|max]' "$repo_root/v1/rules/skill-contracts.md" ||
+grep -Fq 'cost-[low|medium|high|max]' "$repo_root/src/rules/skill-contracts.md" ||
   fail "cost dial vocabulary missing"
 
-require_dir "v1/rules/orchestrator"
-require_dir "v1/rules/subagent"
+require_dir "src/rules/orchestrator"
+require_dir "src/rules/subagent"
 for orch_rule in lifecycle dispatch run-docs; do
-  require_file "v1/rules/orchestrator/$orch_rule.md"
+  require_file "src/rules/orchestrator/$orch_rule.md"
 done
 for worker_rule in planning implementation review docs-maintenance plan-maintenance verification; do
-  require_file "v1/rules/subagent/$worker_rule.md"
+  require_file "src/rules/subagent/$worker_rule.md"
 done
-[ ! -e "$repo_root/v1/rules/orchestrating.md" ] ||
-  fail "retired v1/rules/orchestrating.md still exists; split it into v1/rules/orchestrator/"
+[ ! -e "$repo_root/src/rules/orchestrating.md" ] ||
+  fail "retired src/rules/orchestrating.md still exists; split it into src/rules/orchestrator/"
 for dial in cost-low cost-medium cost-high cost-max review-none review-high; do
-  grep -Fq "$dial" "$repo_root/v1/rules/orchestrator/lifecycle.md" ||
+  grep -Fq "$dial" "$repo_root/src/rules/orchestrator/lifecycle.md" ||
     fail "orchestration dial '$dial' missing"
 done
 
 for fixed_skill in quick-fix plan ship-current-work ship-plans review-app; do
-  match=$(grep -IEn -m 1 'v1/rules/orchestrator/lifecycle[.]md' "$repo_root/v1/skills/$fixed_skill/SKILL.md" || true)
+  match=$(grep -IEn -m 1 'src/rules/orchestrator/lifecycle[.]md' "$repo_root/src/skills/$fixed_skill/SKILL.md" || true)
   [ -z "$match" ] ||
-    fail "fixed skill loads generic classifier by default: v1/skills/$fixed_skill/SKILL.md:$match"
+    fail "fixed skill loads generic classifier by default: src/skills/$fixed_skill/SKILL.md:$match"
 done
 
 for readonly_rule in review verification; do
-  match=$(grep -IEn -m 1 'fix-enabled|fix enabled|authorized fix|commit before reporting|made a fix|Stay read-only unless|may fix' "$repo_root/v1/rules/subagent/$readonly_rule.md" || true)
+  match=$(grep -IEn -m 1 'fix-enabled|fix enabled|authorized fix|commit before reporting|made a fix|Stay read-only unless|may fix' "$repo_root/src/rules/subagent/$readonly_rule.md" || true)
   [ -z "$match" ] ||
     fail "$readonly_rule rule grants mutation authority: $match"
 done
 
-# Every v1/rules path referenced in a skill body must resolve to a real file
+# Every src/rules path referenced in a skill body must resolve to a real file
 # or directory, so dispatch routes never point nowhere.
 while IFS= read -r skill_file; do
   while IFS= read -r ref_path; do
@@ -994,8 +994,8 @@ while IFS= read -r skill_file; do
     normalized_ref=${normalized_ref%/}
     [ -e "$repo_root/$normalized_ref" ] ||
       fail "skill ${skill_file#$repo_root/} references missing rule path: $ref_path"
-  done < <(grep -oE 'v1/rules/[A-Za-z0-9/_.-]+' "$skill_file" | sort -u)
-done < <(find "$repo_root"/v1/skills -name SKILL.md)
+  done < <(grep -oE 'src/rules/[A-Za-z0-9/_.-]+' "$skill_file" | sort -u)
+done < <(find "$repo_root"/src/skills -name SKILL.md)
 
 # The retired execution-model vocabulary must not return to skill bodies or the
 # registry. (Decision docs and disposable plans may still name these terms to
@@ -1005,7 +1005,7 @@ for retired_token in delegate-on delegate-off no-intake direct-execution; do
     match=$(grep -IEn -m 1 "$retired_token" "$skill_surface" || true)
     [ -z "$match" ] ||
       fail "retired execution-model token '$retired_token' in ${skill_surface#$repo_root/}:$match"
-  done < <(find "$repo_root"/v1/skills -name SKILL.md; printf '%s\n' "$repo_root/v1/skills/registry.md")
+  done < <(find "$repo_root"/src/skills -name SKILL.md; printf '%s\n' "$repo_root/src/skills/registry.md")
 done
 
 adapter_doc="$repo_root/docs/architecture/install-and-adapters.md"
@@ -1015,8 +1015,8 @@ grep -Fq '~/.agents/skills/<name>' "$adapter_doc" ||
   fail "codex copy target undocumented"
 
 candidate_files() {
-  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/v1" \
-    \( -path "$repo_root/v1/verify-agent-docs.sh" -o -path "$repo_root/v1/.claude-plugin" \) -prune -o \
+  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/src" \
+    \( -path "$repo_root/src/verify-agent-docs.sh" -o -path "$repo_root/src/.claude-plugin" \) -prune -o \
     -type f -print
 }
 
@@ -1034,8 +1034,8 @@ reject_any_match() {
 }
 
 policy_candidate_files() {
-  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/v1" \
-    \( -path "$repo_root/v1/verify-agent-docs.sh" -o -path "$repo_root/docs/plans" -o -path "$repo_root/v1/.claude-plugin" \) -prune -o \
+  find "$repo_root/README.md" "$repo_root/AGENTS.md" "$repo_root/CLAUDE.md" "$repo_root/docs" "$repo_root/src" \
+    \( -path "$repo_root/src/verify-agent-docs.sh" -o -path "$repo_root/docs/plans" -o -path "$repo_root/src/.claude-plugin" \) -prune -o \
     -type f -print
 }
 
@@ -1058,7 +1058,7 @@ allow_retired_reference() {
   local line_text=$3
 
   case "$label|$relative_file|$line_text" in
-    'new-project-prompt|v1/agent-docs-guide.md|`v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the') return 0 ;;
+    'new-project-prompt|src/agent-docs-guide.md|`v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the') return 0 ;;
     'fresh-planning-chat|docs/decisions/agent-docs.md|`v1/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.') return 0 ;;
   esac
 
@@ -1099,21 +1099,21 @@ reject_unapproved_retired_name 'review-plans-high-level' 'review-plans-high-leve
 reject_unapproved_retired_name '(^|[^-])review-docs([^a-z-]|$)' 'review-docs'
 reject_unapproved_retired_name '(^|[^-])review-work([^a-z-]|$)' 'review-work'
 reject_any_match 'docs/ownership[.]md' "ownership prose doc referenced instead of docs/_meta/ownership.json"
-reject_any_match 'v1/[.]claude-plugin' "retired Claude plugin path referenced"
+reject_any_match 'src/[.]claude-plugin' "retired Claude plugin path referenced"
 reject_policy_match 'Token usage:' "default token usage boilerplate remains"
 reject_policy_match 'unavailable_reason' "usage-unavailable boilerplate remains"
 reject_policy_match 'telemetry JSONL|--telemetry-jsonl' "telemetry JSONL policy remains"
 reject_policy_match 'fix-enabled|fix enabled' "fix-enabled review/verification path remains"
-[ ! -e "$repo_root/v1/.claude-plugin" ] ||
-  fail "retired Claude plugin path exists: v1/.claude-plugin"
+[ ! -e "$repo_root/src/.claude-plugin" ] ||
+  fail "retired Claude plugin path exists: src/.claude-plugin"
 
-for script_path in v1/install.sh v1/copy-skills.sh v1/export-chatgpt-context.sh v1/verify-agent-docs.sh; do
+for script_path in src/install.sh src/copy-skills.sh src/export-chatgpt-context.sh src/verify-agent-docs.sh; do
   require_executable "$script_path"
   require_git_executable_mode "$script_path"
 done
 
 section "local adapter freshness checks"
-bash "$repo_root/v1/copy-skills.sh" --check "$repo_root" ||
+bash "$repo_root/src/copy-skills.sh" --check "$repo_root" ||
   fail "copied skill adapters are stale"
 
 printf 'ALL AGENT-DOCS GATES PASS\n'

@@ -46,7 +46,7 @@ done
 
 repo_root=$(resolve_repo_root "${1:-}")
 repo_root=${repo_root%/}
-source_root="$repo_root/v1/skills"
+source_root="$repo_root/src/skills"
 marker=".agent-docs-managed"
 
 [ -d "$source_root" ] || die "missing $source_root"

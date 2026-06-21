@@ -9,4 +9,4 @@ Start with:
 
 Then load the smallest matching route for the task; read `docs/overview.md`
 only when the task needs system-shape orientation. Durable facts belong in
-`docs/`; workflow rules and reusable skills belong under `v1/`.
+`docs/`; workflow rules and reusable skills belong under `src/`.

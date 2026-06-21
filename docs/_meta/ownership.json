@@ -2,12 +2,12 @@
   "owners": [
     {
       "surface": "install-and-relocation",
-      "paths": ["README.md", "docs/architecture/install-and-adapters.md", "v1/install.sh"],
+      "paths": ["README.md", "docs/architecture/install-and-adapters.md", "src/install.sh"],
       "owns": ["canonical self-reference path", "three-layer install model", "layout and versioning"]
     },
     {
       "surface": "tool-adapters",
-      "paths": ["docs/architecture/install-and-adapters.md", "v1/copy-skills.sh"],
+      "paths": ["docs/architecture/install-and-adapters.md", "src/copy-skills.sh"],
       "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "skill copy refresh"]
     },
     {
@@ -22,67 +22,67 @@
     },
     {
       "surface": "agent-readiness-verifier",
-      "paths": ["docs/_meta/manifest.md", "v1/verify-agent-docs.sh"],
+      "paths": ["docs/_meta/manifest.md", "src/verify-agent-docs.sh"],
       "owns": ["drift gate entry point", "agent-readiness checks", "stale reference detection", "budget checks", "context report mode"]
     },
     {
       "surface": "docs-scaffold-template",
-      "paths": ["v1/template/docs/", "v1/verify-agent-docs.sh", "v1/skills/rebuild-agent-docs/SKILL.md", "v1/skills/doctor/SKILL.md", "v1/agent-docs-guide.md", "docs/architecture/workflow-kit.md"],
+      "paths": ["src/template/docs/", "src/verify-agent-docs.sh", "src/skills/rebuild-agent-docs/SKILL.md", "src/skills/doctor/SKILL.md", "src/agent-docs-guide.md", "docs/architecture/workflow-kit.md"],
       "owns": ["docs scaffold seed set", "consuming-repo scaffold verification boundary", "placeholder gate"]
     },
     {
       "surface": "workflow-lifecycle",
-      "paths": ["docs/architecture/workflow-kit.md", "v1/agent-docs-guide.md"],
+      "paths": ["docs/architecture/workflow-kit.md", "src/agent-docs-guide.md"],
       "owns": ["fresh-chat workflow", "orchestrate workflow", "plan workflow", "ship-current-work", "wrap-up-current-chat", "rebuild-agent-docs"]
     },
     {
       "surface": "skill-contracts",
-      "paths": ["v1/skills/", "v1/skills/registry.md", "v1/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
+      "paths": ["src/skills/", "src/skills/registry.md", "src/rules/skill-contracts.md", "docs/architecture/workflow-kit.md"],
       "owns": ["skill registry", "skill modes", "skill command bodies", "shared skill bootstrap", "shared skill shipping", "generic model language"]
     },
     {
       "surface": "context-efficiency",
-      "paths": ["v1/rules/skill-contracts.md", "v1/rules/authoring-rules.md", "v1/rules/context-profiles.md", "v1/rules/orchestrator/dispatch.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "paths": ["src/rules/skill-contracts.md", "src/rules/authoring-rules.md", "src/rules/context-profiles.md", "src/rules/orchestrator/dispatch.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
       "owns": ["cache-stable input layer", "task-specific input layer", "never-auto-loaded material", "source-first compact reports"]
     },
     {
       "surface": "documentation-budgets",
-      "paths": ["v1/rules/authoring-rules.md", "v1/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/_meta/manifest.md"],
+      "paths": ["src/rules/authoring-rules.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/_meta/manifest.md"],
       "owns": ["static doc class budgets", "rule word caps", "skill body word caps", "word-count enforcement"]
     },
     {
       "surface": "context-profiles",
-      "paths": ["v1/rules/context-profiles.md", "v1/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "paths": ["src/rules/context-profiles.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
       "owns": ["context profile owner contract", "scenario contract", "context report resolver"]
     },
     {
       "surface": "runtime-usage-reporting",
-      "paths": ["v1/rules/orchestrator/dispatch.md", "v1/rules/subagent/", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "paths": ["src/rules/orchestrator/dispatch.md", "src/rules/subagent/", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
       "owns": ["raw runtime usage reporting when exposed", "no default usage boilerplate"]
     },
     {
       "surface": "command-families",
-      "paths": ["v1/skills/registry.md", "docs/architecture/workflow-kit.md"],
+      "paths": ["src/skills/registry.md", "docs/architecture/workflow-kit.md"],
       "owns": ["command family grouping", "skill inventory routing"]
     },
     {
       "surface": "feedback-capture",
-      "paths": [".gitignore", "v1/skills/feedback-agent-docs/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "paths": [".gitignore", "src/skills/feedback-agent-docs/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
       "owns": ["upstream feedback inbox path", "gitignored capture behavior", "feedback capture no-commit contract"]
     },
     {
       "surface": "authoring-rules",
-      "paths": ["v1/rules/authoring-rules.md"],
+      "paths": ["src/rules/authoring-rules.md"],
       "owns": ["documentation authoring rules", "router-only adapter exception"]
     },
     {
       "surface": "orchestration",
-      "paths": ["v1/rules/orchestrator/", "v1/rules/subagent/", "v1/skills/orchestrate/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "paths": ["src/rules/orchestrator/", "src/rules/subagent/", "src/skills/orchestrate/SKILL.md", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
       "owns": ["orchestrator/worker split", "orchestration dials", "worker dispatch contract", "worker-role rules", "orchestration run docs"]
     },
     {
       "surface": "plan-lifecycle",
-      "paths": ["v1/plan-lifecycle.md", "v1/plan-template.md", "docs/plans/"],
+      "paths": ["src/plan-lifecycle.md", "src/plan-template.md", "docs/plans/"],
       "owns": ["plan statuses", "plan templates", "plan cleanup semantics"]
     }
   ]

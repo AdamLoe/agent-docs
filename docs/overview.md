@@ -1,7 +1,7 @@
 # agent-docs overview
 
 `agent-docs` is a reusable documentation-workflow kit for LLM-assisted
-codebases. The repo contains generic rules and skills under `v1/`; each
+codebases. The repo contains generic rules and skills under `src/`; each
 consuming repo supplies app-specific facts in its own `docs/_meta/`.
 
 ## Current layout
@@ -11,7 +11,7 @@ consuming repo supplies app-specific facts in its own `docs/_meta/`.
   README.md                    # user-facing install summary
   AGENTS.md, CLAUDE.md         # router-only auto-loaded files
   docs/                        # this repo's dogfood docs
-  v1/
+  src/
     skills/                    # reusable command bodies
     rules/                     # generic authoring, coding, repo, orchestration rules
     template/                  # docs scaffold copied by /rebuild-agent-docs
@@ -23,10 +23,10 @@ The repo is tool-neutral. Tool-owned paths are only adapters:
 
 - `AGENTS.md` and `CLAUDE.md` are root router files that point to
   `docs/index.md`; this overview is task-routed from that index
-- `~/.claude/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by
-  `v1/copy-skills.sh`
-- `~/.agents/skills/<name>` copied from `~/agent-docs/v1/skills/<name>` by
-  `v1/copy-skills.sh`
+- `~/.claude/skills/<name>` copied from `~/agent-docs/src/skills/<name>` by
+  `src/copy-skills.sh`
+- `~/.agents/skills/<name>` copied from `~/agent-docs/src/skills/<name>` by
+  `src/copy-skills.sh`
 
 ## Working model
 

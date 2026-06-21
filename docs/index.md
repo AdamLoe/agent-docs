@@ -16,4 +16,4 @@ Start here, then read only the smallest matching subtree.
 ## See also
 
 - [`../README.md`](../README.md) — user-facing install summary.
-- [`../v1/agent-docs-guide.md`](../v1/agent-docs-guide.md) — generic guide that consuming repos follow.
+- [`../src/agent-docs-guide.md`](../src/agent-docs-guide.md) — generic guide that consuming repos follow.

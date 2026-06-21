@@ -25,17 +25,17 @@ scenario rows, and verifier checks agree.
 
 | id | purpose | core_rule_paths | overlays | mutation_capability | budget_words | enforcement_status |
 |---|---|---|---|---|---:|---|
-| `planning.brief` | inline implementation brief | `v1/rules/subagent/planning.md` | task owner docs/source by concern | read-only | 700 | report-only |
-| `planning.tracked` | persisted plan material | `v1/rules/subagent/planning.md`, `v1/plan-lifecycle.md`, `v1/plan-template.md`, `v1/rules/repo-rules.md` | authoring rules when plan edits touch durable docs | mutating | 1300 | report-only |
-| `implementation.code` | bounded code change | `v1/rules/subagent/implementation.md`, `v1/rules/repo-rules.md`, `v1/rules/coding-style.md` | source/tests selected by task | mutating | 1700 | report-only |
-| `implementation.code-docs` | code plus owning docs | `v1/rules/subagent/implementation.md`, `v1/rules/repo-rules.md`, `v1/rules/coding-style.md`, `v1/rules/authoring-rules.md` | manifest and ownership rows for touched surfaces | mutating | 2500 | report-only |
-| `implementation.tracked` | selected tracked-plan implementation and closeout | `v1/rules/subagent/implementation.md`, `v1/rules/repo-rules.md`, `v1/rules/coding-style.md`, `v1/rules/authoring-rules.md`, `v1/plan-lifecycle.md` | selected plans and owning architecture/decisions | mutating | 2500 | report-only |
-| `review.generic` | generic independent review | `v1/rules/subagent/review.md` | named lens sources only | read-only | 700 | report-only |
-| `review.docs` | docs/rules review | `v1/rules/subagent/review.md`, `v1/rules/authoring-rules.md` | named docs and ownership rows | read-only | 1000 | report-only |
-| `review.plan` | plan review | `v1/rules/subagent/review.md`, `v1/plan-lifecycle.md` | selected plans and optional template | read-only | 1000 | report-only |
-| `maintenance.docs` | docs repair or migration | `v1/rules/subagent/docs-maintenance.md`, `v1/rules/authoring-rules.md`, `v1/rules/repo-rules.md` | manifest and ownership rows for touched docs | mutating | 1700 | report-only |
-| `maintenance.plan` | plan/run lifecycle maintenance | `v1/rules/subagent/plan-maintenance.md`, `v1/plan-lifecycle.md`, `v1/rules/authoring-rules.md`, `v1/rules/repo-rules.md` | selected plans/run docs and owning docs | mutating | 1800 | report-only |
-| `verification.readonly` | final or targeted gate execution | `v1/rules/subagent/verification.md` | manifest drift-gates and named command output | read-only | 500 | report-only |
+| `planning.brief` | inline implementation brief | `src/rules/subagent/planning.md` | task owner docs/source by concern | read-only | 700 | report-only |
+| `planning.tracked` | persisted plan material | `src/rules/subagent/planning.md`, `src/plan-lifecycle.md`, `src/plan-template.md`, `src/rules/repo-rules.md` | authoring rules when plan edits touch durable docs | mutating | 1300 | report-only |
+| `implementation.code` | bounded code change | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md` | source/tests selected by task | mutating | 1700 | report-only |
+| `implementation.code-docs` | code plus owning docs | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md` | manifest and ownership rows for touched surfaces | mutating | 2500 | report-only |
+| `implementation.tracked` | selected tracked-plan implementation and closeout | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md`, `src/plan-lifecycle.md` | selected plans and owning architecture/decisions | mutating | 2500 | report-only |
+| `review.generic` | generic independent review | `src/rules/subagent/review.md` | named lens sources only | read-only | 700 | report-only |
+| `review.docs` | docs/rules review | `src/rules/subagent/review.md`, `src/rules/authoring-rules.md` | named docs and ownership rows | read-only | 1000 | report-only |
+| `review.plan` | plan review | `src/rules/subagent/review.md`, `src/plan-lifecycle.md` | selected plans and optional template | read-only | 1000 | report-only |
+| `maintenance.docs` | docs repair or migration | `src/rules/subagent/docs-maintenance.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | manifest and ownership rows for touched docs | mutating | 1700 | report-only |
+| `maintenance.plan` | plan/run lifecycle maintenance | `src/rules/subagent/plan-maintenance.md`, `src/plan-lifecycle.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | selected plans/run docs and owning docs | mutating | 1800 | report-only |
+| `verification.readonly` | final or targeted gate execution | `src/rules/subagent/verification.md` | manifest drift-gates and named command output | read-only | 500 | report-only |
 
 ## Scenario Contract
 

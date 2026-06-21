@@ -9,9 +9,9 @@ die() {
 usage() {
   cat <<'EOF'
 Usage:
-  bash v1/export-chatgpt-context.sh [--output-dir <dir>]
-  bash v1/export-chatgpt-context.sh --stdout
-  bash v1/export-chatgpt-context.sh --list-groups
+  bash src/export-chatgpt-context.sh [--output-dir <dir>]
+  bash src/export-chatgpt-context.sh --stdout
+  bash src/export-chatgpt-context.sh --list-groups
 
 Exports this repo as Markdown chunks that can be pasted into ChatGPT for
 planning. By default, files are written under chatgpt-context-export/.
@@ -90,7 +90,7 @@ group_ids="
 04-decisions
 05-plans
 06-agent-docs-guide
-07-v1-top-level
+07-src-top-level
 08-rules
 09-orchestrator-rules
 10-subagent-rules
@@ -108,7 +108,7 @@ group_title() {
     04-decisions) printf 'Decisions' ;;
     05-plans) printf 'Plans' ;;
     06-agent-docs-guide) printf 'Agent Docs Guide' ;;
-    07-v1-top-level) printf 'v1 Top-Level Files' ;;
+    07-src-top-level) printf 'src Top-Level Files' ;;
     08-rules) printf 'Rules' ;;
     09-orchestrator-rules) printf 'Orchestrator Rules' ;;
     10-subagent-rules) printf 'Subagent Rules' ;;
@@ -138,26 +138,26 @@ classify_path() {
         docs/plans/*)
           printf '05-plans'
           ;;
-        v1/agent-docs-guide.md)
+        src/agent-docs-guide.md)
           printf '06-agent-docs-guide'
           ;;
-        v1/rules/orchestrator/*)
+        src/rules/orchestrator/*)
           printf '09-orchestrator-rules'
           ;;
-        v1/rules/subagent/*)
+        src/rules/subagent/*)
           printf '10-subagent-rules'
           ;;
-        v1/rules/*)
+        src/rules/*)
           printf '08-rules'
           ;;
-        v1/skills/*)
+        src/skills/*)
           printf '11-skills'
           ;;
-        v1/template/*)
+        src/template/*)
           printf '12-template'
           ;;
-        v1/*)
-          printf '07-v1-top-level'
+        src/*)
+          printf '07-src-top-level'
           ;;
         *)
           printf '13-other'
