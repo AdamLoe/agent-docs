@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         orchestrator
 last_updated:  2026-06-20
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/install-and-adapters.md
@@ -82,8 +82,8 @@ skill copies mid-run.
 | 6 Shipped review | review.generic (read-only, strong) | done | VERDICT safe-with-fixes; live install confirmed SAFE (deletion + dry-run + atomic-replace traced); 1 real miss: bare `v1/` refs | fe20142 (read) |
 | 6b Bare-v1 active-files cleanup | maintenance.docs (strong) | done | 29 refs fixed across 13 files (docs→src/, src bodies→~/.agentdocs/); verifier:1007 tightened; gate exit 0 | c3712af |
 | 7 Live install + verify | implementation (mutates $HOME) | done | ~/.agentdocs created (manifest kind=local); 21/21 skills refreshed both tools, markers→~/.agentdocs path; adapter-freshness now RUNS + passes; github --dry-run ok | no repo commit |
-| 8 Closeout (plan + hub ship) | maintenance.plan | pending | — | — |
-| 9 Final drift gate + report | verification.readonly | pending | — | — |
+| 8 Closeout (plan + hub ship) | maintenance.plan | done | plan + hub shipped/okay_to_delete; migration notes filled; gate exit 0 | (this commit) |
+| 9 Final drift gate + report | verification.readonly | pending | gate passed inline at phase 8; formal sign-off pending | — |
 
 Editing is serial on the shared tree; phases 2→5 run one at a time, each
 committing before the next. Phases 1 and 6 are read-only. WS2+WS4 merged per
@@ -172,7 +172,25 @@ D7a (install↔verify circular coupling).
 
 ## Closeout / migration status
 
-- Not started. Before `okay_to_delete: true`: durable facts migrated into
-  `architecture/install-and-adapters.md`, `architecture/workflow-kit.md`,
-  `decisions/agent-docs.md`; plan migration notes filled; plan + hub set
-  `status: shipped`.
+Phase 8 complete. All durable facts migrated and verified present in canonical
+docs. Plan migration notes filled. Plan + hub set `status: shipped`,
+`okay_to_delete: true`.
+
+### Migrated facts and targets
+
+| Fact | Target |
+|---|---|
+| Source/runtime split; `v1` retired | `docs/decisions/agent-docs.md` §"Source/runtime split" + `docs/architecture/install-and-adapters.md` intro + `docs/architecture/workflow-kit.md` opening |
+| Two-installer model, install == update | `docs/decisions/agent-docs.md` §"Two-installer model" + `docs/architecture/install-and-adapters.md` §"Installers" |
+| `.agentdocs-install-manifest` provenance-only (not deletion authority) | `docs/decisions/agent-docs.md` §"Install manifest is provenance only" + `docs/architecture/install-and-adapters.md` |
+| Managed-skill deletion policy (`.agent-docs-managed` marker authority; no force flag; collision stops with error; symlinks refused) | `docs/decisions/agent-docs.md` §"Managed-skill deletion policy" + §"Tool paths are adapters" + `docs/architecture/install-and-adapters.md` §"Managed skill adapter refresh" |
+| `copy-skills.sh`/`install.sh` retired; refresh inlined | `docs/decisions/agent-docs.md` §"Skill refresh is embedded in installers" + `docs/architecture/install-and-adapters.md` |
+| Verifier: one bundled script, guarded source-repo default, `--scaffold`, `--context-report` | `docs/decisions/agent-docs.md` §"Verifier modes are explicit" + `docs/architecture/workflow-kit.md` §"Main surfaces" |
+| Ownership: install/adapter + runtime-path concepts | `docs/_meta/ownership.json` `install-and-relocation` + `tool-adapters` surfaces |
+
+### Phase tracker update
+
+| Phase | Status |
+|---|---|
+| 8 Closeout (plan + hub ship) | done — plan + hub shipped/okay_to_delete, migration notes filled, gate exit 0 |
+| 9 Final drift gate + report | pending — gate run by phase 8 (see plan migration notes); formal verification.readonly sign-off still pending |

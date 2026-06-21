@@ -1,8 +1,8 @@
 ---
-status:        draft
+status:        shipped
 owner:         unassigned
-last_updated:  2026-06-21
-okay_to_delete: false
+last_updated:  2026-06-20
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/install-and-adapters.md
@@ -327,19 +327,93 @@ Adjust verifier commands after the verifier split is implemented.
 
 ## Migration notes (filled in at ship time)
 
-Before setting `status: shipped`, migrate durable facts and rationale into:
+All durable facts from this plan were verified present in the canonical docs
+at ship time (commit HEAD dad44bf, branch overhaul-agent-docs-install-workflow).
 
-- `architecture/install-and-adapters.md` for runtime path, installer behavior,
-  and adapter destinations.
-- `architecture/workflow-kit.md` for `src/` as the source kit and
-  `~/.agentdocs/` as the runtime kit.
-- `decisions/agent-docs.md` for the source/runtime split, removal of `v1`
-  runtime terminology, installer script model, and managed skill deletion
-  policy.
-- `_meta/ownership.json` for any renamed concept ownership.
+### Facts migrated and where
 
-Record exact migration targets and final verification evidence here before
-marking the plan shipped.
+| Fact | Target doc | Section |
+|---|---|---|
+| Source/runtime split: `src/` is source, `~/.agentdocs/` is runtime; `v1` retired as a runtime term | `docs/decisions/agent-docs.md` | "Source/runtime split" |
+| Source/runtime split (current state) | `docs/architecture/install-and-adapters.md` | intro paragraph; `docs/architecture/workflow-kit.md` opening paragraph |
+| Two install entry points, install equals update: `install-agentdocs-local.sh` (local dogfood) + `src/install-agentdocs.sh` (GitHub codeload main/tag) | `docs/decisions/agent-docs.md` | "Two-installer model (install equals update)" |
+| Installer behavior (current state) | `docs/architecture/install-and-adapters.md` | "Installers" section |
+| `.agentdocs-install-manifest` is provenance only (kind/path-or-tag/timestamp), NOT deletion authority | `docs/decisions/agent-docs.md` | "Install manifest is provenance only" |
+| Manifest provenance-only (current state) | `docs/architecture/install-and-adapters.md` | "Both installers write…" paragraph |
+| Managed-skill adapter policy: per-skill `.agent-docs-managed` marker is deletion authority; stale managed skills pruned on install; unmanaged same-name collision stops with error; skill-root symlinks refused; no force flag; Claude `~/.claude/skills`, Codex `~/.agents/skills` | `docs/decisions/agent-docs.md` | "Managed-skill deletion policy", "Tool paths are adapters" |
+| Managed-skill adapter refresh (current state) | `docs/architecture/install-and-adapters.md` | "Managed skill adapter refresh" + "Deletion policy" block |
+| `copy-skills.sh`/`install.sh` retired; refresh inlined into installers | `docs/decisions/agent-docs.md` | "Skill refresh is embedded in installers" |
+| Retired scripts (current state) | `docs/architecture/install-and-adapters.md` | "No separate refresh step" block |
+| Verifier is ONE bundled script: default = source-repo gate (guarded by source-repo detection); `--scaffold <target>` = consuming-repo mode; `--context-report` | `docs/decisions/agent-docs.md` | "Verifier modes are explicit" |
+| Verifier (current state) | `docs/architecture/workflow-kit.md` | "Main surfaces" table row for `src/verify-agent-docs.sh` |
+| Ownership of install/adapter + runtime-path concepts | `docs/_meta/ownership.json` | `install-and-relocation` surface (owns runtime path, source/runtime split, install and update model); `tool-adapters` surface (owns managed skill refresh) |
+
+### Implementation commits (this repo)
+
+| Commit | What |
+|---|---|
+| c54fe23 | WS1: rename v1→src |
+| c02e2af | WS2+WS4: installers + verifier split + manifest sync |
+| a022d2a | WS5: docs/decisions migration (install-and-adapters.md, workflow-kit.md, decisions/agent-docs.md, ownership.json) |
+| b2c5c5e | Phase 4b: verifier retired-name-sweep hardening (now skips docs/plans/orchestrator/**) |
+| 725eb01 | WS3: runtime-ref sweep (src/ + docs/) — 30 files |
+| c3712af | Phase 6b: bare-`v1/` active-file cleanup (29 refs across 13 files) |
+
+### Sibling-repo commits (each on its own branch, unpushed)
+
+| Repo | Commit | Branch |
+|---|---|---|
+| brain_visualizer | fdaf512 | ship-visual-polish-and-plan-sweep |
+| evosim | 26619a3 | feat/v2.0.0 |
+| fluid-simulation | a54afae | agent-docs-workspace-proof |
+| incremental | 944db00 | main |
+| llmrpg | 6a096c6 | master |
+| quoridor-ml-studio | c262d1f | codex/implement-threaded-plans |
+| traffic | 70170d4 | grid-road-game-rewrite |
+
+### Live-install verification evidence (phase 7, no repo commit)
+
+`~/.agentdocs/` bundle written with `.agentdocs-install-manifest` containing
+`source_kind: local`, source path `/home/adamg/agent-docs/src`, timestamp
+`2026-06-21T04:02:57Z`. 21/21 skills refreshed in both `~/.claude/skills` and
+`~/.agents/skills`; `.agent-docs-managed` markers updated to `~/.agentdocs/`
+path. Adapter-freshness check runs and passes. GitHub dry-run:
+`~/.agentdocs/install-agentdocs.sh --dry-run` passes offline.
+
+### Exit Gate status per bullet
+
+| Exit Gate bullet | Status |
+|---|---|
+| No tracked source file contains stale `~/agent-docs/v1` runtime guidance | MET — WS3 sweep + phase 6b cleanup; verifier gate confirms exit 0 |
+| No relevant sibling repo doc contains stale `~/agent-docs/v1` guidance | MET — 7 sibling repos swept (commits above); orch-verified zero active stale refs |
+| `install-agentdocs-local.sh` installs local `src/` into `~/.agentdocs/` and refreshes Claude/Codex managed skill copies | MET — phase 7 live install confirmed |
+| `src/install-agentdocs.sh` installs from GitHub tag/latest into `~/.agentdocs/` and refreshes copies | DRY-RUN ONLY — no published tag; tag-push is out of scope per Discipline Rules (D7d). Accepted limitation, not a silent miss. Script validated with `bash -n` and `--dry-run`; GitHub codeload path implemented and tested offline. |
+| Removing a skill from `src/skills/` removes the corresponding managed copied skill on the next install | MET — per-skill `.agent-docs-managed` deletion policy implemented and live-install exercised |
+| Final source-repo drift gate passes | MET — `bash src/verify-agent-docs.sh` exits 0 (see gate run below) |
+| Installed runtime contains expected bundle files and copied skill adapters match `~/.agentdocs/skills/` | MET — 21/21 skills confirmed after phase 7 live install |
+
+### Open follow-ups (recorded here to survive plan/hub deletion)
+
+1. **Feedback inbox location** — `~/agent-docs/feedback/inbox.jsonl` stays
+   unchanged (D11). It is a source-checkout maintainer inbox, not a `v1` runtime
+   ref, and `~/.agentdocs/` is wiped on every install so it is unsuitable as a
+   home. Needs a stable, install-survivable home in a future decision.
+2. **Disposable historical plans still hold bare `v1/` refs** —
+   `docs/plans/{agent-docs-hardening,token-economy,review-app-skill,agent-docs-context-simplification-plan-revised,agent-docs-new-system-pitch}.md`
+   are not loaded as guidance and are deletion candidates. Low-priority: delete
+   or sweep in a future cleanup pass.
+3. **Retired-name sweep skips orchestrator run-docs** — narrowed exclusion
+   landed in b2c5c5e; the shipped-review (phase 6) confirmed this hid nothing
+   real.
+
+### Final drift gate
+
+```
+bash src/verify-agent-docs.sh
+```
+
+Exit 0, output: `ALL AGENT-DOCS GATES PASS` (run after all edits, before
+commit).
 
 ## See also
 
