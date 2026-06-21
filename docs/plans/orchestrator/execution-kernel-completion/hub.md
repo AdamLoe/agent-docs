@@ -51,8 +51,9 @@ context-report directly — Wave 0 measures them.
 | 3 | Meet budgets via relocation; raise unreachable budgets to floors (E3) | active | compression DONE (launch: b672c55; profile: d30592e). File floors: lifecycle 1037, skill-contracts 637, dispatch 811, ctx-profiles 533, authoring 793, repo-rules 429, coding-style 353+3 overlays, plan-lifecycle 427, plan-template 223. 4/7 profiles now in budget. DONE — 3 budgets reconciled to floors (164784e); all 11 profiles within budget. Launch reconcile after Wave 4 | 164784e |
 | 4 | Finish skill recipes (21 skills → profile IDs) | done | all 21 converted (6ce6ea4,e4fa857,250683b,fa75f3e,abf9f9b,7689131). Launch floors: fixed(quick-fix) 1683; classifiers orch 3118/fresh-chat 2778/start-session 2862. fixed≤1200 + classifier≤2000 unreachable → E3 floors | 7689131 |
 | 5a | Source-bound checks + launch budgets (report-only) | done | --contract-check added; checks 2–8 CLEAN; only 7 fixed-skill launch overruns, mostly a measure-launch over-count (counts path strings in prohibition/Reference lines) | c0c5e3f |
-| 5b | Honest measure-launch + floor budgets + flip enforcement | active | fix measure-launch to ignore prohibition/Reference mentions; set launch budgets to honest floors (E3); flip 11 profiles + launch + contract checks to gating; confirm green | — |
-| 6 | Durable migration + closeout | pending | — | — |
+| 5b | Honest measure-launch + floor budgets + flip enforcement | done | measure-launch honest; launch budgets floored (fixed 2000/classifier 3300); ALL 11 profiles ENFORCED + in budget; profile/launch/contract checks GATE; gate green + bites (orch-verified) | f4c0b8c |
+| 6a | Durable migration (architecture/decisions/manifest/ownership/guide) | active | migrate execution-kernel model; cover new surfaces (verify-fixtures, reference leaves, lang overlays, resolver/contract-check modes); fix stale 'scenarios report-only' prose (ctx-profiles:47) | — |
+| 6b | Ship plan + hub; final gate | pending | — | — |
 
 Editing serial on the shared tree. Review where risk warrants (verifier rewrite,
 budget compression). Final gate after the last mutation.
