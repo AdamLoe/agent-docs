@@ -10,7 +10,7 @@ not inspect remotes, GitHub, issues, pull requests, or external services.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
 `drift-gates`.
 
@@ -19,8 +19,8 @@ state and does **not** ask the two intake questions. It still honors dials passe
 in `$ARGUMENTS` (e.g. a `review-*`/`cost-*` setting flows into whatever owning
 skill it routes into).
 
-Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` for the reads-vs-dispatch test,
+Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` for the reads-vs-dispatch test,
 dispatch packet, rule bundles, and commit concurrency.
 
 ## Orchestrator reads
@@ -29,7 +29,7 @@ These are coordination state, read inline under the reads-vs-dispatch test — t
 is routing, not worker dispatch:
 
 - `docs/plans/index.md`.
-- `~/agent-docs/v1/plan-lifecycle.md`.
+- `~/.agentdocs/plan-lifecycle.md`.
 - Top-level plan files under `docs/plans/`, excluding `index.md` and
   `template.md`.
 - `hub.md` for each immediate orchestration run folder under
@@ -54,16 +54,16 @@ when triage crosses the reads-vs-dispatch boundary:
 
 - **Plan-maintenance worker** when cleanup candidates need eligibility or
   migration review before deletion. Pass the Plan-maintenance worker bundle:
-  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`.
+  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
+  `~/.agentdocs/plan-lifecycle.md`,
+  `~/.agentdocs/rules/authoring-rules.md`.
 - **Review worker** when active or recently shipped work needs a state check
   before choosing between implementation and cleanup. Pass
-  `~/agent-docs/v1/rules/subagent/review.md` plus the relevant plan/source.
+  `~/.agentdocs/rules/subagent/review.md` plus the relevant plan/source.
 - **Verification worker** only for a narrow local git/plan-state check better
   isolated from the orchestrator. Pass
-  `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Routing into the owning skill (use existing skills; do not copy their procedures).
 When more than one mutating route is plausible, prefer preserving local git state

@@ -112,8 +112,8 @@ read this first.
 
 7. **Plans live in `docs/plans/` and carry status metadata.**
    The lifecycle rules are owned by the kit file
-   `~/agent-docs/v1/plan-lifecycle.md`; the skeleton by
-   `~/agent-docs/v1/plan-template.md`. A repo's `docs/plans/index.md`
+   `~/.agentdocs/plan-lifecycle.md`; the skeleton by
+   `~/.agentdocs/plan-template.md`. A repo's `docs/plans/index.md`
    is only a router and reminder, not a live inventory. **Migrate as
    much context as possible into architecture/decisions before the plan
    is closed**; `okay_to_delete: true` means shipped or abandoned and

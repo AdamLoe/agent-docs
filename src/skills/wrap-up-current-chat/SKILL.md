@@ -17,7 +17,7 @@ recoverable from docs, code, or git history; it does not ship a diff. Scope is
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `decisions-domains`.
 
 This skill is **state-driven**: it runs directly off this session's history, with
@@ -25,11 +25,11 @@ no two-question intake. Read `docs/_meta/ownership.json` and the
 architecture/decision docs named by the chat or pointed to by that ownership data
 inline — that is coordination routing, not worker dispatch. If this chat wrapped
 a plan, also read `docs/plans/index.md` and
-`~/agent-docs/v1/plan-lifecycle.md`. Honor any dials passed in `$ARGUMENTS`.
+`~/.agentdocs/plan-lifecycle.md`. Honor any dials passed in `$ARGUMENTS`.
 
 Once you know what the chat produced, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose worker phases and
+`~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to choose worker phases and
 dispatch.
 
 ## Capture Policy
@@ -57,21 +57,21 @@ commit concurrency follow `orchestrator/dispatch.md`. Editing workers are serial
 on the shared tree. Use only the phases the chat needs.
 
 - **Docs-maintenance worker** (the durable-context migration). Pass
-  `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`, plus the candidate facts/rationale and
+  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md`, plus the candidate facts/rationale and
   the owning docs from `ownership.json`. It decides what is durable, updates the
   owning architecture/decisions docs in place, and commits its slice.
 - **Plan-maintenance worker** only when this chat wrapped a plan and its status
-  should change. Pass `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`, and
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`. It migrates the plan's durable context
+  should change. Pass `~/.agentdocs/rules/subagent/plan-maintenance.md`,
+  `~/.agentdocs/plan-lifecycle.md`, and
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md`. It migrates the plan's durable context
   first, then sets `status`, `last_updated`, and `okay_to_delete` truthfully per
   `docs/plans/index.md`.
 - **Verification worker** only if repo files changed and a gate is warranted.
-  Pass `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  Pass `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Editing workers stage by filename and commit their own slice before reporting;
 record the hashes and verify the final state. Never push unless explicitly told.

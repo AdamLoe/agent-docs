@@ -12,14 +12,14 @@ implement code and you do not become an inline planning skill.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`. The task is the user's
 app-state thoughts; when launched without it, ask the two intake questions,
 batched, and wait — do not infer the task from an empty or generic invocation,
 and do not offer a menu of things to plan.
 
-Once intent is known, read `~/agent-docs/v1/rules/context-profiles.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose a brief or tracked
+Once intent is known, read `~/.agentdocs/rules/context-profiles.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to choose a brief or tracked
 planning profile. This fixed recipe does not load the generic classifier by
 default. Then
 load only the smallest matching task route:

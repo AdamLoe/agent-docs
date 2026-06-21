@@ -19,15 +19,15 @@ authoritative for what's-where and why.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The doc paths to check are the task; if none are named,
 run the two-question intake (which doc(s) to check, plus dials) and wait before
 the deeper reads.
 
 Once the doc paths are known, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to plan worker fan-out and
+`~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to plan worker fan-out and
 dispatch. Read `docs/_meta/ownership.json` when a finding turns on ownership, and
 read the named doc paths only enough to scope the work into per-doc or per-subtree
 worker slices — the workers do the reading-across.
@@ -41,8 +41,8 @@ when several docs share a subtree.
 
 - **Docs-maintenance worker** per doc/cluster, with a **drift lens** and
   **read-only** dispatch. Pass the Docs-maintenance worker bundle:
-  `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`. Tell it to check accuracy vs code
+  `~/.agentdocs/rules/subagent/docs-maintenance.md`,
+  `~/.agentdocs/rules/authoring-rules.md`. Tell it to check accuracy vs code
   (resolve `path → symbol` pointers and code anchors by name not line, check
   literal constants, flag contradictions and possible code bugs) and clarity vs
   the authoring rules (altitude, what-IS framing, no transcription or ungated
@@ -50,8 +50,8 @@ when several docs share a subtree.
   Point it at the `drift-verification` slot for app-specific high-risk surfaces.
 - **Verification worker** only when a named drift gate is cheap and directly
   relevant to a literal count or contract the docs assert. Pass
-  `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`, naming the exact gate to run. Skip it
+  `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`, naming the exact gate to run. Skip it
   when no gate bears directly on the check.
 
 A single named doc still goes through a docs-maintenance worker — the

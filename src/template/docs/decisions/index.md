@@ -5,4 +5,4 @@ Add rows as decision domains are created.
 
 | Need | Read |
 |---|---|
-| Decision format and ownership rules | `~/agent-docs/v1/rules/authoring-rules.md` |
+| Decision format and ownership rules | `~/.agentdocs/rules/authoring-rules.md` |

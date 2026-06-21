@@ -12,7 +12,7 @@ shared shipping shape.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `drift-gates`. doctor
 is **state-driven**: it runs off existing disk and git state, so it skips both
 intake questions and does not stop to ask for a task. It still honors dials
@@ -22,8 +22,8 @@ Then read, inline, the coordination state this check validates:
 `docs/_meta/manifest.md`, `docs/_meta/ownership.json`, `v1/skills/registry.md`,
 `v1/rules/skill-contracts.md`, and the static gate commands recorded in the
 manifest `drift-gates` slot. To classify and dispatch, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md`.
+`~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md`.
 
 ## What gets validated
 
@@ -45,7 +45,7 @@ The verification worker confirms:
   guides.
 - The manifest `drift-gates` pass. `v1/verify-agent-docs.sh` with no arguments
   is the standard static gate for this kit; consuming-repo scaffold validation
-  uses `~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`. Failures
+  uses `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`. Failures
   name the exact gate.
 
 ## Worker Phases
@@ -55,25 +55,25 @@ follow `orchestrator/dispatch.md`. Run the verification worker first, every
 invocation; the two fix workers run only when the user asks to repair failures.
 
 - **Verification worker** (the health check). Pass the Verification worker
-  bundle: `~/agent-docs/v1/rules/subagent/verification.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. It runs the scaffold, manifest,
+  bundle: `~/.agentdocs/rules/subagent/verification.md`,
+  `~/.agentdocs/rules/repo-rules.md`. It runs the scaffold, manifest,
   registry, and stale-reference checks above. In this kit repo, that typically
   means `v1/verify-agent-docs.sh` plus the manifest `drift-gates`; in a
   consuming repo, the scaffold portion is
-  `~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>` plus the target
+  `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>` plus the target
   manifest `drift-gates`. It reports each failure with the exact file, path, or
   gate that failed. It stays read-only.
 - **Docs-maintenance worker** only when authorized to repair doc-scaffold
   failures (missing required files, manifest-slot or routing gaps, dead ownership
-  paths). Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`. It makes the smallest repair and
+  paths). Pass `~/.agentdocs/rules/subagent/docs-maintenance.md`,
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md`. It makes the smallest repair and
   commits its slice.
 - **Implementation worker** only when authorized to repair a failing verifier or
-  gate script. Pass `~/agent-docs/v1/rules/subagent/implementation.md`,
-  `~/agent-docs/v1/rules/coding-style.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`. It fixes the script, re-runs the gate,
+  gate script. Pass `~/.agentdocs/rules/subagent/implementation.md`,
+  `~/.agentdocs/rules/coding-style.md`,
+  `~/.agentdocs/rules/authoring-rules.md`,
+  `~/.agentdocs/rules/repo-rules.md`. It fixes the script, re-runs the gate,
   and commits.
 
 Repair work follows the shared shipping shape: a fix worker commits its slice,

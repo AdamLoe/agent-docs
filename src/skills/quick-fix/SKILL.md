@@ -11,14 +11,14 @@ worker or `/plan` instead of dispatching implementation.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The problem to fix is the task; if it is missing, run the
 two-question intake and wait.
 
 Once the problem is known, read
-`~/agent-docs/v1/rules/context-profiles.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md`. This fixed recipe does not
+`~/.agentdocs/rules/context-profiles.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md`. This fixed recipe does not
 load the generic classifier by default. Load task-specific
 architecture/decisions/agent-context docs only when the problem needs them.
 

@@ -7,7 +7,7 @@ whose primary documentation reader is an LLM.
 
 This is **agent-docs v1**. Its defining move: the generic machinery — the
 authoring rules and the maintenance/chat commands — lives **once**, in
-this kit (`agent-docs/v1/`), and every app supplies only its own facts
+this kit (`~/.agentdocs/`), and every app supplies only its own facts
 through a small binding file. You are reading the generic half.
 
 ## The problem this solves
@@ -81,7 +81,7 @@ that change at different rates and have different owners:
 
 | Layer | Lives in | Owns |
 |---|---|---|
-| **Generic kit** (`agent-docs/v1/`) | this kit, versioned, shared across apps | the authoring/coding/repo rules, the orchestrator and subagent rule folders, the chat & maintenance **skills**, this guide, the plan-lifecycle rules, the plan template |
+| **Generic kit** (`~/.agentdocs/`) | this kit, versioned, shared across apps | the authoring/coding/repo rules, the orchestrator and subagent rule folders, the chat & maintenance **skills**, this guide, the plan-lifecycle rules, the plan template |
 | **Per-app docs** (`docs/`) | each repo | the app's architecture, decisions, agent-context, plans, and a `_meta/manifest.md` that fills the kit's slots |
 
 The rules in the kit are written to be app-agnostic. Wherever a rule needs
@@ -315,10 +315,10 @@ lifecycle gaps.
 Use `/doctor` for a mechanical health check of the scaffold,
 manifest slots, ownership JSON, skill registry, and stale references. In a
 consuming repo, the scaffold portion uses
-`~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`; the verifier
+`~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`; the verifier
 without `--scaffold` checks the shared kit checkout.
 
-Use `~/agent-docs/v1/verify-agent-docs.sh --context-report` to inspect the
+Use `~/.agentdocs/verify-agent-docs.sh --context-report` to inspect the
 read-only context-profile contract. Add `--profile <id>` to print one profile's
 exact rule files, conditions, word totals, and report-only budget exceptions.
 
@@ -341,9 +341,9 @@ One larger direction is intentionally not part of the current workflow:
 Use `/rebuild-agent-docs` when a repo is adopting this kit for the first
 time or repairing a drifted docs tree. It inventories the current docs,
 compares them to this guide, seeds missing files from
-`~/agent-docs/v1/template/`, migrates durable facts into the right owners,
+`~/.agentdocs/template/`, migrates durable facts into the right owners,
 checks the rebuilt target with
-`~/agent-docs/v1/verify-agent-docs.sh --scaffold <repo-root>`, and ends with
+`~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`, and ends with
 `/ship-current-work` semantics.
 
 `v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the

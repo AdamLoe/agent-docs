@@ -11,17 +11,17 @@ hand-edit plans or migrate facts in your own context.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, plus `change-to-doc`
 and `drift-gates`/`drift-verification` for any migration follow-up.
 
 This skill is **state-driven**: it runs directly off `docs/plans/` and git state,
 so there is no two-question intake. Honor any dials passed in `$ARGUMENTS` where
 they affect fan-out or model spend. Read `docs/plans/index.md`,
-`~/agent-docs/v1/plan-lifecycle.md`, and the manifest for lifecycle and ownership
+`~/.agentdocs/plan-lifecycle.md`, and the manifest for lifecycle and ownership
 context inline; query `docs/_meta/ownership.json` for migration targets rather
-than bulk-loading it. Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md`
-and `~/agent-docs/v1/rules/orchestrator/dispatch.md` to dispatch.
+than bulk-loading it. Then read `~/.agentdocs/rules/orchestrator/lifecycle.md`
+and `~/.agentdocs/rules/orchestrator/dispatch.md` to dispatch.
 
 A plan is working coordination, not canonical knowledge: once its work has
 shipped **and** its durable context has been migrated into
@@ -38,10 +38,10 @@ and commit concurrency follow `orchestrator/dispatch.md`. Each phase below names
 the exact rule files to pass in the dispatch packet.
 
 - **Plan-maintenance worker** (the sweep and migration — the main job). Pass
-  `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`. It sweeps top-level plan files
+  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
+  `~/.agentdocs/plan-lifecycle.md`,
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md`. It sweeps top-level plan files
   (skipping `index.md` and `template.md`) and run folders, buckets each one
   (in-flight, ready-to-migrate, ready-to-delete, needs-human, long-lived),
   migrates durable facts and rationale into the owning docs **before** any status
@@ -68,14 +68,14 @@ the exact rule files to pass in the dispatch packet.
   It commits its slice before reporting.
 - **Docs-maintenance worker** only when the migration targets need real
   architecture/decision edits beyond what the plan-maintenance worker handles
-  cleanly. Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md`. Architecture is rewritten in place;
+  cleanly. Pass `~/.agentdocs/rules/subagent/docs-maintenance.md` and
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md`. Architecture is rewritten in place;
   decisions get the mandatory fields. Code paths in docs are relative to the
   manifest's `code_root`.
 - **Verification worker** only when files changed and a final drift gate is
-  better isolated. Pass `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  better isolated. Pass `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Never delete a plan or run-doc whose latest version is not already in local git
 history, and never delete a freshly migrated plan in the same pass — flagging it

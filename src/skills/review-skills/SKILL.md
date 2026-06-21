@@ -12,22 +12,22 @@ to apply fixes.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**. This skill is state-driven: it runs directly off the on-disk skill
 suite, so **skip the two-question intake** and do not stop to ask for a task. It
 still honors dials passed in `$ARGUMENTS`; broad-sweep default is `cost-high`.
 
 Then read, inline, the coordination state this review spans:
 
-- `~/agent-docs/v1/skills/registry.md` — the skill inventory.
-- `~/agent-docs/v1/agent-docs-guide.md` — especially maintenance and lifecycle.
-- `~/agent-docs/v1/rules/skill-contracts.md` and `~/agent-docs/v1/rules/repo-rules.md`.
-- `~/agent-docs/v1/rules/orchestrator/` and `~/agent-docs/v1/rules/subagent/` —
+- `~/.agentdocs/skills/registry.md` — the skill inventory.
+- `~/.agentdocs/agent-docs-guide.md` — especially maintenance and lifecycle.
+- `~/.agentdocs/rules/skill-contracts.md` and `~/.agentdocs/rules/repo-rules.md`.
+- `~/.agentdocs/rules/orchestrator/` and `~/.agentdocs/rules/subagent/` —
   the orchestrator and worker-role rules the skills route to.
-- Representative `~/agent-docs/v1/skills/*/SKILL.md` bodies, selected by risk
+- Representative `~/.agentdocs/skills/*/SKILL.md` bodies, selected by risk
   (recently changed, mode-ambiguous, or carrying their own policy), plus
-  `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to check skills against the
+  `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+  `~/.agentdocs/rules/orchestrator/dispatch.md` to check skills against the
   documented orchestrator model.
 
 Reading and summarizing this coordination state is inline routing work. Dispatch
@@ -43,17 +43,17 @@ concurrency follow `orchestrator/dispatch.md`.
   frontmatter `name:` vs. registry row, mode/action/commit metadata, missing or
   stale skills, lifecycle gaps and confusing overlap, `$ARGUMENTS` and
   missing-input behavior. Use profile `review.generic` plus
-  `~/agent-docs/v1/skills/registry.md` and the skill bodies under review.
+  `~/.agentdocs/skills/registry.md` and the skill bodies under review.
 - **Docs-maintenance worker** for rule-doc shape and duplicated policy: bootstrap,
   shipping, commit, model-tier, or ownership instructions repeated across skills
   that should move into a shared rule, and rule-doc house-rule compliance. Pass
-  `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, and
-  `~/agent-docs/v1/rules/repo-rules.md` only when fixes are authorized.
+  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
+  `~/.agentdocs/rules/authoring-rules.md`, and
+  `~/.agentdocs/rules/repo-rules.md` only when fixes are authorized.
 - **Verification worker** only when the user authorizes applying fixes and a
   static check (e.g. registry/skill cross-check) is better isolated. Pass
-  `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Default is read-only review. If the user asks to apply fixes, route them to a
 docs-maintenance or implementation worker with an appropriate mutating profile.

@@ -125,7 +125,7 @@ Work:
 - Split the verifier contract into kit-repo checks and consuming-repo scaffold
   checks, or make the scaffold checks target the current working tree through
   `/doctor`.
-- Remove any implication that `~/agent-docs/v1/verify-agent-docs.sh` validates a
+- Remove any implication that `~/.agentdocs/verify-agent-docs.sh` validates a
   rebuilt consuming repo when it actually validates the kit checkout.
 - Add a placeholder gate for scaffold output: no `<!-- fill -->`, `"fill"`,
   empty repo name, or empty `code_root` in rebuilt docs.

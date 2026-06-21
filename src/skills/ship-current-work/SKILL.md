@@ -10,7 +10,7 @@ hunk or run gates inline.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`, `decisions-domains`.
 
@@ -21,8 +21,8 @@ that is coordination routing, not worker dispatch. Honor any dials passed in
 `$ARGUMENTS`. If the tree is clean, say so and stop.
 
 Once you know what changed, read
-`~/agent-docs/v1/rules/context-profiles.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose worker phases and
+`~/.agentdocs/rules/context-profiles.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to choose worker phases and
 dispatch. Resolve owning docs from `change-to-doc` plus `ownership.json`.
 
 ## Worker Phases

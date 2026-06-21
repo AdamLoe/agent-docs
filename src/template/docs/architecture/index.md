@@ -5,4 +5,4 @@ Add rows as architecture docs are created.
 
 | Need | Read |
 |---|---|
-| Documentation maintenance rules | `~/agent-docs/v1/rules/authoring-rules.md` |
+| Documentation maintenance rules | `~/.agentdocs/rules/authoring-rules.md` |

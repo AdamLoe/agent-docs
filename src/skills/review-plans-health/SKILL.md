@@ -12,7 +12,7 @@ delete files unless the user explicitly asks you to apply the cleanup.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`. This
 skill is **state-driven** — it runs off the plan tree on disk, so there is no
 two-question intake; honor any dials passed in `$ARGUMENTS`.
@@ -20,12 +20,12 @@ two-question intake; honor any dials passed in `$ARGUMENTS`.
 Then read, inline, the coordination state this review judges against:
 
 - `docs/plans/index.md` for the plan inventory.
-- `~/agent-docs/v1/plan-lifecycle.md` and `~/agent-docs/v1/plan-template.md` for
+- `~/.agentdocs/plan-lifecycle.md` and `~/.agentdocs/plan-template.md` for
   the lifecycle states and the shape a plan should hold.
 - `docs/_meta/ownership.json` when judging whether a plan's `owning_docs` and
   migration targets are plausible.
-- `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose phases and dispatch.
+- `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+  `~/.agentdocs/rules/orchestrator/dispatch.md` to choose phases and dispatch.
 
 Listing the plan tree and reading frontmatter to scope the review is inline
 routing. Dispatch a worker once the pass reads across the plan/run bodies, judges
@@ -39,8 +39,8 @@ fields follow `orchestrator/dispatch.md`. The health lens below is what the
 worker checks.
 
 - **Plan-maintenance worker** (the hygiene pass, read-only). Pass the
-  Plan-maintenance worker bundle: `~/agent-docs/v1/rules/subagent/plan-maintenance.md`,
-  `~/agent-docs/v1/plan-lifecycle.md`, `~/agent-docs/v1/rules/authoring-rules.md`,
+  Plan-maintenance worker bundle: `~/.agentdocs/rules/subagent/plan-maintenance.md`,
+  `~/.agentdocs/plan-lifecycle.md`, `~/.agentdocs/rules/authoring-rules.md`,
   plus `docs/plans/index.md`, the plans and run folders in scope, and the
   ownership data. It inspects plan/run-folder health and buckets by lifecycle
   state, but **reports only** — no migration, status changes, or deletion unless
@@ -48,7 +48,7 @@ worker checks.
   out by status or subsystem.
 - **Review worker** only when the requested lens is broader than hygiene — a
   planning-shape critique of whether plans are coherent, well-scoped, and headed
-  the right way. Pass `~/agent-docs/v1/rules/subagent/review.md` plus the plans
+  the right way. Pass `~/.agentdocs/rules/subagent/review.md` plus the plans
   under review.
 
 The worker applies this **health lens** to each plan, and the same lens to each

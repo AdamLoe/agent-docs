@@ -12,17 +12,17 @@ into implementer mode.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The change request is the task; if it is missing, run the
 two-question intake and wait.
 
 Once the change is known, read
-`~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to classify and dispatch. Read
-`~/agent-docs/v1/rules/context-profiles.md` for worker profile IDs. Read
-`~/agent-docs/v1/rules/orchestrator/run-docs.md` and
-`~/agent-docs/v1/plan-lifecycle.md` only when run docs are requested or resume
+`~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to classify and dispatch. Read
+`~/.agentdocs/rules/context-profiles.md` for worker profile IDs. Read
+`~/.agentdocs/rules/orchestrator/run-docs.md` and
+`~/.agentdocs/plan-lifecycle.md` only when run docs are requested or resume
 risk is high. Load task-specific docs/source only when classification needs them
 or to verify a worker report.
 

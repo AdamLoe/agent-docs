@@ -16,7 +16,7 @@ calls, and "doc may be the spec, code may be the bug" mismatches get escalated.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
 `drift-gates`, `drift-verification`. This skill is **state-driven**: it runs off
 the docs tree itself, so it skips the two-question intake and runs directly.
@@ -25,8 +25,8 @@ Honor any dials passed in `$ARGUMENTS`. Default
 `skill-contracts.md`; a small or targeted sweep resolves to `cost-medium`, an
 explicit quick pass to `cost-low`.
 
-Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md`. Inline (this is coordination
+Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md`. Inline (this is coordination
 reading, not worker dispatch): query `docs/_meta/ownership.json`, and take the
 `docs/architecture/` and `docs/decisions/` inventory. Group the docs into
 ~subsystem clusters (an architecture doc + its `decisions/<domain>.md` +
@@ -46,9 +46,9 @@ committing its slice before the next starts; aim for ~5–8 clusters in the
 
 - **Docs-maintenance workers**, one per architecture/decision subtree or
   ownership area, at the tier you assigned. Pass the Docs-maintenance worker
-  bundle — `~/agent-docs/v1/rules/subagent/docs-maintenance.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md` — plus the cluster's doc paths, the
+  bundle — `~/.agentdocs/rules/subagent/docs-maintenance.md`,
+  `~/.agentdocs/rules/authoring-rules.md`,
+  `~/.agentdocs/rules/repo-rules.md` — plus the cluster's doc paths, the
   `drift-verification` slot content (inline it; the worker starts cold), and the
   fix-vs-escalate boundary above. Each worker resolves every `path → symbol`
   pointer (match by name, never line number), scans for forbidden transcription
@@ -59,19 +59,19 @@ committing its slice before the next starts; aim for ~5–8 clusters in the
   follow-up role.
 - **Review worker** for the hard ownership and rationale calls a maintenance
   worker escalated. Pass the Review worker bundle —
-  `~/agent-docs/v1/rules/subagent/review.md` — plus the docs and escalations in
+  `~/.agentdocs/rules/subagent/review.md` — plus the docs and escalations in
   question. It decides which escalations are safe to fold in versus genuinely
   human; default read-only unless you authorize the obvious non-debatable fix.
 - **Verification worker** for the consolidated drift gates. Pass the
-  Verification worker bundle — `~/agent-docs/v1/rules/subagent/verification.md`,
-  `~/agent-docs/v1/rules/repo-rules.md` — plus the manifest `drift-gates`. Run
+  Verification worker bundle — `~/.agentdocs/rules/subagent/verification.md`,
+  `~/.agentdocs/rules/repo-rules.md` — plus the manifest `drift-gates`. Run
   this once at the end, not per cluster.
 - **Implementation worker** only when the sweep uncovers a broken script or
   drift verifier that itself needs a code fix. Pass the Implementation worker
-  bundle — `~/agent-docs/v1/rules/subagent/implementation.md`,
-  `~/agent-docs/v1/rules/coding-style.md`,
-  `~/agent-docs/v1/rules/authoring-rules.md`,
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  bundle — `~/.agentdocs/rules/subagent/implementation.md`,
+  `~/.agentdocs/rules/coding-style.md`,
+  `~/.agentdocs/rules/authoring-rules.md`,
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Do not resolve cross-file judgment inline. When no single worker owned a
 renamed symbol, ownership call, or rationale mismatch that spans clusters,

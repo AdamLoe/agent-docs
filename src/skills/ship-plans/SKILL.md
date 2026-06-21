@@ -11,7 +11,7 @@ implementation skill.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The plan paths are the task; if none are given, run the
 two-question intake (ask which plans and the expected outcome) and wait.
@@ -20,12 +20,12 @@ Once the plans are named, read:
 
 - Each named plan in full. Ignore whether it is `draft` or `active`; explicit
   user selection is enough.
-- `~/agent-docs/v1/plan-lifecycle.md` and `docs/plans/index.md` for status,
+- `~/.agentdocs/plan-lifecycle.md` and `docs/plans/index.md` for status,
   migration, and sibling-plan context.
-- `~/agent-docs/v1/rules/context-profiles.md` and
-  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to resolve profiles, plus
+- `~/.agentdocs/rules/context-profiles.md` and
+  `~/.agentdocs/rules/orchestrator/dispatch.md` to resolve profiles, plus
   `docs/agent-context/orchestrating.md` if it exists.
-- `~/agent-docs/v1/rules/orchestrator/run-docs.md` when multiple streams or run
+- `~/.agentdocs/rules/orchestrator/run-docs.md` when multiple streams or run
   docs are in play.
 
 Load task-specific architecture/decisions/agent-context docs and source only as

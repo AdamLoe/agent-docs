@@ -5,4 +5,4 @@ Add rows as operating rules are created.
 
 | Need | Read |
 |---|---|
-| Generic repo rules | `~/agent-docs/v1/rules/repo-rules.md` |
+| Generic repo rules | `~/.agentdocs/rules/repo-rules.md` |

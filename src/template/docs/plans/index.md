@@ -8,5 +8,5 @@ see current plan files.
 
 ## See also
 
-- `~/agent-docs/v1/plan-lifecycle.md`
-- `~/agent-docs/v1/plan-template.md`
+- `~/.agentdocs/plan-lifecycle.md`
+- `~/.agentdocs/plan-template.md`

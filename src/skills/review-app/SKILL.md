@@ -11,16 +11,16 @@ fixes.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
 `drift-gates`, `drift-verification`, and `decisions-domains`. The app-review
 request is the task; if it is missing, run the two-question intake and wait.
 
 Once substantive context exists, read
-`~/agent-docs/v1/rules/context-profiles.md`,
-`~/agent-docs/v1/rules/orchestrator/dispatch.md`,
-`~/agent-docs/v1/rules/orchestrator/run-docs.md`, and
-`~/agent-docs/v1/plan-lifecycle.md`. This fixed recipe does not load the generic
+`~/.agentdocs/rules/context-profiles.md`,
+`~/.agentdocs/rules/orchestrator/dispatch.md`,
+`~/.agentdocs/rules/orchestrator/run-docs.md`, and
+`~/.agentdocs/plan-lifecycle.md`. This fixed recipe does not load the generic
 classifier by default. Load task-specific architecture, decisions, agent-context
 docs, plans, and source only when the confirmed run configuration or worker
 phase needs them.
@@ -99,7 +99,7 @@ write-capable planning worker when the runtime explicitly supports that role
 writing plans. Do not route plan creation to implementation workers.
 
 Create one tracked plan per coherent workstream, not one plan per small finding.
-Each plan follows `~/agent-docs/v1/plan-template.md` and names mission, done
+Each plan follows `~/.agentdocs/plan-template.md` and names mission, done
 definition, in-scope and out-of-scope finding IDs, approach, likely source/docs,
 parallelism and serialization points, exit gate, owning docs, and open decisions.
 

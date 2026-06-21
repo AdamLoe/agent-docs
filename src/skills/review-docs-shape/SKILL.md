@@ -13,7 +13,7 @@ in a later skill the human invokes. As a broad review this defaults to
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `code_root`, `decisions-domains`, plus
 `change-to-doc` when direction/debt is in scope. This skill runs directly off
 disk and git state with no two-question intake. Honor any dials passed in
@@ -33,8 +33,8 @@ free-floating. Read inline (this is coordination reading, not worker dispatch):
 - Active plans in `docs/plans/` when direction matters — to judge what's coming
   that the docs will need to serve.
 
-Then read `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-`~/agent-docs/v1/rules/orchestrator/dispatch.md` to choose phases and dispatch.
+Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+`~/.agentdocs/rules/orchestrator/dispatch.md` to choose phases and dispatch.
 **If `$ARGUMENTS` is empty, default to the whole `docs/` tree** at `cost-high`;
 do not stop to ask.
 
@@ -48,14 +48,14 @@ strong-model work. Both phases are read-only, so they parallelize freely.
   review: is the material in the right layer (architecture = what IS, decisions =
   why, agent-context = procedure), is each concept owned cleanly, is
   `decisions-domains` coverage complete? Report-only, not a repair pass. Pass
-  `~/agent-docs/v1/rules/subagent/docs-maintenance.md` and
-  `~/agent-docs/v1/rules/authoring-rules.md`, plus the target docs and the
+  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
+  `~/.agentdocs/rules/authoring-rules.md`, plus the target docs and the
   ownership/manifest slots it needs.
 - **Review worker** — broad editorial and product fit through a docs-shape lens:
   coverage and gaps (under- and over-documentation both count), routing and
   fresh-chat fit (trace the path a fresh chat takes to answer a real question),
   altitude and framing, and direction against the active plans. Be opinionated —
-  a hedged editorial is useless. Pass `~/agent-docs/v1/rules/subagent/review.md`
+  a hedged editorial is useless. Pass `~/.agentdocs/rules/subagent/review.md`
   plus the target docs/subtree under review. For a large tree, fan out one review
   worker per doc cluster and synthesize **one** point of view.
 

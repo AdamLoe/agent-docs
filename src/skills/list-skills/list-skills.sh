@@ -12,7 +12,7 @@ if [ "${AGENT_DOCS_SOURCE_ROOT:-}" != "" ]; then
 elif [ -f "$candidate_source_root/registry.md" ]; then
   source_root=$candidate_source_root
 else
-  source_root="${HOME:?HOME is not set}/agent-docs/v1/skills"
+  source_root="${HOME:?HOME is not set}/.agentdocs/skills"
 fi
 
 declare -A seen_source=()
@@ -184,4 +184,4 @@ printf '**Installed adapter freshness**\n'
 adapter_status "Codex" "${HOME:?HOME is not set}/.agents/skills"
 adapter_status "Claude" "${HOME:?HOME is not set}/.claude/skills"
 printf '\n'
-printf 'Source of truth: agent-docs skills live in `~/agent-docs/v1/skills/`; Claude reads copied skills in `~/.claude/skills/` and Codex reads copied skills in `~/.agents/skills/`. Project skills live in the repo `.agents/skills/` or `.claude/skills/` directories.\n'
+printf 'Source of truth: agent-docs skills live in `~/.agentdocs/skills/`; Claude reads copied skills in `~/.claude/skills/` and Codex reads copied skills in `~/.agents/skills/`. Project skills live in the repo `.agents/skills/` or `.claude/skills/` directories.\n'

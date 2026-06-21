@@ -13,7 +13,7 @@ maintenance skill, but you also do not invent a worker for a one-line append.
 
 ## Bootstrap
 
-Read `~/agent-docs/v1/rules/skill-contracts.md` and run the **Standard Intake
+Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`.
 
 This skill is **state-driven**: skip the dial/task intake — it operates on the
@@ -28,13 +28,13 @@ Then read, against the task:
   fix-this-repo),
 - the existing feedback content the user gave (in `$ARGUMENTS` or the chat),
 - the feedback inbox path (below),
-- `~/agent-docs/v1/rules/orchestrator/lifecycle.md` and
-  `~/agent-docs/v1/rules/orchestrator/dispatch.md` to confirm classification:
+- `~/.agentdocs/rules/orchestrator/lifecycle.md` and
+  `~/.agentdocs/rules/orchestrator/dispatch.md` to confirm classification:
   this is pure routing/IO, which runs inline.
 
 ## Routing: feedback vs. repo
 
-- **For:** feedback about the GENERIC kit (`~/agent-docs/v1/...`) — rules,
+- **For:** feedback about the GENERIC kit (`~/.agentdocs/...`) — rules,
   skills, templates, the doc-structure scaffold, the generic guide. Also friction
   signals from real use: an agent confused by a rule, a workflow causing
   unnecessary user frustration, a user reacting badly to kit behavior.
@@ -55,11 +55,11 @@ step under the reads-vs-dispatch test in `orchestrator/lifecycle.md`. Spawn a
 worker only when judgment genuinely needs isolation:
 
 - **Docs-maintenance worker** only if payload validation or the append path needs
-  isolated judgment. Pass `~/agent-docs/v1/rules/subagent/docs-maintenance.md`
-  and `~/agent-docs/v1/rules/authoring-rules.md`.
+  isolated judgment. Pass `~/.agentdocs/rules/subagent/docs-maintenance.md`
+  and `~/.agentdocs/rules/authoring-rules.md`.
 - **Verification worker** only if the append path or schema needs a separate
-  check. Pass `~/agent-docs/v1/rules/subagent/verification.md` and
-  `~/agent-docs/v1/rules/repo-rules.md`.
+  check. Pass `~/.agentdocs/rules/subagent/verification.md` and
+  `~/.agentdocs/rules/repo-rules.md`.
 
 Do not force a reusable `capture.md` rule, and do not invent a one-line worker
 just to satisfy the shape.
