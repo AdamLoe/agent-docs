@@ -44,13 +44,16 @@ scenario rows, and verifier checks agree.
 
 ## Scenario Contract
 
-Workflow scenarios are a report-only behavioral contract (expected questions,
-profiles, phases, mutator count, state-basis fields, final ordering, budget
-expectation per task shape). That matrix is verifier-only data and lives in the
-never-auto-loaded fixture `src/verify-fixtures/workflow-scenarios.json`, not on
-this runtime-loaded file. No skill or runtime context loads that fixture; rerun
-`bash src/verify-agent-docs.sh --context-report` to see the `bounded-quick-fix`
-and other scenario rows.
+Workflow scenarios are a source-bound contract gate (expected profiles, phases,
+mutator count, state-basis fields, final ordering, and budget expectation per
+task shape). The verifier checks that each scenario's `expected_profiles` are
+named in the matching skill body — this GATES (exit nonzero on any violation).
+Scenarios include `bounded-quick-fix`, `medium-brief-plan`, `dirty-tree-shipping`,
+`configured-app-review`, and others. The fixture is verifier-only data and lives
+in the never-auto-loaded `src/verify-fixtures/workflow-scenarios.json`; no skill
+or runtime context loads it. Run `bash src/verify-agent-docs.sh --contract-check`
+to execute the gate, or `bash src/verify-agent-docs.sh --context-report` to see
+the scenario rows.
 
 ## Budget floors
 

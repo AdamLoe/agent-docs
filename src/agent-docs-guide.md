@@ -319,8 +319,12 @@ consuming repo, the scaffold portion uses
 without `--scaffold` checks the shared kit checkout.
 
 Use `~/.agentdocs/verify-agent-docs.sh --context-report` to inspect the
-read-only context-profile contract. Add `--profile <id>` to print one profile's
-exact rule files, conditions, word totals, and report-only budget exceptions.
+context-profile contract. Add `--profile <id>` to print one profile's exact
+rule files, conditions, word totals, and enforced budget. Use
+`--resolve <profile-id>` to print only one profile's paths and capability (what
+a worker loads via the resolver). Use `--measure-launch <skill>` to print a
+skill's honest controlled launch word total. Use `--contract-check` to run the
+source-bound contract gate — exits nonzero on any violation.
 
 ## When not to use agent-docs
 
@@ -365,6 +369,22 @@ index, not mandatory adapter startup.
 
 `docs/` owns app facts. Skills and rules own workflow. Tool adapters own no
 facts.
+
+## Execution-kernel model (orientation only)
+
+Worker context is resolved from `rules/context-profiles.md` — the sole
+authority for what rule files, overlays, mutation capability, and enforced
+budget each worker role carries. Skills name profile IDs; workers resolve them
+via the verifier's `--resolve` mode. Role cards defer to the resolved profile
+and add nothing beyond it. All profiles are enforced; the verifier gates on
+budget and contract violations. For the full contract, see:
+- `~/.agentdocs/rules/context-profiles.md` — profile table and budget floors
+- `~/.agentdocs/verify-agent-docs.sh` — resolver, measure-launch, contract-check modes
+- `docs/architecture/workflow-kit.md` — architecture-level description
+
+Dense runtime rule files keep only the normative contract; worked examples and
+rationale live in never-auto-loaded `*-reference.md` companion leaves.
+Language idioms split into conditional overlays loaded only for matching tasks.
 
 ## Dials and intake
 

@@ -47,7 +47,7 @@ Rules live at the layer that owns them:
   opt-in run docs.
 - **Subagent** (`src/rules/subagent/`) - one role's job card.
 - **Context profiles** (`src/rules/context-profiles.md`) - exact core rule
-  files, conditional overlays, mutation capability, and report-only budgets.
+  files, conditional overlays, mutation capability, and enforced budgets.
 - **Skill body** (`src/skills/<name>/SKILL.md`) - one command's routing surface,
   profile IDs, worker phases, and closeout shape.
 
@@ -121,10 +121,12 @@ implementation, docs-maintenance, or plan-maintenance.
 |---|---|
 | `src/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
 | `src/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
-| `src/verify-agent-docs.sh` | Non-mutating kit drift gate (source-repo default); `--context-report [--profile <id>]` prints profile/scenario reports; `--scaffold <repo-root>` checks a target repo's docs scaffold. |
+| `src/verify-agent-docs.sh` | Kit drift gate; modes: `--context-report`, `--resolve`, `--measure-launch`, `--contract-check` (gating), `--scaffold`. |
 | `src/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `context-profiles.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
 | `src/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
 | `src/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
+| `src/rules/coding-style-{rust,python,frontend}.md` | Language-idiom overlays (never auto-loaded). |
+| `src/verify-fixtures/` | Verifier-only: `workflow-scenarios.json`, `baseline.md`. |
 | `src/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
 | `src/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
 | `src/plan-lifecycle.md`, `src/plan-template.md` | Plan metadata and plan skeleton. |

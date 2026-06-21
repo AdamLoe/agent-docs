@@ -301,19 +301,90 @@ reports short saves output tokens without weakening evidence.
 **Tradeoffs.** Workers spend some input reading source docs directly, but the
 workflow avoids stale generated context and large prior-transcript handoffs.
 
-## Context profiles before usage reports
+## Profiles are the sole worker-context authority
 
-**Decision.** Agent-docs enforces context economy with static layer contracts,
-word-count budgets, a canonical `src/rules/context-profiles.md` owner, and the
-read-only `src/verify-agent-docs.sh --context-report` resolver. Worker reports
-include runtime usage counts only when raw counts are exposed by the runtime or
-explicitly requested.
+**Decision.** `src/rules/context-profiles.md` owns all 11 worker profiles.
+Skills name profile IDs; workers resolve exact context via `--resolve <id>`.
+Role cards add no default rule files beyond the resolved profile. All 11
+profiles are `enforced`; the verifier exits nonzero on budget overrun or
+contract check failure. Usage counts appear in reports only when exposed or
+requested.
 
-**Why.** Deterministic profile reports and scenario rows catch context drift
-without requiring every adapter to expose identical runtime metrics. Optional
-raw counts can inform later review, but they are not default boilerplate.
+**Why.** One authority prevents role cards from silently expanding context.
+Deterministic checks catch drift without adapter-specific runtime metrics.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/rules/authoring-rules.md`](../../src/rules/authoring-rules.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+
+## Enforced budgets with correctness floors (E3)
+
+**Decision.** All budgets are enforced. Three profiles were raised to measured
+floors (planning.tracked 1600, review.docs 1200, maintenance.plan 2100) after
+full relocation with zero correctness loss. Launch budgets: fixed-skill 2000,
+classifier 3300. No budget may be raised without a documented correctness reason.
+
+**Why.** Deleting rules to hit a number is worse than an honest floor.
+Enforcement makes over-budget a hard gate failure.
+
+**Code anchors.** `src/rules/context-profiles.md → Budget floors`, `Launch budgets`; `src/verify-agent-docs.sh → fixed_budget`, `classifier_budget`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+
+## Reference-leaf relocation pattern
+
+**Decision.** Each dense runtime rule keeps only the normative contract.
+Examples and rationale relocate to never-auto-loaded `*-reference.md` companion
+leaves. Language idioms split into conditional overlays
+(`coding-style-{rust,python,frontend}.md`). Both add zero launch cost.
+
+**Why.** Relocating explanations compresses rules to correctness floors without
+losing rationale.
+
+**Code anchors.** `src/rules/*-reference.md`; `src/rules/orchestrator/*-reference.md`; `src/rules/coding-style-{rust,python,frontend}.md`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), `src/rules/*.md`, `src/rules/orchestrator/`.
+
+## Thin-recipe skills and classifier allowlist
+
+**Decision.** A skill body owns only profile IDs, phase order, unique gates,
+escalation, and result shape — nothing copied from shared contracts. Fixed
+skills must not load `orchestrator/lifecycle.md`. Only `orchestrate`,
+`fresh-chat`, and `start-session` classify. `--contract-check` gates on all.
+
+**Why.** Re-embedding shared prose creates a second policy surface that drifts.
+
+**Code anchors.** `src/rules/skill-contracts.md → Skill Recipe`, `src/verify-agent-docs.sh → contract_check`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/skill-contracts.md`](../../src/rules/skill-contracts.md), [`../../src/skills/`](../../src/skills/).
+
+## plan_closeout grant for implementation.tracked
+
+**Decision.** `implementation.tracked` may close only the selected plan when
+dispatch grants `plan_closeout`. Review and verification are read-only. The
+grant must be consistent across `context-profiles.md`, `subagent/implementation.md`,
+and `orchestrator/dispatch.md`.
+
+**Why.** An explicit grant keeps mutation authority traceable; implicit closeout
+risks closing the wrong plan.
+
+**Code anchors.** `src/rules/context-profiles.md → implementation.tracked`; `src/rules/subagent/implementation.md → plan_closeout`; `src/rules/orchestrator/dispatch.md → plan_closeout`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/rules/subagent/implementation.md`](../../src/rules/subagent/implementation.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md).
+
+## Source-bound contract-check gate
+
+**Decision.** `--contract-check` runs nine source-bound checks — launch
+budgets, lifecycle loading, subagent bundles, role authority, plan_closeout
+consistency, review-app pre-audit, scenario source-binding, report fields,
+and final-ordering. Exits nonzero on any violation; `PASS` never prints while
+a violation exists. `src/verify-fixtures/workflow-scenarios.json` is
+verifier-only.
+
+**Why.** Phrase-checking a self-authored table proves only self-consistency.
+Source-bound checks prove the contract against authoritative files.
+
+**Code anchors.** `src/verify-agent-docs.sh → contract_check`; `src/verify-fixtures/workflow-scenarios.json`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh), [`../../src/verify-fixtures/`](../../src/verify-fixtures/).
 
 ## Final-state shipping order
 

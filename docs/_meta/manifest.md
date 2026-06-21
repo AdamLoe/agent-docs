@@ -16,8 +16,12 @@ code_root: src/
 | Repository layout inventory | docs/repository-layout.md |
 | ChatGPT context export utility | docs/repository-layout.md, src/export-chatgpt-context.sh |
 | Drift gates, budget checks, context reports, and agent-readiness verifier | docs/_meta/manifest.md, src/verify-agent-docs.sh |
+| Verifier modes: --resolve, --measure-launch, --contract-check | src/verify-agent-docs.sh, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
+| Verifier-only fixtures (scenario contract, launch baseline) | src/verify-fixtures/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |
 | Docs scaffold template and consuming-repo scaffold checks | src/template/docs/, src/verify-agent-docs.sh, src/skills/rebuild-agent-docs/SKILL.md, src/skills/doctor/SKILL.md, src/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Doc-authoring rules and adapter-file policy | src/rules/authoring-rules.md |
+| Reference leaves for runtime rule files | src/rules/authoring-rules-reference.md, src/rules/skill-contracts-reference.md, src/rules/context-profiles-reference.md, src/rules/repo-rules-reference.md, src/rules/orchestrator/lifecycle-reference.md, src/rules/orchestrator/dispatch-reference.md, docs/architecture/workflow-kit.md |
+| Conditional language-idiom overlays | src/rules/coding-style-rust.md, src/rules/coding-style-python.md, src/rules/coding-style-frontend.md, src/rules/context-profiles.md, docs/architecture/workflow-kit.md |
 | Orchestrator workflow control, dispatch, run docs, and dials | src/rules/orchestrator/, src/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Subagent worker-role rules | src/rules/subagent/, docs/architecture/workflow-kit.md |
 | Plan lifecycle and plan skeleton | src/plan-lifecycle.md, src/plan-template.md |
@@ -55,11 +59,14 @@ bash install-agentdocs-local.sh
 [ -d ~/.agents/skills/fresh-chat ]
 ```
 
-Context profile reports are read-only and deterministic:
+Context profile reports, resolver, and contract-check gate are read-only and deterministic:
 
 ```sh
 bash src/verify-agent-docs.sh --context-report
 bash src/verify-agent-docs.sh --context-report --profile implementation.code
+bash src/verify-agent-docs.sh --resolve implementation.tracked
+bash src/verify-agent-docs.sh --measure-launch quick-fix
+bash src/verify-agent-docs.sh --contract-check
 ```
 
 ## decisions-domains

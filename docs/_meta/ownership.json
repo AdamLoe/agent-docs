@@ -53,7 +53,27 @@
     {
       "surface": "context-profiles",
       "paths": ["src/rules/context-profiles.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
-      "owns": ["context profile owner contract", "scenario contract", "context report resolver"]
+      "owns": ["context profile owner contract", "profile enforcement authority", "enforced budgets and correctness floors", "context report resolver", "launch budget floors"]
+    },
+    {
+      "surface": "verifier-fixtures",
+      "paths": ["src/verify-fixtures/workflow-scenarios.json", "src/verify-fixtures/baseline.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md"],
+      "owns": ["source-bound scenario contract gate", "frozen launch baseline", "verifier fixture data"]
+    },
+    {
+      "surface": "reference-leaves",
+      "paths": ["src/rules/authoring-rules-reference.md", "src/rules/skill-contracts-reference.md", "src/rules/context-profiles-reference.md", "src/rules/repo-rules-reference.md", "src/rules/orchestrator/lifecycle-reference.md", "src/rules/orchestrator/dispatch-reference.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["never-auto-loaded rule examples and rationale", "reference-leaf relocation pattern"]
+    },
+    {
+      "surface": "language-overlays",
+      "paths": ["src/rules/coding-style-rust.md", "src/rules/coding-style-python.md", "src/rules/coding-style-frontend.md", "src/rules/context-profiles.md", "docs/architecture/workflow-kit.md"],
+      "owns": ["conditional language-idiom overlays", "Rust coding idioms", "Python coding idioms", "frontend/TS coding idioms"]
+    },
+    {
+      "surface": "verifier-modes",
+      "paths": ["src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md", "docs/_meta/manifest.md"],
+      "owns": ["--resolve profile mode", "--measure-launch honest skill total mode", "--contract-check source-bound gate mode"]
     },
     {
       "surface": "runtime-usage-reporting",
