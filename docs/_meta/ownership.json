@@ -2,13 +2,13 @@
   "owners": [
     {
       "surface": "install-and-relocation",
-      "paths": ["README.md", "docs/architecture/install-and-adapters.md", "src/install.sh"],
-      "owns": ["canonical self-reference path", "three-layer install model", "layout and versioning"]
+      "paths": ["README.md", "docs/architecture/install-and-adapters.md", "install-agentdocs-local.sh", "src/install-agentdocs.sh"],
+      "owns": ["runtime path", "source/runtime split", "install and update model"]
     },
     {
       "surface": "tool-adapters",
-      "paths": ["docs/architecture/install-and-adapters.md", "src/copy-skills.sh"],
-      "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "skill copy refresh"]
+      "paths": ["docs/architecture/install-and-adapters.md", "install-agentdocs-local.sh", "src/install-agentdocs.sh"],
+      "owns": ["Claude skill discovery", "Codex skill discovery", "cross-tool contract", "managed skill refresh"]
     },
     {
       "surface": "auto-loaded-router-files",

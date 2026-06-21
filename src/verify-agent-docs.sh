@@ -701,6 +701,20 @@ case "${1:-}" in
     ;;
 esac
 
+# The default mode is the agent-docs SOURCE-repo self-consistency gate: manifest
+# rows, ownership, skill registry, context profiles, and budgets all resolve
+# relative to this checkout. The script also ships inside the runtime bundle as
+# ~/.agentdocs/verify-agent-docs.sh, where those source surfaces do not exist.
+# When run outside the source repo, degrade gracefully and point at the runtime
+# mode (--scaffold) instead of failing on missing source files.
+if [ ! -f "$repo_root/src/skills/registry.md" ] ||
+   ! grep -Eq '^repo_name:[[:space:]]*agent-docs[[:space:]]*$' \
+     "$repo_root/docs/_meta/manifest.md" 2>/dev/null; then
+  printf 'not the agent-docs source repo; source self-consistency checks are skipped.\n'
+  printf 'use --scaffold <repo-root> to validate a consuming repo, or run this gate from the agent-docs checkout.\n'
+  exit 0
+fi
+
 section "kit repository checks"
 
 manifest="$repo_root/docs/_meta/manifest.md"
@@ -1060,6 +1074,8 @@ allow_retired_reference() {
   case "$label|$relative_file|$line_text" in
     'new-project-prompt|src/agent-docs-guide.md|`v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the') return 0 ;;
     'fresh-planning-chat|docs/decisions/agent-docs.md|`v1/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.') return 0 ;;
+    'new-project-prompt|docs/plans/orchestrator/runtime-install-model/streams/ws1-rename.md|  and the allowlisted `v1/new-project-prompt.md` retired-name mention.') return 0 ;;
+    'new-project-prompt|docs/plans/orchestrator/runtime-install-model/streams/ws1-rename.md|- `allow_retired_reference` allowlist in verifier: `v1/new-project-prompt.md`') return 0 ;;
   esac
 
   return 1
@@ -1107,13 +1123,58 @@ reject_policy_match 'fix-enabled|fix enabled' "fix-enabled review/verification p
 [ ! -e "$repo_root/src/.claude-plugin" ] ||
   fail "retired Claude plugin path exists: src/.claude-plugin"
 
-for script_path in src/install.sh src/copy-skills.sh src/export-chatgpt-context.sh src/verify-agent-docs.sh; do
+for script_path in \
+  install-agentdocs-local.sh \
+  src/install-agentdocs.sh \
+  src/export-chatgpt-context.sh \
+  src/verify-agent-docs.sh; do
   require_executable "$script_path"
   require_git_executable_mode "$script_path"
 done
 
+# Adapter freshness: copied managed skills in each tool destination must match
+# the installed runtime skills under ~/.agentdocs/skills/. The installers own
+# the copy; this gate only observes that installed copies are not stale. It is
+# skipped when the runtime is not installed (e.g. a fresh checkout in CI).
 section "local adapter freshness checks"
-bash "$repo_root/src/copy-skills.sh" --check "$repo_root" ||
-  fail "copied skill adapters are stale"
+check_adapter_freshness() {
+  local skills_root="${HOME:?HOME is not set}/.agentdocs/skills"
+  local marker=".agent-docs-managed"
+  local dest_root skill_dir skill_name dest existing name
+
+  if [ ! -d "$skills_root" ]; then
+    printf 'runtime skills not installed (%s); skipping adapter freshness\n' \
+      "$skills_root"
+    return 0
+  fi
+
+  for dest_root in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
+    [ ! -L "$dest_root" ] ||
+      fail "$dest_root is a symlink; refusing to check a tool-owned skill root"
+    [ -d "$dest_root" ] || fail "missing skill destination: $dest_root"
+
+    for existing in "$dest_root"/*; do
+      { [ -e "$existing" ] || [ -L "$existing" ]; } || continue
+      name=$(basename "$existing")
+      if [ -e "$existing/$marker" ] && [ ! -d "$skills_root/$name" ]; then
+        fail "$existing is managed by agent-docs but no matching runtime skill exists"
+      fi
+    done
+
+    for skill_dir in "$skills_root"/*/; do
+      [ -d "$skill_dir" ] || continue
+      skill_name=$(basename "$skill_dir")
+      dest="$dest_root/$skill_name"
+
+      [ -d "$dest" ] || fail "missing copied skill: $dest"
+      [ -e "$dest/$marker" ] || fail "$dest exists but is not managed by agent-docs"
+      diff -qr --exclude="$marker" "$skill_dir" "$dest" >/dev/null ||
+        fail "$dest is stale; run install-agentdocs-local.sh"
+    done
+
+    printf 'agent-docs skills are fresh in %s\n' "$dest_root"
+  done
+}
+check_adapter_freshness
 
 printf 'ALL AGENT-DOCS GATES PASS\n'

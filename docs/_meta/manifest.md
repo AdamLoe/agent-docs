@@ -8,8 +8,8 @@ code_root: src/
 
 | Changed surface | Owning doc |
 |---|---|
-| Install, relocation, canonical self-reference path | README.md, docs/architecture/install-and-adapters.md, src/install.sh |
-| Per-tool adapters, skill discovery, cross-tool contract, skill copy refresh | docs/architecture/install-and-adapters.md, src/copy-skills.sh |
+| Install, update, runtime path, and source/runtime split | README.md, docs/architecture/install-and-adapters.md, install-agentdocs-local.sh, src/install-agentdocs.sh |
+| Per-tool adapters, skill discovery, cross-tool contract, managed skill refresh | docs/architecture/install-and-adapters.md, install-agentdocs-local.sh, src/install-agentdocs.sh |
 | Router-only auto-loaded files | AGENTS.md, CLAUDE.md, README.md, docs/architecture/install-and-adapters.md |
 | Workflow lifecycle, adopting or repairing agent-docs | docs/architecture/workflow-kit.md, src/agent-docs-guide.md |
 | Skill registry, command bodies, and shared skill contracts | src/skills/, src/skills/registry.md, src/rules/skill-contracts.md, docs/architecture/workflow-kit.md |
@@ -36,25 +36,30 @@ bash src/verify-agent-docs.sh
 
 ## drift-verification
 
-The verifier above is the default non-mutating gate for this repo. Installer
-resolution checks are deliberate manual checks because they mutate `$HOME`:
+The verifier above is the default non-mutating gate for this repo. The two
+installers preview their planned actions without mutating `$HOME`:
 
 ```sh
-bash v1/install.sh
-bash v1/copy-skills.sh
-bash v1/copy-skills.sh --check
-readlink -e ~/agent-docs/v1/rules/authoring-rules.md
-readlink -e ~/.claude/skills/fresh-chat/SKILL.md
-readlink -e ~/.claude/skills/plan/SKILL.md
-readlink -e ~/.agents/skills/fresh-chat/SKILL.md
-readlink -e ~/.agents/skills/plan/SKILL.md
+bash install-agentdocs-local.sh --dry-run
+bash src/install-agentdocs.sh --dry-run
+```
+
+Live install mutates `$HOME`; run it deliberately, then confirm the runtime
+bundle and copied adapters resolved under `~/.agentdocs/`:
+
+```sh
+bash install-agentdocs-local.sh
+[ -f ~/.agentdocs/rules/authoring-rules.md ]
+[ -f ~/.agentdocs/skills/fresh-chat/SKILL.md ]
+[ -d ~/.claude/skills/fresh-chat ]
+[ -d ~/.agents/skills/fresh-chat ]
 ```
 
 Context profile reports are read-only and deterministic:
 
 ```sh
-bash v1/verify-agent-docs.sh --context-report
-bash v1/verify-agent-docs.sh --context-report --profile implementation.code
+bash src/verify-agent-docs.sh --context-report
+bash src/verify-agent-docs.sh --context-report --profile implementation.code
 ```
 
 ## decisions-domains
