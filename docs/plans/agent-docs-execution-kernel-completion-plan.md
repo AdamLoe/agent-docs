@@ -1,8 +1,8 @@
 ---
-status: active
+status: shipped
 owner: implementation
 last_updated: 2026-06-21
-okay_to_delete: false
+okay_to_delete: true
 long_lived: false
 owning_docs:
   - architecture/workflow-kit.md
@@ -312,6 +312,32 @@ Manual canaries, once in Claude Code and once in Codex:
    selected plan; final gate follows plan/docs closeout.
 4. Resume after an overlapping commit: stale worker context is rejected until a
    delta reread or fresh worker occurs.
+
+## Closeout / migration notes
+
+Durable facts migrated (Wave 6a, commit 24e3dae): execution-kernel model + serial-mutation +
+read-only review/verification contracts → `docs/architecture/workflow-kit.md`; all active
+decisions → `docs/decisions/agent-docs.md`; resolver/fixtures/skill-registry slots →
+`docs/_meta/manifest.md` + `docs/_meta/ownership.json`; model summary → `src/agent-docs-guide.md`.
+
+E3 budget-floor reconciliation: aspirational launch/profile targets from Wave 0 could not be
+met without cutting irreducible normative contract. Floors accepted: `planning.tracked` 1600
+(was ≤1300), `review.docs` 1200 (was ≤1000), `maintenance.plan` 2100 (was ≤1800), fixed
+launch 2000 (was ≤1200), classifier launch 3300 (was ≤2000). All 11 profiles enforced and
+within reconciled budgets.
+
+Exit-gate status:
+- All 11 profiles enforced + within budget → MET.
+- Only classifier allowlist loads lifecycle → MET (contract-check 2).
+- Role cards non-expanding; review/verification read-only; plan_closeout consistent; final-gate-after-last-mutation; report fields with invalidation → MET (contract-checks 4/5/6/8).
+- Source/registry/Claude-copy/Codex-copy parity → MET (scaffold/copy checks pass).
+- Fixed launch ≤1200 / classifier ≤2000 → E3-floor (fixed 2000 / classifier 3300; accepted limitation).
+- Skill-copy refresh via `install-agentdocs-local.sh` → pending-USER (requires explicit permission per repo-rules).
+- Manual canaries in Claude Code + Codex → pending-USER (cannot be performed by agent).
+
+Pending-USER items: (1) run `bash install-agentdocs-local.sh` to refresh skill copies;
+(2) manual canaries once in Claude Code and once in Codex: bounded quick-fix, review-app
+with config, ship-plans named closeout, resume-after-overlapping-commit.
 
 ## Discipline rules
 

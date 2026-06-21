@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         orchestrator
 last_updated:  2026-06-21
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -53,7 +53,7 @@ context-report directly — Wave 0 measures them.
 | 5a | Source-bound checks + launch budgets (report-only) | done | --contract-check added; checks 2–8 CLEAN; only 7 fixed-skill launch overruns, mostly a measure-launch over-count (counts path strings in prohibition/Reference lines) | c0c5e3f |
 | 5b | Honest measure-launch + floor budgets + flip enforcement | done | measure-launch honest; launch budgets floored (fixed 2000/classifier 3300); ALL 11 profiles ENFORCED + in budget; profile/launch/contract checks GATE; gate green + bites (orch-verified) | f4c0b8c |
 | 6a | Durable migration (architecture/decisions/manifest/ownership/guide) | done | model migrated to workflow-kit + decisions + manifest + ownership + guide; stale scenario prose fixed; gate+contract-check green | 24e3dae |
-| 6b | Ship plan + hub; final gate | pending | — | — |
+| 6b | Ship plan + hub; final gate | done | plan+hub: status=shipped, okay_to_delete=true; exit gate 0/0 violations; pending-USER: installer refresh + manual canaries | (this commit) |
 
 Editing serial on the shared tree. Review where risk warrants (verifier rewrite,
 budget compression). Final gate after the last mutation.
@@ -69,6 +69,16 @@ budget compression). Final gate after the last mutation.
 ## Streams
 
 - `streams/` (one note per wave, worker-written)
+
+## Closeout
+
+Wave 6b complete. Durable facts migrated to: `docs/architecture/workflow-kit.md`,
+`docs/decisions/agent-docs.md`, `docs/_meta/manifest.md`, `docs/_meta/ownership.json`,
+`src/agent-docs-guide.md`. All 11 profiles enforced + in budget; launch budgets
+reconciled to E3 floors (fixed 2000 / classifier 3300); gate green, 0 contract
+violations. Pending-USER: run `bash install-agentdocs-local.sh` to refresh skill
+copies, then run manual Claude Code + Codex canaries (quick-fix, review-app,
+ship-plans, resume-invalidated) per plan exit-gate section.
 
 ## Open questions / blockers
 
