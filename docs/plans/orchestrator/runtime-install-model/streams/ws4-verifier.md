@@ -48,3 +48,25 @@ Other edits:
 
 Gates: `bash src/verify-agent-docs.sh` = 0 (ALL GATES PASS); guard graceful-skip
 exit 0 outside source repo; dangling-ref grep = no matches.
+
+## Verifier hardening
+
+Changed: in `reject_unapproved_retired_name`, added a path-skip before the
+inner grep loop — any `$relative_file` starting with `docs/plans/orchestrator/`
+is skipped with `continue`. The `candidate_files()` function and the
+`.agent-docs/(current|src)` stale-path reject are untouched.
+
+Allowlist entries removed from `allow_retired_reference` (run-doc files only,
+no longer needed since the whole `docs/plans/orchestrator/**` subtree is now
+excluded from the sweep):
+- `new-project-prompt|docs/plans/orchestrator/runtime-install-model/streams/ws1-rename.md` (two entries)
+- `new-project-prompt|docs/plans/orchestrator/runtime-install-model/hub.md` (one entry)
+
+Kept: the `src/agent-docs-guide.md` entry and the `docs/decisions/agent-docs.md`
+fresh-planning-chat entry — both are real production docs.
+
+Gate result: `bash src/verify-agent-docs.sh` → exit 0, `ALL AGENT-DOCS GATES
+PASS`. Previously-failing `ws5-docs.md:25` (`new-project-prompt` mention in
+run-doc prose) no longer triggers. Non-run-doc detection confirmed intact: skip
+is path-scoped to `docs/plans/orchestrator/` only; `src/` and
+`docs/decisions/` still run through the full check plus per-line allowlist.
