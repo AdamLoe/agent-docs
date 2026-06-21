@@ -134,31 +134,11 @@ Reference leaves (NEVER auto-loaded — pointer only in the parent):
 file's pointer; none is a profile `core_rule_paths` entry; launch loop counts
 none. Confirmed never-auto-loaded.
 
-## Correctness floors (what blocks going lower)
+## Correctness floors
 
-- **skill-contracts ~630.** Relocated: intake "why cache-first", branch examples,
-  dial migration/rationale, model-policy rationale, owner-pointer prose. KEPT
-  (normative startup contract a worker needs at decision time): the 4-step intake
-  order + the stop rule, the two intake branches, both dials + resolution + the
-  two gate-checked dial-vocab needles, model-policy roles + escalation triggers,
-  human-stops, verification-fallback, owner pointers. These are rules, not
-  examples; 250 would require deleting contract.
-- **dispatch ~810.** Relocated: the Standard Preamble checklist (orchestrator
-  bakes it into prompts — not a decision-time dispatch rule), all rationale, and
-  packet-field "why". KEPT (explicit preserve-list): the dispatch-packet field
-  block verbatim (the machine the orchestrator fills), context-profile use, the
-  full Worker Reports field list incl. invalidation conditions, mutation
-  authority + `plan_closeout` grant, resume rule, dispatch-failure stop,
-  commit-concurrency / serial-editing rule. 300 would require deleting field
-  lists.
-- **context-profiles ~530.** Almost nothing is relocatable: the Profiles table
-  alone is 285 words of machine-checked contract (verifier parses 11 rows,
-  validates mutation/budget/status), plus the Owner Contract field list and the
-  untouched Scenario-fixture pointer (`bounded-quick-fix` needle). Only the
-  budget-exception / enforcement / scenario rationale moved to the leaf. Net +21
-  vs. baseline because the pointer + two load-bearing parentheticals
-  (review/verification read-only, enforcement_status gating) were added; 350 is
-  unreachable without deleting the table or the field-list contract.
+- **skill-contracts ~630:** relocated rationale/examples; KEPT 4-step intake, both dials + gate-checked needles, model-policy, human-stops, owner pointers. 250 would delete contract.
+- **dispatch ~810:** relocated preamble checklist + rationale; KEPT packet fields verbatim, mutation authority, invalidation conditions, commit-concurrency rule. 300 would delete field lists.
+- **context-profiles ~530:** table alone is 285 w machine-checked contract; only rationale relocated. Net +21 vs baseline; 350 unreachable without deleting table.
 
 ## Launch totals (both drop by the combined −291)
 
@@ -174,9 +154,16 @@ none. Confirmed never-auto-loaded.
   → exit 0 (still report-only over-budget on profile core files owned by other
   workers; untouched here — no `budget_words` / `enforcement_status` changed).
 
-## Verdict
+## Verdict + Wave 3 continued
 
-Like the lifecycle pilot, these are contract-dense launch drivers whose floors
-(~630 / ~810 / ~530) sit above target. The combined −291 is the honest relocation
-ceiling; the budget-reconciliation step should raise these per-file budgets to
-their floors rather than cut correctness.
+Contract-dense; −291 is the relocation ceiling; raise budgets to floors.
+
+Profile-driver rules (profile words before→after): authoring 1428→793, repo-rules
+755→429, coding-style 608→353 (Rust/Python/frontend idioms split into conditional
+overlays `coding-style-rust.md`, `-python.md`, `-frontend.md` in implementation
+profiles), plan-lifecycle 653→427, plan-template 244→223. Reference leaves:
+`authoring-rules-reference.md`, `repo-rules-reference.md`, `plan-lifecycle-reference.md`.
+Profile resolved-words: implementation.code 1859→1278, .code-docs 3287→2071,
+.tracked 3940→2498, maintenance.docs 2532→1571, maintenance.plan 3203→2016,
+review.docs 1783→1148, planning.tracked 2115→1542. Gate: exit 0,
+ALL AGENT-DOCS GATES PASS + CONTEXT REPORT PASS.
