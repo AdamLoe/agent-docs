@@ -51,7 +51,7 @@ Most requests are a handoff, not a dispatch. Match the request to its owning
 orchestrator skill and tell the user which to invoke (or invoke it): a bounded
 fix → `/quick-fix`; planning, briefs, or discussion → `/plan`; a multi-phase
 change request → `/orchestrate`; a docs drift/house-rules check → `/check-docs`;
-or another owning skill from `v1/skills/registry.md`. Do not become the
+or another owning skill from `~/.agentdocs/skills/registry.md`. Do not become the
 implementer, planner, or reviewer yourself.
 
 Dispatch one **context-reading worker** only when the request is a broad,

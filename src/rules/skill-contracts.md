@@ -1,7 +1,7 @@
 # Skill contracts (agent-docs v1)
 
 GENERIC. App-independent. This is the short startup contract read by every
-`v1/skills/*/SKILL.md`. Keep only fixed startup behavior and adapter-neutral
+`~/.agentdocs/skills/*/SKILL.md`. Keep only fixed startup behavior and adapter-neutral
 defaults here. Deeper orchestration, mode, shipping, and registry policy lives
 in the owner docs linked below; do not copy those sections back into this file or
 individual skill bodies.
@@ -34,7 +34,7 @@ Then branch:
   capture skill may ask for missing payload content, but not for generic
   task/dial intake.
 
-Use the skill body or `v1/skills/registry.md` Intake column to identify
+Use the skill body or `~/.agentdocs/skills/registry.md` Intake column to identify
 `asks` vs. `no-prompt`. Query `docs/_meta/ownership.json` only for ownership
 questions; do not bulk-load it. Treat `docs/overview.md` as a normal
 task-routed doc from `docs/index.md`: read it for system-shape orientation,
@@ -95,7 +95,7 @@ Use role-based names so adapters can map them locally: `cheap`, `mid-tier`,
   workers freely; `review-high`/`review-max` adds stronger independent review
   where useful.
 
-A skill's launch tier is recorded in `v1/skills/registry.md` as `cheap`, `mid`,
+A skill's launch tier is recorded in `~/.agentdocs/skills/registry.md` as `cheap`, `mid`,
 `strong`, or `strongest`; `mid` maps to the `mid-tier` role above. Dispatched
 workers follow the role mapping above regardless of launch tier.
 

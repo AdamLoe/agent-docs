@@ -71,7 +71,7 @@ read this first.
    frequently-routed files small, then route to the exact owner for the task.
 
    **Cache-stable layer:** router-only `AGENTS.md`/`CLAUDE.md`, the stable
-   runtime card in `v1/rules/skill-contracts.md`, manifest startup slots,
+   runtime card in `~/.agentdocs/rules/skill-contracts.md`, manifest startup slots,
    `docs/index.md`, subtree indexes, and worker role cards. `docs/overview.md`
    is stable orientation, but still task-routed unless a skill names it.
 
@@ -81,7 +81,7 @@ read this first.
    use `docs/repository-layout.md` only to locate files.
 
    **Never-auto-loaded layer:** architecture leaves, decisions, plans, run docs,
-   `v1/agent-docs-guide.md`, full ownership JSON, repository layout, source
+   `~/.agentdocs/agent-docs-guide.md`, full ownership JSON, repository layout, source
    files, verifier output, and narrative pitch material.
 
    **Documentation class budgets:** routers and subtree indexes `<=250` words;

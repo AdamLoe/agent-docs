@@ -1,17 +1,17 @@
 # Orchestrating in agent-docs
 
 This repo follows the generic orchestrator rules under
-[`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/) and the worker
-rules under [`../../v1/rules/subagent/`](../../v1/rules/subagent/).
+[`../../src/rules/orchestrator/`](../../src/rules/orchestrator/) and the worker
+rules under [`../../src/rules/subagent/`](../../src/rules/subagent/).
 
 ## Repo-local notes
 
 - There are no scarce runtime resources.
 - The main collision risk is documentation surface overlap: keep root
-  `README.md`, `docs/architecture/*`, `docs/decisions/*`, and `v1/skills/*`
+  `README.md`, `docs/architecture/*`, `docs/decisions/*`, and `src/skills/*`
   ownership explicit before parallel edits, and run editing workers serially per
   the commit-concurrency rule in
-  [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md).
+  [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md).
 - Do not push unless the user explicitly asks.
 
 ## See also

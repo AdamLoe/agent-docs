@@ -1,9 +1,9 @@
 # agent-docs skill registry
 
-This is the shared inventory for `v1/skills/*/SKILL.md`. It keeps workflow facts
+This is the shared inventory for `~/.agentdocs/skills/*/SKILL.md`. It keeps workflow facts
 out of individual skills when they apply to the suite as a whole. Every skill is
-an orchestrator entry point; see `v1/rules/skill-contracts.md`,
-`v1/rules/context-profiles.md`, and `v1/rules/orchestrator/`.
+an orchestrator entry point; see `~/.agentdocs/rules/skill-contracts.md`,
+`~/.agentdocs/rules/context-profiles.md`, and `~/.agentdocs/rules/orchestrator/`.
 
 **Worker roles** names the subagent roles a skill normally dispatches
 (`planning`, `implementation`, `review`, `docs-maintenance`, `plan-maintenance`,
@@ -14,9 +14,9 @@ top-level commit. **Intake**: `asks` skills run the two-question intake when
 launched without context; `no-prompt` skills operate on existing disk/git state
 and run directly (honoring any dials passed in). **Launch tier** is the
 recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
-`strongest`. All are defined in `v1/rules/skill-contracts.md`.
+`strongest`. All are defined in `~/.agentdocs/rules/skill-contracts.md`.
 Context profile IDs and mutation capability are defined only in
-`v1/rules/context-profiles.md`; registry rows remain inventory metadata.
+`~/.agentdocs/rules/context-profiles.md`; registry rows remain inventory metadata.
 
 ## Start and plan
 
@@ -54,6 +54,6 @@ Context profile IDs and mutation capability are defined only in
 | `list-skills` | report-only | list source skills and adapter freshness | none (inline); optional verification | no | no-prompt | mid | optional filter |
 | `feedback-agent-docs` | capture | record kit feedback into the upstream inbox | none (inline); optional docs-maintenance | no (writes the gitignored kit inbox) | no-prompt | mid | optional feedback content |
 
-Suite-wide policy lives in `v1/rules/skill-contracts.md`; orchestrator policy in
-`v1/rules/orchestrator/`; worker-role rules in `v1/rules/subagent/`; repo/git
-policy in `v1/rules/repo-rules.md`.
+Suite-wide policy lives in `~/.agentdocs/rules/skill-contracts.md`; orchestrator policy in
+`~/.agentdocs/rules/orchestrator/`; worker-role rules in `~/.agentdocs/rules/subagent/`; repo/git
+policy in `~/.agentdocs/rules/repo-rules.md`.

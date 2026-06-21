@@ -41,8 +41,8 @@ Skills and dispatches name profile IDs instead of copying profile tables.
 Use:
 
 ```sh
-bash v1/verify-agent-docs.sh --context-report
-bash v1/verify-agent-docs.sh --context-report --profile implementation.code
+bash ~/.agentdocs/verify-agent-docs.sh --context-report
+bash ~/.agentdocs/verify-agent-docs.sh --context-report --profile implementation.code
 ```
 
 to print exact files, conditions, word totals, and budget exceptions. Task-owned

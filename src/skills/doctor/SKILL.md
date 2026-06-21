@@ -19,8 +19,8 @@ intake questions and does not stop to ask for a task. It still honors dials
 passed in `$ARGUMENTS`.
 
 Then read, inline, the coordination state this check validates:
-`docs/_meta/manifest.md`, `docs/_meta/ownership.json`, `v1/skills/registry.md`,
-`v1/rules/skill-contracts.md`, and the static gate commands recorded in the
+`docs/_meta/manifest.md`, `docs/_meta/ownership.json`, `~/.agentdocs/skills/registry.md`,
+`~/.agentdocs/rules/skill-contracts.md`, and the static gate commands recorded in the
 manifest `drift-gates` slot. To classify and dispatch, read
 `~/.agentdocs/rules/orchestrator/lifecycle.md` and
 `~/.agentdocs/rules/orchestrator/dispatch.md`.
@@ -39,11 +39,11 @@ The verification worker confirms:
   `_meta/manifest.md` and `_meta/ownership.json`.
 - Ownership data is parseable JSON and every owner path points at an existing
   file or directory.
-- Every `v1/skills/*/SKILL.md` frontmatter `name:` matches its directory and has
-  a row in `v1/skills/registry.md`.
+- Every `~/.agentdocs/skills/*/SKILL.md` frontmatter `name:` matches its directory and has
+  a row in `~/.agentdocs/skills/registry.md`.
 - No stale live references remain to retired entry points or prose ownership
   guides.
-- The manifest `drift-gates` pass. `v1/verify-agent-docs.sh` with no arguments
+- The manifest `drift-gates` pass. `~/.agentdocs/verify-agent-docs.sh` with no arguments
   is the standard static gate for this kit; consuming-repo scaffold validation
   uses `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`. Failures
   name the exact gate.
@@ -58,7 +58,7 @@ invocation; the two fix workers run only when the user asks to repair failures.
   bundle: `~/.agentdocs/rules/subagent/verification.md`,
   `~/.agentdocs/rules/repo-rules.md`. It runs the scaffold, manifest,
   registry, and stale-reference checks above. In this kit repo, that typically
-  means `v1/verify-agent-docs.sh` plus the manifest `drift-gates`; in a
+  means `~/.agentdocs/verify-agent-docs.sh` plus the manifest `drift-gates`; in a
   consuming repo, the scaffold portion is
   `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>` plus the target
   manifest `drift-gates`. It reports each failure with the exact file, path, or

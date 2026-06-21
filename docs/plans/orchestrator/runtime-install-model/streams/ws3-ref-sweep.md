@@ -56,3 +56,62 @@ Only the two excluded migration docs as expected:
 - `docs/plans/agentdocs-runtime-install-model.md` (the plan specifying before→after)
 
 No other residual refs remain in this repo or any sibling repo.
+
+## Bare-v1 cleanup (phase 6b)
+
+Earlier sweeps converted the explicit `~/agent-docs/v1/...` runtime form but
+missed bare `v1/...` source-path refs. This phase fixed those in the owned set,
+applying the source-vs-runtime split (`docs/**` kit links → `src/...`; `src/`
+runtime bodies → `~/.agentdocs/...`), prioritizing in-file consistency.
+
+### Files touched (13) + refs fixed (29 total)
+
+- `src/rules/skill-contracts.md` — 3 refs → `~/.agentdocs/...` (runtime body)
+- `src/rules/authoring-rules.md` — 2 refs → `~/.agentdocs/...` (runtime body)
+- `src/rules/orchestrator/dispatch.md` — 2 refs (`--context-report` command) → `~/.agentdocs/verify-agent-docs.sh`
+- `src/skills/registry.md` — 8 refs → `~/.agentdocs/...` (runtime body)
+- `src/skills/fresh-chat/SKILL.md` — 1 ref → `~/.agentdocs/skills/registry.md`
+- `src/skills/feedback-agent-docs/SKILL.md` — 1 ref (`surface` example) → `~/.agentdocs/rules/...`
+- `src/skills/doctor/SKILL.md` — 6 refs → `~/.agentdocs/...` (matches file's existing convention)
+- `docs/agent-context/index.md` — 2 links → `../../src/...`
+- `docs/agent-context/orchestrating.md` — 3 refs → `src/...`/`../../src/...`
+- `docs/agent-context/collaboration-style.md` — 1 link → `../../src/...`
+- `docs/architecture/index.md` — 1 link → `../../src/...`
+- `docs/architecture/workflow-kit.md` — 1 ref (line ~179) → `~/.agentdocs/...` (see judgment below)
+- `docs/plans/index.md` — 3 links → `../../src/...`
+
+### Source-vs-runtime judgment calls
+
+- `docs/architecture/workflow-kit.md:179` — bare `v1/verify-agent-docs.sh --scaffold <repo-root>`
+  describes a CONSUMING-repo scaffold check. Per the in-file exception it matched
+  the runtime form (line 168 already uses `~/.agentdocs/verify-agent-docs.sh
+  --scaffold .`), so → `~/.agentdocs/...`, NOT `src/...`. The source-checkout
+  gate commands elsewhere in the file (`bash src/verify-agent-docs.sh`) were
+  already correct and left as-is.
+- `src/rules/orchestrator/dispatch.md:44-45` — the `--context-report` command is
+  in a body that becomes `~/.agentdocs/rules/orchestrator/dispatch.md`; migrated
+  sibling bodies (doctor, rebuild SKILLs) write `~/.agentdocs/verify-agent-docs.sh`,
+  so matched that → `~/.agentdocs/...`.
+- `src/skills/doctor/SKILL.md` — file had already standardized on `~/.agentdocs/...`
+  (e.g. line 48), so all six stragglers (registry, skill-contracts, the `v1/skills/*`
+  glob, the `v1/verify-agent-docs.sh` self-refs) matched that convention.
+- `src/skills/feedback-agent-docs/SKILL.md:74` — the `surface` field example names
+  a kit rule file by path; as a runtime self-reference → `~/.agentdocs/rules/...`.
+
+### Optional verifier tighten — DONE
+
+`src/verify-agent-docs.sh:1007` prefix-strip tightened `~/agent-docs/` →
+`~/.agentdocs/`. Functionally dead either way (line 1011 grep only captures
+`src/rules/...` substrings, never runtime-form refs), so zero gate risk; applied
+for vocabulary alignment.
+
+### Gate result
+
+`bash src/verify-agent-docs.sh` → see commit; `git grep` confirms only intentional
+leftovers remain (retirement-prose mentions, the two excluded migration docs).
+
+### Left deliberately
+
+None in the owned set. Intentional out-of-scope refs (retirement prose in
+`docs/decisions/agent-docs.md:8`, `src/agent-docs-guide.md:349`, the verifier
+allowlist `new-project-prompt` entry, the migration-history docs) untouched.

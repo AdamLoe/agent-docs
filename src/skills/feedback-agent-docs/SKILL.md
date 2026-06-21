@@ -71,7 +71,7 @@ infer sensible values from the current context. Do not block on confirmation whe
 the issue is clear and kit-level. Fields:
 
 - `scope` — one of `rule` | `skill` | `structure` | `generic-doc` | `other`
-- `surface` — the specific target, e.g. `v1/rules/authoring-rules.md rule 3`
+- `surface` — the specific target, e.g. `~/.agentdocs/rules/authoring-rules.md rule 3`
   or `/quick-fix` or `docs/architecture scaffold`
 - `observation` — what is wrong, missing, or confusing
 - `suggestion` — optional proposed change

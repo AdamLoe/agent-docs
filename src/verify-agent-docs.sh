@@ -1004,7 +1004,7 @@ done
 while IFS= read -r skill_file; do
   while IFS= read -r ref_path; do
     [ -n "$ref_path" ] || continue
-    normalized_ref=${ref_path#\~/agent-docs/}
+    normalized_ref=${ref_path#\~/.agentdocs/}
     normalized_ref=${normalized_ref%/}
     [ -e "$repo_root/$normalized_ref" ] ||
       fail "skill ${skill_file#$repo_root/} references missing rule path: $ref_path"

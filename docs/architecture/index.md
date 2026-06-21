@@ -8,4 +8,4 @@
 ## See also
 
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
-- [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)
+- [`../../src/rules/authoring-rules.md`](../../src/rules/authoring-rules.md)

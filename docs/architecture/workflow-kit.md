@@ -176,7 +176,7 @@ and unresolved placeholders. It does not validate the source checkout.
 - `/fresh-chat` starts ordinary work from the docs router.
 - `/doctor` validates scaffold, manifest, ownership, skill registry, and stale
   reference health; consuming-repo scaffold checks use
-  `v1/verify-agent-docs.sh --scaffold <repo-root>`.
+  `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`.
 - `/orchestrate` coordinates the quick-fix or plan/review/implement/review
   lifecycle through specialist workers. Medium or unclear work goes through a
   planning-worker brief before implementation.
