@@ -48,8 +48,8 @@ context-report directly — Wave 0 measures them.
 | 1a | Scenario matrix → fixture + resolver modes + verifier reads fixture | done | context-profiles 892→503; launches −389 each (qf 3168, orch 5407); --resolve/--measure-launch added | fc07685 |
 | 1b | Role-card "what you read" rewrites (subagent/*.md) | done | all 6 defer to --resolve; See-also marked non-loading; cards grew slightly (Wave 3 compresses) | bf386b7 |
 | 2 | Align role + mutation contracts (closeout authority, remove fix-enabled review) | done | plan_closeout grant consistent profile/role/dispatch; review+verification read-only; report needs invalidation conds | ac67fb8 |
-| 3 | Meet budgets via relocation; raise unreachable budgets to floors (E3) | active | compression DONE (launch: b672c55; profile: d30592e). File floors: lifecycle 1037, skill-contracts 637, dispatch 811, ctx-profiles 533, authoring 793, repo-rules 429, coding-style 353+3 overlays, plan-lifecycle 427, plan-template 223. 4/7 profiles now in budget. Reconcile 3 over-floor budgets next: planning.tracked 1542→bud, review.docs 1148→bud, maintenance.plan 2016→bud. Launch reconcile after Wave 4 | d30592e |
-| 4 | Finish skill recipes (21 skills → profile IDs; review-app defaults) | pending | — | — |
+| 3 | Meet budgets via relocation; raise unreachable budgets to floors (E3) | active | compression DONE (launch: b672c55; profile: d30592e). File floors: lifecycle 1037, skill-contracts 637, dispatch 811, ctx-profiles 533, authoring 793, repo-rules 429, coding-style 353+3 overlays, plan-lifecycle 427, plan-template 223. 4/7 profiles now in budget. DONE — 3 budgets reconciled to floors (164784e); all 11 profiles within budget. Launch reconcile after Wave 4 | 164784e |
+| 4 | Finish skill recipes (21 skills → profile IDs; review-app defaults) | active | batches: (1) review-app (2) quick-fix/plan/ship-current-work/ship-plans (3) 7 review/check (4) 8 utility/bootstrap (5) orchestrate last. This is what cuts launch budgets | — |
 | 5 | Source-bound verifier gates + flip enforcement | pending | — | — |
 | 6 | Durable migration + closeout | pending | — | — |
 
