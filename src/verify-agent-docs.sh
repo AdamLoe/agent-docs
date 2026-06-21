@@ -11,11 +11,21 @@ usage() {
 Usage:
   bash src/verify-agent-docs.sh
   bash src/verify-agent-docs.sh --context-report [--profile <id>]
+  bash src/verify-agent-docs.sh --resolve <profile-id>
+  bash src/verify-agent-docs.sh --measure-launch <skill-name>
   bash src/verify-agent-docs.sh --scaffold <repo-root>
 
 Default mode validates the agent-docs kit checkout that contains this script.
 The --context-report mode prints the read-only context profile and scenario
 contract, including exact files, conditions, word totals, and budget exceptions.
+Scenario rows are read from the never-auto-loaded fixture
+src/verify-fixtures/workflow-scenarios.json.
+The --resolve mode prints one profile's core rule paths, conditional overlays,
+mutation capability, and budget so a skill can resolve a single profile without
+loading the whole table.
+The --measure-launch mode prints the controlled launch word total for one skill
+(skill body, shared startup contract, startup orchestrator/role rules, docs
+index, and requested manifest slots), excluding task-routed source/tests.
 The --scaffold mode validates only the target repo's docs/ scaffold, manifest,
 ownership JSON, routing, and unresolved scaffold placeholders.
 EOF
@@ -449,16 +459,30 @@ context_profile_rows() {
   ' "$repo_root/src/rules/context-profiles.md"
 }
 
+scenario_fixture() {
+  printf '%s' "$repo_root/src/verify-fixtures/workflow-scenarios.json"
+}
+
 scenario_rows() {
-  awk -F'|' '
-    /^\| `[^`]+` \|/ && NF == 11 {
-      for (i = 2; i <= 10; i++) {
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
-        gsub(/^`|`$/, "", $i)
-      }
-      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8, $9, $10
-    }
-  ' "$repo_root/src/rules/context-profiles.md"
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot read scenario fixture; install python"
+
+  "$python_cmd" - "$(scenario_fixture)" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+
+fields = [
+    "scenario_id", "task_shape", "expected_questions", "expected_profiles",
+    "expected_phases", "expected_mutator_count", "state_basis_fields",
+    "final_ordering", "budget_expectation",
+]
+for row in data.get("scenarios", []):
+    print("\t".join(str(row.get(field, "")) for field in fields))
+PY
 }
 
 profile_word_total() {
@@ -524,6 +548,91 @@ context_report() {
   printf 'CONTEXT REPORT PASS\n'
 }
 
+# --resolve <profile-id>: print exactly one profile's resolved core rule paths,
+# conditional overlays, mutation capability, and budget, so a skill/dispatch can
+# resolve ONE profile without loading the whole profiles table. Writes nothing
+# and emits no copied rule bodies.
+resolve_profile() {
+  local target=$1
+  local found=0
+  local id purpose core_paths overlays mutation budget status total exception
+  local display_paths
+
+  [ -n "$target" ] || { usage >&2; exit 2; }
+
+  while IFS=$'\t' read -r id purpose core_paths overlays mutation budget status; do
+    [ "$id" = "$target" ] || continue
+    found=1
+    total=$(profile_word_total "$core_paths")
+    exception="none"
+    if [ "$total" -gt "$budget" ]; then
+      exception="over budget in $status status; correctness requires listed core files"
+    fi
+    display_paths=${core_paths//\`/}
+    printf 'RESOLVE %s\n' "$id"
+    printf '  core_paths: %s\n' "$display_paths"
+    printf '  overlays: %s\n' "$overlays"
+    printf '  mutation: %s\n' "$mutation"
+    printf '  budget: %s\n' "$budget"
+    printf '  resolved_words: %s\n' "$total"
+    printf '  enforcement: %s\n' "$status"
+    printf '  budget_exception: %s\n' "$exception"
+  done < <(context_profile_rows)
+
+  [ "$found" -eq 1 ] || fail "unknown context profile: $target"
+  printf 'RESOLVE PASS\n'
+}
+
+# --measure-launch <skill-name>: print the controlled launch word total for one
+# skill using the Wave-0 formula: skill body + shared startup contract
+# (skill-contracts.md) + the orchestrator/role rules that skill loads at startup
+# (detected from the SKILL body) + docs/index.md + requested manifest slots
+# (docs/_meta/manifest.md). Task-routed source/tests/docs are excluded. Writes
+# nothing and emits no copied rule bodies.
+measure_launch() {
+  local skill_name=$1
+  local skill_file="$repo_root/src/skills/$skill_name/SKILL.md"
+  local total=0
+  local label path count
+
+  [ -n "$skill_name" ] || { usage >&2; exit 2; }
+  [ -f "$skill_file" ] || fail "unknown skill: $skill_name"
+
+  printf 'MEASURE-LAUNCH %s\n' "$skill_name"
+
+  add_startup_file() {
+    local file=$1
+    local file_label=$2
+    [ -f "$file" ] || fail "launch file missing for $skill_name: ${file#$repo_root/}"
+    count=$(wc -w < "$file")
+    count=${count//[[:space:]]/}
+    total=$((total + count))
+    printf '  %-22s %s\n' "$file_label" "$count"
+  }
+
+  # Skill body.
+  add_startup_file "$skill_file" "skill-body"
+
+  # Shared startup contract loaded by every skill bootstrap.
+  add_startup_file "$repo_root/src/rules/skill-contracts.md" "skill-contracts"
+
+  # Orchestrator/role rules this skill names in its startup body. Only count what
+  # the skill actually loads at launch, not task-routed overlays.
+  for rule in context-profiles.md orchestrator/dispatch.md orchestrator/lifecycle.md; do
+    if grep -Fq "rules/$rule" "$skill_file"; then
+      label=${rule##*/}
+      add_startup_file "$repo_root/src/rules/$rule" "${label%.md}"
+    fi
+  done
+
+  # Docs router entry and the requested manifest slots.
+  add_startup_file "$repo_root/docs/index.md" "docs-index"
+  add_startup_file "$repo_root/docs/_meta/manifest.md" "manifest-slots"
+
+  printf '  %-22s %s\n' "TOTAL" "$total"
+  printf 'MEASURE-LAUNCH PASS\n'
+}
+
 validate_context_profiles() {
   local python_cmd
 
@@ -531,25 +640,40 @@ validate_context_profiles() {
   [ -n "$python_cmd" ] ||
     fail "cannot validate context profiles; install python"
 
-  if ! "$python_cmd" - "$repo_root/src/rules/context-profiles.md" "$repo_root" <<'PY'
+  if ! "$python_cmd" - "$repo_root/src/rules/context-profiles.md" "$repo_root" "$(scenario_fixture)" <<'PY'
+import json
 import pathlib
-import re
 import sys
 
 profile_path = pathlib.Path(sys.argv[1])
 repo_root = pathlib.Path(sys.argv[2])
+scenario_fixture = pathlib.Path(sys.argv[3])
 text = profile_path.read_text(encoding="utf-8")
 
 profile_rows = []
-scenario_rows = []
 for line in text.splitlines():
     if not line.startswith("| `"):
         continue
     cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
     if len(cells) == 7:
         profile_rows.append(cells)
-    elif len(cells) == 9:
-        scenario_rows.append(cells)
+
+# Scenarios are verifier-only data; they live in a never-auto-loaded fixture so
+# they leave the runtime context-profiles load surface. Field order matches the
+# old in-doc table columns so downstream needle checks are unchanged.
+scenario_fields = [
+    "scenario_id", "task_shape", "expected_questions", "expected_profiles",
+    "expected_phases", "expected_mutator_count", "state_basis_fields",
+    "final_ordering", "budget_expectation",
+]
+try:
+    fixture_data = json.loads(scenario_fixture.read_text(encoding="utf-8"))
+except (OSError, ValueError) as exc:
+    raise SystemExit(f"cannot read scenario fixture {scenario_fixture}: {exc}")
+scenario_rows = [
+    [str(row.get(field, "")) for field in scenario_fields]
+    for row in fixture_data.get("scenarios", [])
+]
 
 required_profiles = {
     "planning.brief", "planning.tracked", "implementation.code",
@@ -682,6 +806,16 @@ case "${1:-}" in
         ;;
     esac
     ;;
+  --resolve)
+    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+    resolve_profile "$2"
+    exit 0
+    ;;
+  --measure-launch)
+    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+    measure_launch "$2"
+    exit 0
+    ;;
   --scaffold)
     [ "$#" -eq 2 ] || { usage >&2; exit 2; }
     [ -d "$2" ] || fail "scaffold target is not a directory: $2"
@@ -728,6 +862,7 @@ require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
 require_file "src/rules/context-profiles.md"
+require_file "src/verify-fixtures/workflow-scenarios.json"
 require_dir "docs/architecture"
 require_dir "docs/decisions"
 require_dir "docs/agent-context"

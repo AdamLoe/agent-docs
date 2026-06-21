@@ -39,23 +39,14 @@ scenario rows, and verifier checks agree.
 
 ## Scenario Contract
 
-The verifier treats these rows as a report-only behavioral contract. Each row
-names expected questions, profiles, phases, mutator count, state-basis fields,
-final ordering, and budget expectation.
-
-| scenario_id | task_shape | expected_questions | expected_profiles | expected_phases | expected_mutator_count | state_basis_fields | final_ordering | budget_expectation |
-|---|---|---|---|---|---:|---|---|---|
-| `bounded-quick-fix` | supplied bounded fix | none; no dial picker | `implementation.code`, `verification.readonly`; no classifier | one implementation worker then final verification | 1 | HEAD plus exact dirty paths | gate observes post-mutation state | report-only within budget |
-| `unclear-small-work` | small but underspecified | one material task question; no dial picker | `planning.brief` before implementation | question then brief or route | 0 | HEAD plus exact dirty paths | no worker before answer | report-only |
-| `medium-brief-plan` | medium unclear change | none after supplied intent | `planning.brief` | read-only planning brief | 0 | HEAD plus exact dirty paths | inline brief before mutation | report-only |
-| `tracked-change-plan` | explicit tracked plan creation | none after supplied intent | `planning.tracked` | plan write and commit | 1 | HEAD plus exact dirty paths | plan persistence before review | report-only |
-| `dirty-tree-shipping` | ship with unrelated dirt | none unless dirt blocks | `implementation.code-docs`, `verification.readonly` | inspect, mutate owned files, verify | 1 | HEAD plus exact dirty paths | owned staging before commit | report-only |
-| `named-plan-shipping` | selected existing plan | none for draft status | `implementation.tracked`, `verification.readonly` | implement, migrate, close plan, verify | 1 | HEAD plus exact dirty paths | plan closeout before final gate | report-only |
-| `docs-repair` | docs-only repair | none when scope supplied | `maintenance.docs`, `verification.readonly` | docs maintenance then gate | 1 | HEAD plus exact dirty paths | docs mutation before final gate | report-only |
-| `report-only-review` | independent review | none when lens supplied | `review.generic` | review only | 0 | HEAD plus exact dirty paths | findings route to mutator | report-only |
-| `configured-app-review` | supplied audit config | no reconfirmation; approval before plans | `review.generic`, `planning.tracked` after approval | audit, findings, approved plans | 1 after approval | HEAD plus exact dirty paths | plan creation waits for approval | report-only |
-| `failed-verification` | gate failure | none unless fix choice needed | `verification.readonly`, then mutator profile | verification reports; fix routed out | 0 before fix | observed commit plus dirty paths | verifier never mutates | report-only |
-| `resume-invalidated` | worker resume after overlap | none; force delta reread or fresh worker | original profile plus reread | invalidate, reread or respawn | unchanged | intervening commit and dirty overlap | no stale resume before reread | report-only |
+The verifier treats workflow scenarios as a report-only behavioral contract,
+each naming expected questions, profiles, phases, mutator count, state-basis
+fields, final ordering, and budget expectation. That matrix is verifier-only
+data, so it lives in the never-auto-loaded fixture
+`src/verify-fixtures/workflow-scenarios.json` instead of this runtime-loaded
+file. The verifier reads it there; rerun `bash src/verify-agent-docs.sh
+--context-report` to see the `bounded-quick-fix` and other scenario rows. No
+skill or runtime context loads that fixture.
 
 ## See also
 
