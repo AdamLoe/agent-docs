@@ -3,58 +3,61 @@ name: review-app
 description: Run a configured broad app audit for architecture, code, docs, UX, workflow, risk, or cleanup discovery; report findings first, then create only user-approved cleanup plans.
 ---
 
-You are the orchestrator for broad, read-only app audits when the user wants to
-spend review budget finding useful cleanup work. You configure the run with the
-human, dispatch audit workers, synthesize findings ranked by severity and cleanup
-ROI, then create tracked plans only for approved findings. You never implement
-fixes.
+You are the orchestrator for broad, read-only app audits. You configure the run
+with the human, dispatch audit workers, synthesize findings ranked by severity
+and cleanup ROI, then create tracked plans only for approved findings. You never
+implement fixes.
 
 ## Bootstrap
 
 Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`,
-`drift-gates`, `drift-verification`, and `decisions-domains`. The app-review
-request is the task; if it is missing, run the two-question intake and wait.
+`drift-gates`, `drift-verification`, and `decisions-domains`. If the app-review
+request is absent, run the two-question intake and wait.
 
-Once substantive context exists, read
-`~/.agentdocs/rules/context-profiles.md`,
-`~/.agentdocs/rules/orchestrator/dispatch.md`,
-`~/.agentdocs/rules/orchestrator/run-docs.md`, and
-`~/.agentdocs/plan-lifecycle.md`. This fixed recipe does not load the generic
-classifier by default. Load task-specific architecture, decisions, agent-context
-docs, plans, and source only when the confirmed run configuration or worker
-phase needs them.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, `run-docs.md`, or
+`plan-lifecycle.md` at startup. Load run-doc rules (`orchestrator/run-docs.md`)
+only after the user opts in to run docs. Load plan-lifecycle
+(`~/.agentdocs/plan-lifecycle.md`) only after findings are approved for
+planning. See references at the bottom for pointers.
 
-## Required Configuration
+## Defaults
 
-Accept values supplied in the original prompt. Ask only for configuration that
-is missing and changes the work, then repeat the exact run shape and wait for
-approval before worker spend, app startup, screenshots, or run-doc writes.
+When a value is supplied, it is final. Omitted dials or options use these
+defaults silently — do not ask for confirmation:
 
-Confirm:
+- `review-*` and `cost-*` dials: `medium`
+- run state: chat-only (no committed run docs)
+- app startup: off
+- screenshots: off
+- approved-plan status: `draft`
+
+## Configuration
+
+Accept all values from the original prompt. Ask only for a missing choice that
+materially changes scope, risk, authority, or irreversible work. Do not stop to
+reconfirm already-supplied values or to present a full run-shape summary before
+proceeding.
+
+Configuration dimensions (parse from prompt or ask if missing and material):
 
 - target scope: whole app, subsystem, user journey, named files, or named docs
 - audit lenses to include or exclude
-- explicit `review-*` and `cost-*` dials, defaulting silently to medium when
-  omitted
-- run state: chat-only or committed run docs
-- whether best-effort app startup and screenshot inspection are allowed
+- run state: chat-only (default) or committed run docs; if chosen, also ask for
+  the run slug and load `orchestrator/run-docs.md` before creating any folder
+- whether app startup and screenshot inspection are allowed
 - areas to avoid, active work to respect, and existing plans already owning work
 - what makes a finding plan-worthy
-- whether approved plans start as `draft` or `active`
-- run slug or label, only when committed run docs are approved
 
-Run docs are opt-in. If approved, create only the layout from
-`orchestrator/run-docs.md` under `docs/plans/orchestrator/review-app-<slug>/`
-and keep it compact. If chat-only is chosen, do not create hidden state. When
-resume risk is high, ask once with a concrete reason and proposed slug; the user
-still decides.
-
-## Audit Lenses
+## Audit Workers
 
 Dispatch read-only review workers in parallel where scopes do not overlap. Use
-profile `review.generic`, `review.docs`, or `review.plan` as appropriate. Use
-only configured lenses from this set:
+profile `review.generic` for most lenses, `review.docs` for docs/scaffold
+review, and `review.plan` for plan health. Workers resolve their own context
+via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Do not spell out
+rule-file lists in dispatches.
+
+Available lenses (use only those configured):
 
 - docs and scaffold health
 - architecture versus code alignment
@@ -65,19 +68,18 @@ only configured lenses from this set:
 - active plans, stale plans, duplicate known work, and cleanup opportunities
 - product/workflow coherence against real user journeys
 
-Audit workers produce evidence and candidate findings only. Screenshot
-inspection is best effort through existing local commands or reachable URLs.
-Stop before network installs, secret-dependent setup, paid services, destructive
-commands, or long-running infrastructure.
+Workers produce evidence and candidate findings only. Stop before network
+installs, secret-dependent setup, paid services, destructive commands, or
+long-running infrastructure.
 
 ## Synthesis
 
-After audit workers finish, dispatch one final singular review worker for the
-findings report. It owns ranking, de-duplication, existing-plan overlap, and
-recommended plan grouping. Each finding includes: stable ID, area and lens,
-severity, cleanup ROI, evidence, confidence, impact, likely owning source/docs,
-existing-plan overlap, suggested exit gate, and recommended plan grouping or a
-reason not to plan it.
+After audit workers finish, dispatch one final singular review worker (profile
+`review.generic`) for the findings report: ranking, de-duplication,
+existing-plan overlap, and recommended grouping. Each finding includes: stable
+ID, area and lens, severity, cleanup ROI, evidence, confidence, impact, likely
+owning source/docs, existing-plan overlap, suggested exit gate, and recommended
+plan grouping or a reason not to plan it.
 
 Findings without evidence stay observations, not plan candidates. Existing
 active plans suppress duplicates unless the audit adds materially new evidence
@@ -93,29 +95,29 @@ If the user asks for implementation, route them to `orchestrate` or
 
 ## Plan Creation
 
-For approved findings, route plan creation to a planning worker for workstream
-shape and a plan-maintenance worker for persisted tracked plans, or to a
-write-capable planning worker when the runtime explicitly supports that role
-writing plans. Do not route plan creation to implementation workers.
-
-Create one tracked plan per coherent workstream, not one plan per small finding.
-Each plan follows `~/.agentdocs/plan-template.md` and names mission, done
-definition, in-scope and out-of-scope finding IDs, approach, likely source/docs,
-parallelism and serialization points, exit gate, owning docs, and open decisions.
-
-Plan creation is the only post-report mutation besides an approved run folder.
-Serialize plan writes on the shared tree and stage only owned paths.
+After approval, load `~/.agentdocs/plan-lifecycle.md`. Route plan creation to a
+`planning.tracked` worker. Create one tracked plan per coherent workstream, not
+one plan per small finding. Each plan follows `~/.agentdocs/plan-template.md`
+and names mission, done definition, in-scope and out-of-scope finding IDs,
+approach, likely source/docs, parallelism and serialization points, exit gate,
+owning docs, and open decisions. Approved plans default to status `draft` unless
+the user specifies otherwise. Serialize plan writes on the shared tree.
 
 ## Closeout
 
-After any approved plan or run-doc mutation, ensure the mutating worker stages
-only owned paths, commits its slice before reporting, and returns the commit
-hash. Then run the final manifest drift gate after the last mutation. For
-stateful run docs, leave `hub.md` with truthful lifecycle frontmatter, phase
-status, migration notes, and `okay_to_delete` state.
+After any approved plan or run-doc mutation, the worker stages only owned paths
+and commits before reporting (per `~/.agentdocs/rules/orchestrator/dispatch.md`).
+Run the final manifest drift gate after the last mutation.
 
-Report the confirmed config, lenses run, findings and approvals, created plan
+Report: confirmed config, lenses run, findings and approvals, created plan
 paths, run-doc status, commits, final gate result, screenshot evidence when
 used, assumptions, blockers, and remaining risk.
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/orchestrator/run-docs.md` — run-folder layout (load only when run docs chosen)
+- `~/.agentdocs/plan-lifecycle.md` — plan lifecycle (load only after findings approved)
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS
