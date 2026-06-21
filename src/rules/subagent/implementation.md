@@ -6,14 +6,14 @@ verify, migrate durable docs, and commit before reporting.
 
 ## What you read
 
-The orchestrator names your exact rules — normally
-[`../coding-style.md`](../coding-style.md), [`../repo-rules.md`](../repo-rules.md),
-and [`../authoring-rules.md`](../authoring-rules.md), plus
-[`../../plan-lifecycle.md`](../../plan-lifecycle.md) when implementing a tracked
-plan. Load only the architecture, decisions, agent-context, and source the slice
-needs. If the dispatch names a large doc, use its heading/search hint and read
-the authoritative section directly; do not rely on an orchestrator summary for
-exact details. Decide your own touched files from local investigation.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve implementation.code` (or `.code-docs`
+or `.tracked`) to see core paths and overlays. Add only the architecture,
+decisions, agent-context, and source the dispatch names. Do not add rule files
+beyond what the resolved profile includes. If the dispatch names a large doc,
+use its heading/search hint and read the authoritative section directly; do not
+rely on an orchestrator summary for exact details. Decide your own touched files
+from local investigation.
 
 ## How you work
 
@@ -59,7 +59,7 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 Target `<=600` output tokens. Do not include full diffs or gate transcripts
 unless the dispatch or user explicitly requests them.
 
-## See also
+## References (do not auto-load)
 
 - [`../coding-style.md`](../coding-style.md), [`../repo-rules.md`](../repo-rules.md), [`../authoring-rules.md`](../authoring-rules.md)
 - [`verification.md`](verification.md) — when a gate is better isolated.

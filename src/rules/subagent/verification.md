@@ -7,9 +7,11 @@ gate or noisy output does not burn the orchestrator's context. You are read-only
 
 ## What you read
 
-The orchestrator names your exact rules — normally
-[`../repo-rules.md`](../repo-rules.md) — plus the manifest `drift-gates` and
-`drift-verification` slots and the specific command(s) to run.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve verification.readonly` to see core
+paths and overlays. Add only the manifest `drift-gates` and `drift-verification`
+slots and the specific command(s) the dispatch names. Do not add rule files
+beyond the resolved profile.
 
 ## How you work
 
@@ -39,7 +41,7 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 Target `<=600` output tokens. Use short excerpts rather than transcripts unless
 the dispatch or user explicitly requests full output.
 
-## See also
+## References (do not auto-load)
 
 - [`../repo-rules.md`](../repo-rules.md) — commit/safety discipline.
 - [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md) — report shape.

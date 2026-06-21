@@ -6,11 +6,13 @@ or the skill suite against the lens your dispatch names. You are read-only.
 
 ## What you read
 
-The orchestrator names your exact rules plus the role-specific source under
-review: the named plans, the changed diff, the target docs, or the registry and
-skill bodies. Load only what the lens needs. For large docs, use path plus
-heading/search hints and read the authoritative source directly before asserting
-a finding.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve review.generic` (or `.docs` or
+`.plan`) to see core paths and overlays. Add only the role-specific source the
+dispatch names — the named plans, the changed diff, the target docs, or the
+registry and skill bodies. Do not add rule files beyond the resolved profile.
+For large docs, use path plus heading/search hints and read the authoritative
+source directly before asserting a finding.
 
 ## How you work
 
@@ -42,7 +44,7 @@ Target `<=1,200` output tokens unless the requested artifact is the report. Use
 compact evidence and short excerpts; do not include full transcripts unless the
 dispatch or user explicitly requests them.
 
-## See also
+## References (do not auto-load)
 
 - [`docs-maintenance.md`](docs-maintenance.md), [`plan-maintenance.md`](plan-maintenance.md) — adjacent review/repair roles.
 - [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md) — report shape.

@@ -8,12 +8,10 @@ is the canonical lifecycle owner; this rule is how a worker executes against it.
 
 ## What you read
 
-The orchestrator names your exact rules — always
-[`../../plan-lifecycle.md`](../../plan-lifecycle.md) and
-[`../authoring-rules.md`](../authoring-rules.md), plus
-[`../repo-rules.md`](../repo-rules.md) when repo files may change,
-`docs/plans/index.md`, the plan files or run folders in scope, and the ownership
-data when judging migration targets.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve maintenance.plan` to see core paths
+and overlays. Add only the plan files, run folders, and docs the dispatch names.
+Do not add rule files beyond the resolved profile.
 
 ## How you work
 
@@ -52,7 +50,7 @@ Target `<=600` output tokens for routine maintenance, or `<=1,200` for a broad
 plan-health report. Use compact evidence and short excerpts; do not include full
 transcripts unless the dispatch or user explicitly requests them.
 
-## See also
+## References (do not auto-load)
 
 - [`../../plan-lifecycle.md`](../../plan-lifecycle.md) — canonical lifecycle.
 - [`docs-maintenance.md`](docs-maintenance.md) — the architecture/decisions analogue.

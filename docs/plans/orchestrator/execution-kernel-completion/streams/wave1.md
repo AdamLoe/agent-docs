@@ -99,6 +99,39 @@ This is the intended effect of relocating verifier-only data, not a regression.
   3168; `MEASURE-LAUNCH PASS`.
 - `rg -l "workflow-scenarios|verify-fixtures" src/skills` → empty.
 
+## Wave 1b — Role cards defer to resolved profile as sole context authority
+
+Profile: maintenance.docs. One mutating worker; commits its own slice.
+
+### Per-card word counts (before → after) and what was removed
+
+| Card | Before | After | Removed from "What you read" |
+|---|---:|---:|---|
+| `planning.md` | 417 | 418 | Enumerated `plan-lifecycle.md` + `plan-template.md` load list; replaced with `--resolve planning.brief` / `.tracked` pointer |
+| `implementation.md` | 457 | 471 | Enumerated `coding-style.md`, `repo-rules.md`, `authoring-rules.md`, `plan-lifecycle.md` load list; replaced with `--resolve implementation.code` / `.code-docs` / `.tracked` pointer |
+| `review.md` | 319 | 341 | Loose "orchestrator names your exact rules" without profile pointer; replaced with `--resolve review.generic` / `.docs` / `.plan` |
+| `verification.md` | 309 | 328 | Enumerated `repo-rules.md` load; replaced with `--resolve verification.readonly` pointer |
+| `docs-maintenance.md` | 345 | 349 | Enumerated `authoring-rules.md`, `repo-rules.md`, manifest slots, ownership data load list; replaced with `--resolve maintenance.docs` pointer |
+| `plan-maintenance.md` | 363 | 367 | Enumerated `plan-lifecycle.md`, `authoring-rules.md`, `repo-rules.md`, `docs/plans/index.md` load list; replaced with `--resolve maintenance.plan` pointer |
+
+Cards grew slightly (+1 to +22 words) because the resolver command line is more explicit than the old terse list. Wave 3 owns budget compression; this wave owns correctness of framing.
+
+### What was changed
+
+- All six "What you read" sections now point workers to `bash src/verify-agent-docs.sh --resolve <profile-id>` as the sole authority for which rule files to load.
+- Enumerated "normally read" / "also read" / implicit load lists removed from all cards.
+- All six "See also" sections relabeled "References (do not auto-load):" so links are navigation only, not startup loads.
+
+### What was preserved
+
+- All role-specific behavioral content (how to do the role, report shape, commit discipline, dirty-tree rules, safety/ordering invariants) unchanged in every card.
+- No mutation-authority wording was changed (e.g., implementation card still does not close plans; that is Wave 2).
+
+### Gate results
+
+- `bash src/verify-agent-docs.sh` → exit 0, `ALL AGENT-DOCS GATES PASS`.
+- `bash src/verify-agent-docs.sh --context-report` → exit 0, `CONTEXT REPORT PASS`. Profile word totals shifted slightly (role card rewrite); no profile enforcement status changed.
+
 ## Durable facts for later waves
 
 - Scenario matrix is verifier-only data living in

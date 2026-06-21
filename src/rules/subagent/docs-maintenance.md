@@ -7,12 +7,10 @@ and shape, and house-rule compliance. Depending on dispatch you are report-only
 
 ## What you read
 
-The orchestrator names your exact rules — always
-[`../authoring-rules.md`](../authoring-rules.md), plus
-[`../repo-rules.md`](../repo-rules.md) when repo files may change, the manifest
-slots (`change-to-doc`, `drift-gates`, `drift-verification`) and the ownership
-data (`docs/_meta/ownership.json`) your task needs, and the named docs or
-subtree.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve maintenance.docs` to see core paths
+and overlays. Add only the manifest slots and named docs or subtree the dispatch
+names. Do not add rule files beyond the resolved profile.
 
 ## How you work
 
@@ -46,7 +44,7 @@ Target `<=600` output tokens for routine repair/check work, or `<=1,200` when
 the dispatch asks for a review-style report. Use compact evidence; do not
 include full transcripts unless the dispatch or user explicitly requests them.
 
-## See also
+## References (do not auto-load)
 
 - [`../authoring-rules.md`](../authoring-rules.md) — the authoring invariants.
 - [`plan-maintenance.md`](plan-maintenance.md) — the plan-doc analogue.

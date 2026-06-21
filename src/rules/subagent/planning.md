@@ -7,13 +7,13 @@ the whole lifecycle — the orchestrator owns that.
 
 ## What you read
 
-The orchestrator names your exact rules in the dispatch packet. For planning that
-is normally [`../../plan-lifecycle.md`](../../plan-lifecycle.md) and
-[`../../plan-template.md`](../../plan-template.md), plus the task-specific
-architecture, decisions, agent-context, and source the concern needs. Load only
-what the assigned concern requires; do not sweep the whole tree. If the
-orchestrator passes a large doc, use the heading/search hint and read the source
-section directly before making a judgment.
+Read exactly the resolved profile: use
+`bash src/verify-agent-docs.sh --resolve planning.brief` or
+`--resolve planning.tracked` to see core paths and overlays. Add only the
+task-routed architecture, decisions, agent-context, and source the dispatch
+names. Load nothing beyond the resolved profile plus that dispatch-named
+material. If the orchestrator passes a large doc, use the heading/search hint
+and read the authoritative section directly before making a judgment.
 
 ## How you work
 
@@ -65,7 +65,7 @@ Target `<=1,200` output tokens unless the requested artifact is the report. Keep
 evidence compact and source-backed; do not include full transcripts unless the
 dispatch or user explicitly requests them.
 
-## See also
+## References (do not auto-load)
 
 - [`../../plan-lifecycle.md`](../../plan-lifecycle.md), [`../../plan-template.md`](../../plan-template.md)
 - [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md) — report shape.
