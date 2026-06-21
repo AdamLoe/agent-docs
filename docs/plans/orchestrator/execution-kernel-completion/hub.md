@@ -52,7 +52,7 @@ context-report directly — Wave 0 measures them.
 | 4 | Finish skill recipes (21 skills → profile IDs) | done | all 21 converted (6ce6ea4,e4fa857,250683b,fa75f3e,abf9f9b,7689131). Launch floors: fixed(quick-fix) 1683; classifiers orch 3118/fresh-chat 2778/start-session 2862. fixed≤1200 + classifier≤2000 unreachable → E3 floors | 7689131 |
 | 5a | Source-bound checks + launch budgets (report-only) | done | --contract-check added; checks 2–8 CLEAN; only 7 fixed-skill launch overruns, mostly a measure-launch over-count (counts path strings in prohibition/Reference lines) | c0c5e3f |
 | 5b | Honest measure-launch + floor budgets + flip enforcement | done | measure-launch honest; launch budgets floored (fixed 2000/classifier 3300); ALL 11 profiles ENFORCED + in budget; profile/launch/contract checks GATE; gate green + bites (orch-verified) | f4c0b8c |
-| 6a | Durable migration (architecture/decisions/manifest/ownership/guide) | active | migrate execution-kernel model; cover new surfaces (verify-fixtures, reference leaves, lang overlays, resolver/contract-check modes); fix stale 'scenarios report-only' prose (ctx-profiles:47) | — |
+| 6a | Durable migration (architecture/decisions/manifest/ownership/guide) | done | model migrated to workflow-kit + decisions + manifest + ownership + guide; stale scenario prose fixed; gate+contract-check green | 24e3dae |
 | 6b | Ship plan + hub; final gate | pending | — | — |
 
 Editing serial on the shared tree. Review where risk warrants (verifier rewrite,
