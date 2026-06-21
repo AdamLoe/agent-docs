@@ -17,39 +17,33 @@ Protocol** with manifest slots: `repo_name`, `code_root`, `change-to-doc`. This
 skill is **state-driven** — it runs off the plan tree on disk, so there is no
 two-question intake; honor any dials passed in `$ARGUMENTS`.
 
-Then read, inline, the coordination state this review judges against:
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Read inline (this is coordination reading, not worker dispatch):
 
 - `docs/plans/index.md` for the plan inventory.
 - `~/.agentdocs/plan-lifecycle.md` and `~/.agentdocs/plan-template.md` for
   the lifecycle states and the shape a plan should hold.
 - `docs/_meta/ownership.json` when judging whether a plan's `owning_docs` and
   migration targets are plausible.
-- `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-  `~/.agentdocs/rules/orchestrator/dispatch.md` to choose phases and dispatch.
 
 Listing the plan tree and reading frontmatter to scope the review is inline
-routing. Dispatch a worker once the pass reads across the plan/run bodies, judges
-lifecycle health, or fans out by status — per the reads-vs-dispatch test in
-`orchestrator/lifecycle.md`.
+routing. Dispatch a worker once a phase reads across the plan/run bodies, judges
+lifecycle health, or fans out by status. See References for pointers.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and report
-fields follow `orchestrator/dispatch.md`. The health lens below is what the
-worker checks.
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
-- **Plan-maintenance worker** (the hygiene pass, read-only). Pass the
-  Plan-maintenance worker bundle: `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`, `~/.agentdocs/rules/authoring-rules.md`,
-  plus `docs/plans/index.md`, the plans and run folders in scope, and the
-  ownership data. It inspects plan/run-folder health and buckets by lifecycle
-  state, but **reports only** — no migration, status changes, or deletion unless
-  the user asked to apply cleanup. For large plan sets, sample first, then fan
-  out by status or subsystem.
+- **Plan-maintenance worker** (the hygiene pass, read-only). Profile:
+  `maintenance.plan` plus `docs/plans/index.md`, the plans and run folders in
+  scope, and the ownership data. It inspects plan/run-folder health and buckets
+  by lifecycle state, but **reports only** — no migration, status changes, or
+  deletion unless the user asked to apply cleanup. For large plan sets, sample
+  first, then fan out by status or subsystem.
 - **Review worker** only when the requested lens is broader than hygiene — a
   planning-shape critique of whether plans are coherent, well-scoped, and headed
-  the right way. Pass `~/.agentdocs/rules/subagent/review.md` plus the plans
-  under review.
+  the right way. Profile: `review.generic` plus the plans under review.
 
 The worker applies this **health lens** to each plan, and the same lens to each
 orchestration run folder (hub, observed state, open questions, blockers, next
@@ -84,5 +78,10 @@ Record from the worker report into one concise memo:
   sanity check, merge, or abandonment)
 - needs-human list (plans blocked on product, architecture, or ownership)
 - the recommended next cleanup action — the smallest batch worth doing
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
+- `~/.agentdocs/plan-lifecycle.md` — load only as coordination reading before dispatch
 
 $ARGUMENTS

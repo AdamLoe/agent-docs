@@ -16,45 +16,33 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The plan paths are the task; if none are given, ask the
 two intake questions and wait.
 
-Once the plans are named, read `docs/plans/index.md`,
-`~/.agentdocs/plan-lifecycle.md`, each named plan in full, and
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to choose phases and dispatch.
-Use the plans as the source of truth for expected outcomes even if their
-frontmatter claims the work is shipped. Load task-specific
-architecture/decisions/agent-context docs only when a phase needs them.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Once the plans are named, read `docs/plans/index.md` and each named
+plan in full inline. Use the plans as the source of truth for expected outcomes
+even if their frontmatter claims the work is shipped. Load task-specific
+architecture/decisions/agent-context docs only when a phase needs them. See
+References for pointers.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, bundles, and
-commit concurrency follow `orchestrator/dispatch.md`. Each phase below names the
-exact rule files to pass.
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
-- **Review worker** (the lead phase). Pass the Review worker bundle —
-  `~/.agentdocs/rules/subagent/review.md` — plus each named plan and the
-  smallest relevant diff, docs, and source. It judges whether the plan outcome
-  (not just the first task) is actually present, runs cheap verification when it
-  raises confidence, and reports findings ordered by severity. Confirm app state
-  when practical for UI-facing or workflow changes.
+- **Review worker** (the lead phase). Profile: `review.generic` plus each named
+  plan and the smallest relevant diff, docs, and source. It judges whether the
+  plan outcome (not just the first task) is actually present, runs cheap
+  verification when it raises confidence, and reports findings ordered by
+  severity. Confirm app state when practical for UI-facing or workflow changes.
 - **Implementation worker** for obvious, non-debatable misses only, when fixes
-  are authorized. Pass `~/.agentdocs/rules/subagent/implementation.md`,
-  `~/.agentdocs/rules/coding-style.md`,
-  `~/.agentdocs/rules/authoring-rules.md`,
-  `~/.agentdocs/rules/repo-rules.md`. If substantial work remains, recommend
-  another implementation pass rather than patching it inline.
-- **Docs-maintenance worker** when durable docs are missing or stale. Pass
-  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`.
+  are authorized. Profile: `implementation.code-docs`. If substantial work
+  remains, recommend another implementation pass rather than patching it inline.
+- **Docs-maintenance worker** when durable docs are missing or stale. Profile:
+  `maintenance.docs`.
 - **Plan-maintenance worker** for shipped status or migration corrections —
-  migrate durable context first, then set the truthful plan status. Pass
-  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`,
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`.
+  migrate durable context first, then set the truthful plan status. Profile:
+  `maintenance.plan`.
 - **Verification worker** to run gates after any fixes when a gate is better
-  isolated. Pass `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`.
+  isolated. Profile: `verification.readonly`.
 
 ## Closeout
 
@@ -65,6 +53,10 @@ Record from worker reports:
 - plan status and docs migration state
 - checks run and result
 - whether another implementation prompt is needed
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 Plans to review:
 

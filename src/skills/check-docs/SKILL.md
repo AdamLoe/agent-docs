@@ -25,38 +25,32 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 run the two-question intake (which doc(s) to check, plus dials) and wait before
 the deeper reads.
 
-Once the doc paths are known, read
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to plan worker fan-out and
-dispatch. Read `docs/_meta/ownership.json` when a finding turns on ownership, and
-read the named doc paths only enough to scope the work into per-doc or per-subtree
-worker slices — the workers do the reading-across.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Load `docs/_meta/ownership.json` only when a finding turns on
+ownership. See References for pointers.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape follows
-`orchestrator/dispatch.md`. Drift checks are read-only, so worker slices
-parallelize freely — one doc-maintenance worker per doc, or one per doc cluster
-when several docs share a subtree.
+Dispatch read-only workers in parallel — one doc-maintenance worker per doc, or
+one per doc cluster when several docs share a subtree. Workers resolve their
+context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Docs-maintenance worker** per doc/cluster, with a **drift lens** and
-  **read-only** dispatch. Pass the Docs-maintenance worker bundle:
-  `~/.agentdocs/rules/subagent/docs-maintenance.md`,
-  `~/.agentdocs/rules/authoring-rules.md`. Tell it to check accuracy vs code
-  (resolve `path → symbol` pointers and code anchors by name not line, check
-  literal constants, flag contradictions and possible code bugs) and clarity vs
-  the authoring rules (altitude, what-IS framing, no transcription or ungated
-  counts, ownership), and to **report findings without editing or committing**.
-  Point it at the `drift-verification` slot for app-specific high-risk surfaces.
+  **read-only** dispatch. Profile: `maintenance.docs`. Tell it to check accuracy
+  vs code (resolve `path → symbol` pointers and code anchors by name not line,
+  check literal constants, flag contradictions and possible code bugs) and
+  clarity vs the authoring rules (altitude, what-IS framing, no transcription or
+  ungated counts, ownership), and to **report findings without editing or
+  committing**. Point it at the `drift-verification` slot for app-specific
+  high-risk surfaces.
 - **Verification worker** only when a named drift gate is cheap and directly
-  relevant to a literal count or contract the docs assert. Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`, naming the exact gate to run. Skip it
-  when no gate bears directly on the check.
+  relevant to a literal count or contract the docs assert. Profile:
+  `verification.readonly`, naming the exact gate to run. Skip it when no gate
+  bears directly on the check.
 
 A single named doc still goes through a docs-maintenance worker — the
-cross-file read and the house-rule judgment are the dispatch boundary in
-`orchestrator/lifecycle.md`, not an inline exception.
+cross-file read and the house-rule judgment are the dispatch boundary, not an
+inline exception.
 
 ## Closeout
 
@@ -70,5 +64,9 @@ Aggregate from worker reports — no edits, no commits:
 - recommended next action — e.g. "minor, fix inline", "run `fix-docs-drift`",
   "needs an editorial `review-docs-shape` pass", or "escalate the possible code
   bug at X"
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 $ARGUMENTS

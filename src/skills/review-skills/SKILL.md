@@ -17,43 +17,37 @@ Protocol**. This skill is state-driven: it runs directly off the on-disk skill
 suite, so **skip the two-question intake** and do not stop to ask for a task. It
 still honors dials passed in `$ARGUMENTS`; broad-sweep default is `cost-high`.
 
-Then read, inline, the coordination state this review spans:
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Read inline (this is coordination reading, not worker dispatch):
 
 - `~/.agentdocs/skills/registry.md` — the skill inventory.
 - `~/.agentdocs/agent-docs-guide.md` — especially maintenance and lifecycle.
 - `~/.agentdocs/rules/skill-contracts.md` and `~/.agentdocs/rules/repo-rules.md`.
-- `~/.agentdocs/rules/orchestrator/` and `~/.agentdocs/rules/subagent/` —
-  the orchestrator and worker-role rules the skills route to.
 - Representative `~/.agentdocs/skills/*/SKILL.md` bodies, selected by risk
-  (recently changed, mode-ambiguous, or carrying their own policy), plus
-  `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-  `~/.agentdocs/rules/orchestrator/dispatch.md` to check skills against the
-  documented orchestrator model.
+  (recently changed, mode-ambiguous, or carrying their own policy).
 
 Reading and summarizing this coordination state is inline routing work. Dispatch
 a worker once a phase reads across the skill bodies, makes a defensible judgment
-call, or (when authorized) mutates the tree.
+call, or (when authorized) mutates the tree. See References for pointers.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
-concurrency follow `orchestrator/dispatch.md`.
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Review worker** for registry/skill consistency: directory name vs.
   frontmatter `name:` vs. registry row, mode/action/commit metadata, missing or
   stale skills, lifecycle gaps and confusing overlap, `$ARGUMENTS` and
-  missing-input behavior. Use profile `review.generic` plus
+  missing-input behavior. Profile: `review.generic` plus
   `~/.agentdocs/skills/registry.md` and the skill bodies under review.
 - **Docs-maintenance worker** for rule-doc shape and duplicated policy: bootstrap,
   shipping, commit, model-tier, or ownership instructions repeated across skills
-  that should move into a shared rule, and rule-doc house-rule compliance. Pass
-  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md` only when fixes are authorized.
+  that should move into a shared rule, and rule-doc house-rule compliance. Profile:
+  `review.docs` plus `~/.agentdocs/rules/repo-rules.md` only when fixes are
+  authorized.
 - **Verification worker** only when the user authorizes applying fixes and a
-  static check (e.g. registry/skill cross-check) is better isolated. Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`.
+  static check (e.g. registry/skill cross-check) is better isolated. Profile:
+  `verification.readonly`.
 
 Default is read-only review. If the user asks to apply fixes, route them to a
 docs-maintenance or implementation worker with an appropriate mutating profile.
@@ -73,5 +67,10 @@ Record from worker reports, findings first:
   one-platform assumptions, or skills the registry/guide cannot surface.
 - proposed or applied fixes, with commit hashes for any applied, and whether the
   suite is coherent enough to trust or needs a follow-up plan.
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
+- `~/.agentdocs/rules/orchestrator/` — orchestrator and worker-role rules (load only when checking skills against the orchestrator model)
 
 $ARGUMENTS

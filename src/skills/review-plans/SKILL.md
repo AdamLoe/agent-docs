@@ -18,12 +18,13 @@ plan/orchestration slots named by the repo. The task is the named plan paths
 plus any custom review lens; if no plan paths or lens are given, run the
 two-question intake and wait.
 
-Once the plans are named, read `docs/plans/index.md`,
-`~/.agentdocs/plan-lifecycle.md`, and `~/.agentdocs/plan-template.md` so
-the review understands this repo's plan conventions, then each named plan. Read
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to classify and dispatch. Load
-referenced architecture/decisions docs only when a review stream needs them.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Once the plans are named, read `docs/plans/index.md` and each named
+plan inline. Load `~/.agentdocs/plan-lifecycle.md` and
+`~/.agentdocs/plan-template.md` only as coordination reading before dispatch (so
+the review understands this repo's plan conventions). Load referenced
+architecture/decisions docs only when a review stream needs them. See References
+for pointers.
 
 ## Review Policy
 
@@ -41,21 +42,17 @@ referenced architecture/decisions docs only when a review stream needs them.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
-concurrency follow `orchestrator/dispatch.md`. Broad reviews default to
-`cost-high`. Review workers are read-only, so fan them out in parallel — one per
-named plan or one per coherent plan cluster.
+Broad reviews default to `cost-high`. Review workers are read-only, so fan them
+out in parallel — one per named plan or one per coherent plan cluster. Workers
+resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
-- **Review worker** (the critique), one per named plan or coherent cluster. Pass
-  the Review worker bundle: `~/.agentdocs/rules/subagent/review.md` plus the
-  plan(s) under review, with the plan-review lens (or the user's custom lens).
-  Each worker leads with findings ordered by severity and states whether its
-  plans are implementation-ready.
+- **Review worker** (the critique), one per named plan or coherent cluster.
+  Profile: `review.plan` plus the plan(s) under review, with the plan-review
+  lens (or the user's custom lens). Each worker leads with findings ordered by
+  severity and states whether its plans are implementation-ready.
 - **Planning worker** only when the user asked to apply review output as revised
-  plan text. Pass the Planning worker bundle:
-  `~/.agentdocs/rules/subagent/planning.md`,
-  `~/.agentdocs/plan-lifecycle.md`, `~/.agentdocs/plan-template.md`. It
-  edits the named plans at planning altitude and commits before reporting.
+  plan text. Profile: `planning.tracked`. It edits the named plans at planning
+  altitude and commits before reporting.
 
 ## Closeout
 
@@ -65,5 +62,10 @@ Record from worker reports:
 - open questions the user must resolve
 - whether each plan (or the set) is implementation-ready
 - suggested plan edits, or applied edits and their commit hash if authorized
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
+- `~/.agentdocs/plan-lifecycle.md` — load only as coordination reading before dispatch
 
 $ARGUMENTS

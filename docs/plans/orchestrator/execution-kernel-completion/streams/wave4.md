@@ -87,3 +87,68 @@ bash src/verify-agent-docs.sh --measure-launch quick-fix
 
 No registry row updates required. Mode, worker roles, commits, intake, launch
 tier, and normal-input columns remain accurate for all 4 converted skills.
+
+## Batch 3: check-docs, fix-docs-drift, review-docs-shape, review-plans, review-plans-health, review-shipped-work, review-skills
+
+### Word counts
+
+| Skill | Before | After |
+|---|---:|---:|
+| `check-docs` | 510 | 485 |
+| `fix-docs-drift` | 656 | 645 |
+| `review-docs-shape` | 567 | 565 |
+| `review-plans` | 453 | 477 |
+| `review-plans-health` | 605 | 607 |
+| `review-shipped-work` | 391 | 377 |
+| `review-skills` | 499 | 508 |
+
+### Shared policy removed
+
+- **Eager startup loads removed**: All 7 Bootstrap sections now include "Do NOT
+  pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at startup."
+- **Spelled-out worker bundles replaced with profile IDs**: Every worker
+  dispatch now names a profile ID (e.g. `maintenance.docs`, `review.generic`,
+  `review.plan`, `review.docs`, `maintenance.plan`, `implementation.code-docs`,
+  `verification.readonly`). The old pattern of listing
+  `~/.agentdocs/rules/subagent/docs-maintenance.md` + `authoring-rules.md` +
+  `repo-rules.md` inline in dispatch descriptions is removed.
+- **Generic dispatch/lifecycle prose removed**: Inline "dispatch shape follows
+  `orchestrator/dispatch.md`", model-tier policy, and serial-editing prose that
+  duplicates `dispatch.md` removed. Pointed to `skill-contracts.md` Owner
+  Pointers instead.
+- **References sections added** to all 7 skills (previously absent from most),
+  with "do not auto-load" markers.
+
+### lifecycle.md startup load
+
+Removed from all 7 skills. Every skill has "Do NOT pre-load ... `lifecycle.md`"
+in Bootstrap. Two plan-focused skills (`review-plans`, `review-plans-health`)
+retain `plan-lifecycle.md` as deferred coordination reading (before dispatch,
+not at startup) — matching the established pattern from `review-app`.
+
+### Profile IDs used
+
+| Skill | Profiles |
+|---|---|
+| `check-docs` | `maintenance.docs` (read-only drift lens), `verification.readonly` |
+| `fix-docs-drift` | `maintenance.docs`, `review.generic`, `verification.readonly`, `implementation.code-docs` |
+| `review-docs-shape` | `review.docs`, `review.generic` |
+| `review-plans` | `review.plan`, `planning.tracked` |
+| `review-plans-health` | `maintenance.plan`, `review.generic` |
+| `review-shipped-work` | `review.generic`, `implementation.code-docs`, `maintenance.docs`, `maintenance.plan`, `verification.readonly` |
+| `review-skills` | `review.generic`, `review.docs`, `verification.readonly` |
+
+### Gate results
+
+```
+bash src/verify-agent-docs.sh
+→ exit 0  ALL AGENT-DOCS GATES PASS
+
+bash src/verify-agent-docs.sh --context-report
+→ exit 0  CONTEXT REPORT PASS
+```
+
+### Registry rows
+
+No registry row updates required. Mode, worker roles, commits, intake, and
+launch tier columns remain accurate for all 7 converted skills.

@@ -19,8 +19,8 @@ Protocol** with manifest slots: `code_root`, `decisions-domains`, plus
 disk and git state with no two-question intake. Honor any dials passed in
 `$ARGUMENTS`.
 
-Then orient against the review target so the opinion is grounded, not
-free-floating. Read inline (this is coordination reading, not worker dispatch):
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Orient inline (this is coordination reading, not worker dispatch):
 
 - `docs/_meta/ownership.json` — query it to judge whether concepts sit with the
   right owner.
@@ -33,31 +33,27 @@ free-floating. Read inline (this is coordination reading, not worker dispatch):
 - Active plans in `docs/plans/` when direction matters — to judge what's coming
   that the docs will need to serve.
 
-Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to choose phases and dispatch.
 **If `$ARGUMENTS` is empty, default to the whole `docs/` tree** at `cost-high`;
-do not stop to ask.
+do not stop to ask. See References for pointers.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and fan-out
-follow `orchestrator/dispatch.md` and `lifecycle.md`. Editorial judgment is
-strong-model work. Both phases are read-only, so they parallelize freely.
+Editorial judgment is strong-model work. Both phases are read-only, so they
+parallelize freely. Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Docs-maintenance worker** — architecture/decision **shape** and ownership
   review: is the material in the right layer (architecture = what IS, decisions =
   why, agent-context = procedure), is each concept owned cleanly, is
-  `decisions-domains` coverage complete? Report-only, not a repair pass. Pass
-  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, plus the target docs and the
-  ownership/manifest slots it needs.
+  `decisions-domains` coverage complete? Report-only, not a repair pass. Profile:
+  `review.docs`, plus the target docs and the ownership/manifest slots it needs.
 - **Review worker** — broad editorial and product fit through a docs-shape lens:
   coverage and gaps (under- and over-documentation both count), routing and
   fresh-chat fit (trace the path a fresh chat takes to answer a real question),
   altitude and framing, and direction against the active plans. Be opinionated —
-  a hedged editorial is useless. Pass `~/.agentdocs/rules/subagent/review.md`
-  plus the target docs/subtree under review. For a large tree, fan out one review
-  worker per doc cluster and synthesize **one** point of view.
+  a hedged editorial is useless. Profile: `review.generic` plus the target
+  docs/subtree under review. For a large tree, fan out one review worker per doc
+  cluster and synthesize **one** point of view.
 
 This review judges docs *as docs* — workers do not re-verify every code claim,
 but ground coverage claims in `docs/overview.md` and the system's real shape.
@@ -74,5 +70,9 @@ Record from worker reports, synthesized into one opinionated editorial:
 - **Suggested next skill** — `fix-docs-drift` or `check-docs` for the mechanical
   cleanup this surfaced, a new plan for structural moves (offer to draft it into
   `docs/plans/`), or "leave clean" when nothing needs doing.
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 $ARGUMENTS

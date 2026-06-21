@@ -25,53 +25,44 @@ Honor any dials passed in `$ARGUMENTS`. Default
 `skill-contracts.md`; a small or targeted sweep resolves to `cost-medium`, an
 explicit quick pass to `cost-low`.
 
-Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md`. Inline (this is coordination
-reading, not worker dispatch): query `docs/_meta/ownership.json`, and take the
-`docs/architecture/` and `docs/decisions/` inventory. Group the docs into
-~subsystem clusters (an architecture doc + its `decisions/<domain>.md` +
-tightly-coupled neighbours) and tier each: clusters touching a high-risk
-contract surface (from the `drift-verification` slot) or needing multi-file
-reconciliation go to a strong worker; the rest are mechanical mid-tier
-verify-and-fix. Do not read the cluster docs yourself beyond what clustering
-needs — that reading is the workers' job.
+Do NOT pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at
+startup. Inline (this is coordination reading, not worker dispatch): query
+`docs/_meta/ownership.json`, and take the `docs/architecture/` and
+`docs/decisions/` inventory. Group the docs into ~subsystem clusters (an
+architecture doc + its `decisions/<domain>.md` + tightly-coupled neighbours) and
+tier each: clusters touching a high-risk contract surface (from the
+`drift-verification` slot) or needing multi-file reconciliation go to a strong
+worker; the rest are mechanical mid-tier verify-and-fix. Do not read the cluster
+docs yourself beyond what clustering needs — that reading is the workers' job.
+See References for pointers.
 
-## Worker phases
+## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, bundles, and
-commit concurrency follow `orchestrator/dispatch.md`. Editing is **serial per
-tree** — run one docs-maintenance worker at a time on the shared tree, each
-committing its slice before the next starts; aim for ~5–8 clusters in the
-`cost-high` band, sequenced rather than spawned per doc.
+Editing is **serial per tree** — run one docs-maintenance worker at a time on
+the shared tree, each committing its slice before the next starts; aim for ~5–8
+clusters in the `cost-high` band, sequenced rather than spawned per doc.
+Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Docs-maintenance workers**, one per architecture/decision subtree or
-  ownership area, at the tier you assigned. Pass the Docs-maintenance worker
-  bundle — `~/.agentdocs/rules/subagent/docs-maintenance.md`,
-  `~/.agentdocs/rules/authoring-rules.md`,
-  `~/.agentdocs/rules/repo-rules.md` — plus the cluster's doc paths, the
-  `drift-verification` slot content (inline it; the worker starts cold), and the
-  fix-vs-escalate boundary above. Each worker resolves every `path → symbol`
-  pointer (match by name, never line number), scans for forbidden transcription
-  and ungated literal counts, spot-checks its cluster's high-risk facts,
-  compares touched surfaces with the manifest `change-to-doc` owners when
-  drift seems cross-cutting, fixes in place, and commits. Cross-cluster issues
-  go in its `escalate:` list with the exact paths, evidence, and recommended
-  follow-up role.
+  ownership area, at the tier you assigned. Profile: `maintenance.docs`. Pass
+  the cluster's doc paths, the `drift-verification` slot content (inline it; the
+  worker starts cold), and the fix-vs-escalate boundary above. Each worker
+  resolves every `path → symbol` pointer (match by name, never line number),
+  scans for forbidden transcription and ungated literal counts, spot-checks its
+  cluster's high-risk facts, compares touched surfaces with the manifest
+  `change-to-doc` owners when drift seems cross-cutting, fixes in place, and
+  commits. Cross-cluster issues go in its `escalate:` list with the exact paths,
+  evidence, and recommended follow-up role.
 - **Review worker** for the hard ownership and rationale calls a maintenance
-  worker escalated. Pass the Review worker bundle —
-  `~/.agentdocs/rules/subagent/review.md` — plus the docs and escalations in
+  worker escalated. Profile: `review.generic`. Pass the docs and escalations in
   question. It decides which escalations are safe to fold in versus genuinely
   human; default read-only unless you authorize the obvious non-debatable fix.
-- **Verification worker** for the consolidated drift gates. Pass the
-  Verification worker bundle — `~/.agentdocs/rules/subagent/verification.md`,
-  `~/.agentdocs/rules/repo-rules.md` — plus the manifest `drift-gates`. Run
-  this once at the end, not per cluster.
+- **Verification worker** for the consolidated drift gates. Profile:
+  `verification.readonly`. Pass the manifest `drift-gates`. Run this once at the
+  end, not per cluster.
 - **Implementation worker** only when the sweep uncovers a broken script or
-  drift verifier that itself needs a code fix. Pass the Implementation worker
-  bundle — `~/.agentdocs/rules/subagent/implementation.md`,
-  `~/.agentdocs/rules/coding-style.md`,
-  `~/.agentdocs/rules/authoring-rules.md`,
-  `~/.agentdocs/rules/repo-rules.md`.
+  drift verifier that itself needs a code fix. Profile: `implementation.code-docs`.
 
 Do not resolve cross-file judgment inline. When no single worker owned a
 renamed symbol, ownership call, or rationale mismatch that spans clusters,
@@ -88,5 +79,9 @@ Record from worker reports and the final gate:
 - gates run and result
 - whether any mismatch smells like a code bug rather than doc drift
 - commit hash(es)
+
+## References (do not auto-load)
+
+- `skill-contracts.md` Owner Pointers → dispatch shape, profile IDs, resolver
 
 $ARGUMENTS
