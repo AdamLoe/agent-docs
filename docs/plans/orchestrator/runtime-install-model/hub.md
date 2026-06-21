@@ -70,7 +70,7 @@ skill copies mid-run.
 |---|---|---|---|---|
 | 0 Coordination setup | orchestrator inline | done | hub created | 310f764 |
 | 1 Plan review | review.plan (read-only) | done | yes-with-changes; D7a–e adopted | — |
-| 2 WS1 rename + mechanical v1→src | implementation.code-docs (mid) | pending | — | — |
+| 2 WS1 rename + mechanical v1→src | implementation.code-docs (mid) | done | git mv done; `bash src/verify-agent-docs.sh` exit 0; profile table now routes to `src/rules/...` | c54fe23 |
 | 3 Install+Verify machinery (WS2+WS4) | implementation.code-docs (strong) | pending | — | — |
 | 4 WS5 docs & decisions | implementation.code-docs (mid) | pending | — | — |
 | 5 WS3 global ref sweep + siblings | implementation.code-docs (mid) | pending | — | — |
@@ -90,6 +90,20 @@ D7a (install↔verify circular coupling).
 - [`streams/ws3-ref-sweep.md`](streams/ws3-ref-sweep.md)
 - [`streams/ws4-verifier.md`](streams/ws4-verifier.md)
 - [`streams/ws5-docs.md`](streams/ws5-docs.md)
+
+## Carry-forward facts (observed)
+
+- After c54fe23, dispatch routes are `src/...` (not `v1/...`). The
+  `src/rules/context-profiles.md` table already reflects this.
+- **WS1 artifact to catch:** `docs/overview.md:26,28` now read
+  `~/agent-docs/src/skills/<name>` (WS1 rewrote `v1`→`src` inside a
+  `~/agent-docs/` path). WS3's `~/agent-docs/v1` pattern will NOT match this.
+  Correct end state = `~/.agentdocs/skills/<name>` copied by the new installer.
+  Explicitly routed to WS5 (copy-model prose) + WS3 (catch residual
+  `~/agent-docs/src`). Also re-grep `~/agent-docs/src` in shipped review.
+- `manifest.md` `## drift-verification` block still has old install commands
+  (`bash v1/install.sh`, `bash v1/copy-skills.sh`, `~/agent-docs/v1` readlinks)
+  — owned by the Install+Verify phase (3).
 
 ## Open questions / blockers
 
