@@ -83,7 +83,7 @@ skill copies mid-run.
 | 6b Bare-v1 active-files cleanup | maintenance.docs (strong) | done | 29 refs fixed across 13 files (docs→src/, src bodies→~/.agentdocs/); verifier:1007 tightened; gate exit 0 | c3712af |
 | 7 Live install + verify | implementation (mutates $HOME) | done | ~/.agentdocs created (manifest kind=local); 21/21 skills refreshed both tools, markers→~/.agentdocs path; adapter-freshness now RUNS + passes; github --dry-run ok | no repo commit |
 | 8 Closeout (plan + hub ship) | maintenance.plan | done | plan + hub shipped/okay_to_delete; migration notes filled; gate exit 0 | (this commit) |
-| 9 Final drift gate + report | verification.readonly | pending | gate passed inline at phase 8; formal sign-off pending | — |
+| 9 Final drift gate + report | verification.readonly | done | FULLY GREEN at cd3fb9e: source gate + adapter-freshness pass, zero active stale refs (this repo + 8 siblings), runtime resolves 21/21, both installers parse + dry-run; only dirt = 11 preserved deletions | read-only |
 
 Editing is serial on the shared tree; phases 2→5 run one at a time, each
 committing before the next. Phases 1 and 6 are read-only. WS2+WS4 merged per
