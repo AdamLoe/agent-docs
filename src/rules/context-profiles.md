@@ -4,6 +4,9 @@ GENERIC. App-independent. This file is the canonical owner for worker context
 profiles. Skills and dispatch rules name profile IDs from this table; they do
 not copy profile tables, rule bundles, or mutation policy.
 
+Expanded rationale (do not auto-load):
+[`context-profiles-reference.md`](context-profiles-reference.md).
+
 ## Owner Contract
 
 Each profile row defines:
@@ -12,10 +15,12 @@ Each profile row defines:
 - `purpose` - the work shape the profile supports.
 - `core_rule_paths` - exact rule files loaded before task-routed sources.
 - `overlays` - conditional files loaded only when the named condition is true.
-- `mutation_capability` - `read-only`, `mutating`, or `conditional`.
+- `mutation_capability` - `read-only`, `mutating`, or `conditional` (`review.*`
+  and `verification.*` are always `read-only`).
 - `budget_words` - report target for core rule files, excluding task-routed
   docs/source/tests.
-- `enforcement_status` - `report-only`, `pilot-enforced`, or `enforced`.
+- `enforcement_status` - `report-only`, `pilot-enforced`, or `enforced`
+  (only the latter two make an over-budget total a hard failure).
 
 Budget exceptions must name the exact files and the correctness reason in the
 context report. Enforcement is enabled only after the profile, converted skills,
@@ -39,17 +44,17 @@ scenario rows, and verifier checks agree.
 
 ## Scenario Contract
 
-The verifier treats workflow scenarios as a report-only behavioral contract,
-each naming expected questions, profiles, phases, mutator count, state-basis
-fields, final ordering, and budget expectation. That matrix is verifier-only
-data, so it lives in the never-auto-loaded fixture
-`src/verify-fixtures/workflow-scenarios.json` instead of this runtime-loaded
-file. The verifier reads it there; rerun `bash src/verify-agent-docs.sh
---context-report` to see the `bounded-quick-fix` and other scenario rows. No
-skill or runtime context loads that fixture.
+Workflow scenarios are a report-only behavioral contract (expected questions,
+profiles, phases, mutator count, state-basis fields, final ordering, budget
+expectation per task shape). That matrix is verifier-only data and lives in the
+never-auto-loaded fixture `src/verify-fixtures/workflow-scenarios.json`, not on
+this runtime-loaded file. No skill or runtime context loads that fixture; rerun
+`bash src/verify-agent-docs.sh --context-report` to see the `bounded-quick-fix`
+and other scenario rows.
 
 ## See also
 
+- [`context-profiles-reference.md`](context-profiles-reference.md) — rationale (do not auto-load).
 - [`orchestrator/dispatch.md`](orchestrator/dispatch.md)
 - [`orchestrator/lifecycle.md`](orchestrator/lifecycle.md)
 - [`../skills/registry.md`](../skills/registry.md)

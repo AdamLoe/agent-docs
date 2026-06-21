@@ -1,6 +1,6 @@
 ---
 wave: 3
-status: pilot-complete
+status: launch-drivers-compressed
 commit: (see below)
 ---
 
@@ -107,3 +107,76 @@ the role cards — will hit a correctness floor above their listed target the sa
 way this one did. Recommend the user either accept lifecycle at ~1037 (with this
 decision recorded) or relax that one budget; the per-file budgets that assume
 "all bulk is relocatable explanation" do not hold for the contract-dense files.
+
+---
+
+# Wave 3 continued — compress the three launch-driver rules
+
+Same RELOCATE method as the pilot, applied to the contract-dense files loaded at
+every skill startup. Decision E3 in force: relocate maximally with zero
+correctness loss; do NOT delete real rules to hit a number — report the floor.
+
+## Per-file before → after + reachability + floor
+
+| File | Before | After | Aspirational target | Reachable by relocation alone? |
+|---|---:|---:|---:|---|
+| `src/rules/skill-contracts.md` | 831 | 637 | 250 | **No** |
+| `src/rules/orchestrator/dispatch.md` | 929 | 811 | 300 | **No** |
+| `src/rules/context-profiles.md` | 512 | 533 | 350 | **No** |
+
+Reference leaves (NEVER auto-loaded — pointer only in the parent):
+
+- `src/rules/skill-contracts-reference.md` (855 w, generic-rule cap 1800)
+- `src/rules/orchestrator/dispatch-reference.md` (1106 w, orchestrator cap 2200)
+- `src/rules/context-profiles-reference.md` (568 w, generic-rule cap 1800)
+
+`rg -l "<leaf>" src/skills src/rules` → each leaf appears ONLY in its parent
+file's pointer; none is a profile `core_rule_paths` entry; launch loop counts
+none. Confirmed never-auto-loaded.
+
+## Correctness floors (what blocks going lower)
+
+- **skill-contracts ~630.** Relocated: intake "why cache-first", branch examples,
+  dial migration/rationale, model-policy rationale, owner-pointer prose. KEPT
+  (normative startup contract a worker needs at decision time): the 4-step intake
+  order + the stop rule, the two intake branches, both dials + resolution + the
+  two gate-checked dial-vocab needles, model-policy roles + escalation triggers,
+  human-stops, verification-fallback, owner pointers. These are rules, not
+  examples; 250 would require deleting contract.
+- **dispatch ~810.** Relocated: the Standard Preamble checklist (orchestrator
+  bakes it into prompts — not a decision-time dispatch rule), all rationale, and
+  packet-field "why". KEPT (explicit preserve-list): the dispatch-packet field
+  block verbatim (the machine the orchestrator fills), context-profile use, the
+  full Worker Reports field list incl. invalidation conditions, mutation
+  authority + `plan_closeout` grant, resume rule, dispatch-failure stop,
+  commit-concurrency / serial-editing rule. 300 would require deleting field
+  lists.
+- **context-profiles ~530.** Almost nothing is relocatable: the Profiles table
+  alone is 285 words of machine-checked contract (verifier parses 11 rows,
+  validates mutation/budget/status), plus the Owner Contract field list and the
+  untouched Scenario-fixture pointer (`bounded-quick-fix` needle). Only the
+  budget-exception / enforcement / scenario rationale moved to the leaf. Net +21
+  vs. baseline because the pointer + two load-bearing parentheticals
+  (review/verification read-only, enforcement_status gating) were added; 350 is
+  unreachable without deleting the table or the field-list contract.
+
+## Launch totals (both drop by the combined −291)
+
+- `--measure-launch quick-fix`: **3303 → 3012**. MEASURE-LAUNCH PASS.
+- `--measure-launch orchestrate`: **4753 → 4462**. MEASURE-LAUNCH PASS.
+  (skill-contracts −194, dispatch −118, context-profiles +21.)
+
+## Gate
+
+- `bash src/verify-agent-docs.sh` → exit 0, `ALL AGENT-DOCS GATES PASS`.
+- `bash src/verify-agent-docs.sh --context-report` → exit 0, `CONTEXT REPORT PASS`.
+- `--context-report --profile implementation.code` / `implementation.tracked`
+  → exit 0 (still report-only over-budget on profile core files owned by other
+  workers; untouched here — no `budget_words` / `enforcement_status` changed).
+
+## Verdict
+
+Like the lifecycle pilot, these are contract-dense launch drivers whose floors
+(~630 / ~810 / ~530) sit above target. The combined −291 is the honest relocation
+ceiling; the budget-reconciliation step should raise these per-file budgets to
+their floors rather than cut correctness.
