@@ -49,8 +49,9 @@ context-report directly — Wave 0 measures them.
 | 1b | Role-card "what you read" rewrites (subagent/*.md) | done | all 6 defer to --resolve; See-also marked non-loading; cards grew slightly (Wave 3 compresses) | bf386b7 |
 | 2 | Align role + mutation contracts (closeout authority, remove fix-enabled review) | done | plan_closeout grant consistent profile/role/dispatch; review+verification read-only; report needs invalidation conds | ac67fb8 |
 | 3 | Meet budgets via relocation; raise unreachable budgets to floors (E3) | active | compression DONE (launch: b672c55; profile: d30592e). File floors: lifecycle 1037, skill-contracts 637, dispatch 811, ctx-profiles 533, authoring 793, repo-rules 429, coding-style 353+3 overlays, plan-lifecycle 427, plan-template 223. 4/7 profiles now in budget. DONE — 3 budgets reconciled to floors (164784e); all 11 profiles within budget. Launch reconcile after Wave 4 | 164784e |
-| 4 | Finish skill recipes (21 skills → profile IDs; review-app defaults) | active | batches: (1) review-app (2) quick-fix/plan/ship-current-work/ship-plans (3) 7 review/check (4) 8 utility/bootstrap (5) orchestrate last. This is what cuts launch budgets | — |
-| 5 | Source-bound verifier gates + flip enforcement | pending | — | — |
+| 4 | Finish skill recipes (21 skills → profile IDs) | done | all 21 converted (6ce6ea4,e4fa857,250683b,fa75f3e,abf9f9b,7689131). Launch floors: fixed(quick-fix) 1683; classifiers orch 3118/fresh-chat 2778/start-session 2862. fixed≤1200 + classifier≤2000 unreachable → E3 floors | 7689131 |
+| 5a | Source-bound checks + launch budgets (report-only) | active | implement grep-able contract checks + launch-budget check; report violations before flipping | — |
+| 5b | Fix violations + flip profiles/launches to enforced | pending | — | — |
 | 6 | Durable migration + closeout | pending | — | — |
 
 Editing serial on the shared tree. Review where risk warrants (verifier rewrite,
