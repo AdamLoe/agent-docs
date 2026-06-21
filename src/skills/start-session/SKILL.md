@@ -19,9 +19,11 @@ state and does **not** ask the two intake questions. It still honors dials passe
 in `$ARGUMENTS` (e.g. a `review-*`/`cost-*` setting flows into whatever owning
 skill it routes into).
 
-Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` for the reads-vs-dispatch test,
-dispatch packet, and commit concurrency.
+Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` for the
+reads-vs-dispatch test. Load the dispatch contract only when ready to dispatch,
+and resolve worker context with
+`bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
+table.
 
 ## Orchestrator reads
 
@@ -92,8 +94,7 @@ Record from the state reads and any worker reports:
 
 ## References (do not auto-load)
 
-- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
 - `~/.agentdocs/rules/orchestrator/lifecycle.md` — reads-vs-dispatch test
-- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
+- `skill-contracts.md` Owner Pointers → dispatch contract, profile IDs and resolver
 
 $ARGUMENTS

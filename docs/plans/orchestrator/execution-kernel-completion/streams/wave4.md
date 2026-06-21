@@ -204,18 +204,22 @@ cuts paid for explicit profile IDs + References).
   grant), `review.generic`/`.docs`/`.plan`, `maintenance.docs`/`.plan`,
   `verification.readonly`. Workers self-resolve via `--resolve`.
 
-**Launch**: 4609 (run start) → 3118 (−1491). Counts 5 files: skill-body 900,
-skill-contracts 637, lifecycle 1037, docs-index 114, manifest-slots 430.
+**Launch**: 4609 → 3118 (−1491). dispatch (811) + context-profiles (680)
+deferred; lifecycle (1037) retained. Floor = 637+1037+114+430+900 = 3118.
 
-- **dispatch.md (811) deferred**: yes — off startup; no literal
-  `rules/orchestrator/dispatch.md` string, so measure-launch drops it.
-- **context-profiles.md (680) deferred**: yes — resolved via `--resolve`; no
-  literal `rules/context-profiles.md` string.
-- **lifecycle.md (1037) retained**: yes — classifier needs the ladder at startup.
-  Launch floor = 637+1037+114+430+900 = 3118; lifecycle is irreducible.
+**Gate**: `verify-agent-docs.sh` exit 0 ALL PASS; `--measure-launch orchestrate`
+exit 0 TOTAL 3118. Registry row: no update.
 
-**Gate**: `verify-agent-docs.sh` exit 0 ALL PASS; `--context-report` exit 0
-CONTEXT REPORT PASS; `--measure-launch orchestrate` exit 0 TOTAL 3118.
+## Batch 6: classifier deferral parity (fresh-chat, start-session)
 
-Registry row: no update — roles, intake `asks`, launch tier `strong`, commits
-unchanged.
+Deferred `dispatch.md` + `context-profiles.md` off startup for both remaining
+classifiers. Removed literal `rules/orchestrator/dispatch.md` and
+`rules/context-profiles.md` strings from Bootstrap and References; replaced
+with skill-contracts.md Owner Pointers pointer. `lifecycle.md` retained.
+
+| Skill | Words before→after | Launch before→after |
+|---|---|---|
+| `fresh-chat` | 538 → 560 | 4247 → 2778 (−1469) |
+| `start-session` | 631 → 644 | 4340 → 2862 (−1478) |
+
+All 3 classifiers now floor at ~2800–3100. Gate: exit 0 ALL AGENT-DOCS GATES PASS.

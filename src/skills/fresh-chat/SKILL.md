@@ -17,9 +17,11 @@ two-question intake and wait — do not guess the task, do not offer a menu of
 tasks.
 
 Once the request is known, read
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to apply the reads-vs-dispatch
-test and route. Load the smallest matching route for the user's actual request:
+`~/.agentdocs/rules/orchestrator/lifecycle.md` to classify and apply the
+reads-vs-dispatch test. Load the dispatch contract only when ready to dispatch,
+and resolve worker context with
+`bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
+table. Load the smallest matching route for the user's actual request:
 
 - System shape or first-screen orientation → `docs/overview.md`.
 - Current subsystem facts, or code work touching system behaviour →
@@ -40,7 +42,7 @@ test and route. Load the smallest matching route for the user's actual request:
 
 Routing context only, read inline — this is coordination state, not task work:
 
-- Orchestrator core (skill-contracts, lifecycle, dispatch — above).
+- Orchestrator core (skill-contracts, lifecycle — above; dispatch only at dispatch time).
 - `docs/_meta/manifest.md` for `repo_name` and `code_root`.
 - `docs/index.md`.
 - The smallest route for the user's actual request.
@@ -79,8 +81,7 @@ Record:
 
 ## References (do not auto-load)
 
-- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
 - `~/.agentdocs/rules/orchestrator/lifecycle.md` — reads-vs-dispatch test
-- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
+- `skill-contracts.md` Owner Pointers → dispatch contract, profile IDs and resolver
 
 $ARGUMENTS
