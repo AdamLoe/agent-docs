@@ -47,8 +47,8 @@ context-report directly — Wave 0 measures them.
 | 0 | Truthful baseline + freeze (fixtures, re-measure, update plan baseline) | done | launches: quick-fix 3557/≤1200, orchestrate 5796/≤2000; fixture src/verify-fixtures/baseline.md | 7f3809d |
 | 1a | Scenario matrix → fixture + resolver modes + verifier reads fixture | done | context-profiles 892→503; launches −389 each (qf 3168, orch 5407); --resolve/--measure-launch added | fc07685 |
 | 1b | Role-card "what you read" rewrites (subagent/*.md) | done | all 6 defer to --resolve; See-also marked non-loading; cards grew slightly (Wave 3 compresses) | bf386b7 |
-| 2 | Align role + mutation contracts (closeout authority, remove fix-enabled review) | active | key fix: impl role card prohibits plan-status but impl.tracked grants closeout | — |
-| 3 | Meet worker + launch budgets (compress runtime rules, no correctness loss) | pending | — | — |
+| 2 | Align role + mutation contracts (closeout authority, remove fix-enabled review) | done | plan_closeout grant consistent profile/role/dispatch; review+verification read-only; report needs invalidation conds | ac67fb8 |
+| 3 | Meet worker + launch budgets (compress runtime rules, no correctness loss) | active-pilot | ALL 9 files 50–73% over (lifecycle 1826/500, dispatch 929/300, skill-contracts 831/250, authoring 1428/700); 8/11 profiles over. Pilot lifecycle.md to test reachability + reference-leaf pattern | — |
 | 4 | Finish skill recipes (21 skills → profile IDs; review-app defaults) | pending | — | — |
 | 5 | Source-bound verifier gates + flip enforcement | pending | — | — |
 | 6 | Durable migration + closeout | pending | — | — |
