@@ -1073,9 +1073,10 @@ allow_retired_reference() {
 
   case "$label|$relative_file|$line_text" in
     'new-project-prompt|src/agent-docs-guide.md|`v1/new-project-prompt.md` is retired; `/rebuild-agent-docs` is the') return 0 ;;
-    'fresh-planning-chat|docs/decisions/agent-docs.md|`v1/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.') return 0 ;;
+    'fresh-planning-chat|docs/decisions/agent-docs.md|`src/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.') return 0 ;;
     'new-project-prompt|docs/plans/orchestrator/runtime-install-model/streams/ws1-rename.md|  and the allowlisted `v1/new-project-prompt.md` retired-name mention.') return 0 ;;
     'new-project-prompt|docs/plans/orchestrator/runtime-install-model/streams/ws1-rename.md|- `allow_retired_reference` allowlist in verifier: `v1/new-project-prompt.md`') return 0 ;;
+    'new-project-prompt|docs/plans/orchestrator/runtime-install-model/hub.md|  file mentioning retired names (e.g. `new-project-prompt`, possibly') return 0 ;;
   esac
 
   return 1

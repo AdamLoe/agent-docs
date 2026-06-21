@@ -6,92 +6,76 @@ adopt, with each repo supplying only its own facts in `docs/_meta/`.
 
 Repo: `github.com/AdamLoe/agent-docs`
 
-## Install — REQUIRED
+## Source and runtime layout
 
-Clone the repo, then run the installer from the checkout:
+The source checkout and the installed runtime are separate:
+
+- **Source checkout** lives wherever you clone it (e.g. `~/agent-docs`). The
+  exported kit lives under `src/` in the checkout.
+- **Runtime** is always at `~/.agentdocs/`. Skills, rules, templates, and
+  consuming-repo docs self-reference `~/.agentdocs/...`; the source path is
+  not part of the runtime contract.
+
+## Install / Update — REQUIRED
+
+Install and update are the same operation. Two entry points:
+
+**Normal install from GitHub (recommended):**
+
+```sh
+bash ~/.agentdocs/install-agentdocs.sh        # update from main branch
+bash ~/.agentdocs/install-agentdocs.sh <tag>  # install a specific tag
+```
+
+Or run the bundled installer directly from a checkout:
 
 ```sh
 git clone https://github.com/AdamLoe/agent-docs.git ~/agent-docs
-bash ~/agent-docs/v1/install.sh
+bash ~/agent-docs/src/install-agentdocs.sh
 ```
 
-`v1/install.sh` copies the agent-docs skills into the Claude and Codex user
-skill directories. It verifies that `~/agent-docs/v1/...` plus sample skills
-resolve through both tools.
-If the physical checkout lives somewhere else, pass that path:
+This downloads a GitHub codeload archive of `AdamLoe/agent-docs` (default
+`main` branch, or the named tag), validates the bundle shape, then atomically
+replaces `~/.agentdocs/`. Even when run from a local checkout, it installs
+from GitHub, not from local source.
+
+**Dogfood / development install (source checkout only):**
 
 ```sh
-bash /path/to/agent-docs/v1/install.sh /path/to/agent-docs
+bash ~/agent-docs/install-agentdocs-local.sh
 ```
 
-Use `--dry-run` with the same arguments to inspect the canonical path and
-skill-copy actions before mutating `$HOME`. Tool-owned paths are adapters only.
+Publishes the local `src/` bundle into `~/.agentdocs/`. Source edits do not
+affect other projects until this runs. Use `--dry-run` to preview.
 
-## The three-layer model
+Both installers then refresh the managed Claude and Codex skill copies from
+`~/.agentdocs/skills/` into `~/.claude/skills/<name>` and
+`~/.agents/skills/<name>`.
 
-There are three paths to keep separate:
+## After skill changes (dogfood workflow)
 
-```text
-physical checkout            # where the repo clone actually lives
-~/agent-docs/                 # canonical self-reference path
-~/.claude/skills/<name>       # copied Claude adapter
-~/.agents/skills/<name>       # copied Codex adapter
+After editing source skills, republish and verify:
+
+```sh
+bash ~/agent-docs/install-agentdocs-local.sh
+bash src/verify-agent-docs.sh
 ```
-
-The installer makes `~/agent-docs` resolve to the physical checkout when those
-paths differ. Docs and skills use `~/agent-docs/v1/...` as the stable way to
-refer back to the kit.
-
-Tools discover skills through their own adapter paths:
-
-- Claude Code reads copied skill entries from `~/.claude/skills/<name>`.
-- Codex reads copied user skills from `~/.agents/skills/<name>`. In this repo
-  setup, `v1/copy-skills.sh` refreshes both tool copies from
-  `~/agent-docs/v1/skills/<name>`.
-
-The kit remains the source of truth. Tool discovery dirs get refreshed copies;
-run `bash ~/agent-docs/v1/copy-skills.sh` after adding, renaming, or deleting
-skills, then run `bash ~/agent-docs/v1/copy-skills.sh --check` to confirm the
-copied adapters match the source. `v1/copy-skills.sh --dry-run` previews those
-changes, refuses symlinked skill roots, and preflights unmanaged skill-name
-conflicts before deleting stale managed children or refreshing copies.
 
 ## Reference convention
 
-Anything that points at the kit uses the absolute path
-`~/agent-docs/<version>/...`:
+Skills, rules, and consuming-repo docs use the runtime path
+`~/.agentdocs/...` as their stable self-reference:
 
-- Use `~/agent-docs/v1/rules/authoring-rules.md`.
+- Use `~/.agentdocs/rules/authoring-rules.md`.
 - Do not use relative paths like `../../rules/...` for kit references; a
   skill may be read through a copied adapter path.
-- Do not use tool-specific roots such as `${CLAUDE_PLUGIN_ROOT}` for the
-  standard copied-adapter install.
-
-Relative links are still fine inside ordinary Markdown files when they
-link to neighboring files in the same repo.
-
-## Layout & versioning
-
-```text
-~/agent-docs/
-  README.md          <- this file, the install summary
-  AGENTS.md          <- router-only entry point for agent tools
-  CLAUDE.md          <- router-only entry point for Claude
-  docs/              <- architecture, decisions, agent-context, plans
-  v1/                <- the kit: skills/, rules/, plan-lifecycle.md,
-                       plan-template.md, agent-docs-guide.md
-```
-
-A consuming repo pins its version via `agent_docs_version` in
-`docs/_meta/manifest.md`. Old repos stay on their version untouched; new
-repos adopt the latest.
 
 ## More detail
 
 See [`docs/index.md`](docs/index.md) for the dogfood docs router:
 
 - [`docs/architecture/install-and-adapters.md`](docs/architecture/install-and-adapters.md)
-  covers the canonical path and per-tool adapters.
+  covers the source/runtime split, installers, and per-tool adapters.
 - [`docs/architecture/workflow-kit.md`](docs/architecture/workflow-kit.md)
   covers skills, rules, templates, and workflow commands.
 - [`docs/decisions/agent-docs.md`](docs/decisions/agent-docs.md)

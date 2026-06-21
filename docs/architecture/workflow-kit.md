@@ -1,26 +1,29 @@
 # Workflow kit
 
-`v1/` is the stable and active kit version. The workflow lowers context by
+`src/` is the source kit; `~/.agentdocs/` is the installed runtime that skills,
+rules, and consuming-repo docs self-reference. The workflow lowers context by
 routing work to focused roles, not by generating per-run context workspaces.
-The fixed startup runtime-card is `v1/rules/skill-contracts.md`; profile policy
-lives in `v1/rules/context-profiles.md`, generic classification in lifecycle,
-dispatch shape in dispatch, and command inventory in the registry. Mandatory
-startup is cache-first: read the runtime card, needed manifest slots, and
-`docs/index.md`, then stop. `docs/overview.md` is routed by task.
+The fixed startup runtime-card is `~/.agentdocs/rules/skill-contracts.md`;
+profile policy lives in `~/.agentdocs/rules/context-profiles.md`, generic
+classification in lifecycle, dispatch shape in dispatch, and command inventory
+in the registry. Mandatory startup is cache-first: read the runtime card,
+needed manifest slots, and `docs/index.md`, then stop. `docs/overview.md` is
+routed by task.
 
 ## Context layers
 
-Cache-stable inputs are the router-only adapters, `v1/rules/skill-contracts.md`,
-manifest startup slots, docs indexes, and stable worker role cards. The
-task-specific layer is the smallest owning slice: one architecture leaf, one
-decisions domain, one agent-context procedure, selected plan/run docs, and
-needed source/tests. Ownership JSON and repository layout are queried only for
-ownership or location questions. Never auto-load architecture
-leaves, decisions, plans, run docs, `v1/agent-docs-guide.md`, full ownership
-JSON, source files, verifier output, or pitch material. Class word budgets live
-in `v1/rules/authoring-rules.md`. Worker context profiles live in
-`v1/rules/context-profiles.md` and are reported by
-`v1/verify-agent-docs.sh --context-report`.
+Cache-stable inputs are the router-only adapters,
+`~/.agentdocs/rules/skill-contracts.md`, manifest startup slots, docs indexes,
+and stable worker role cards. The task-specific layer is the smallest owning
+slice: one architecture leaf, one decisions domain, one agent-context
+procedure, selected plan/run docs, and needed source/tests. Ownership JSON and
+repository layout are queried only for ownership or location questions. Never
+auto-load architecture leaves, decisions, plans, run docs,
+`~/.agentdocs/agent-docs-guide.md`, full ownership JSON, source files,
+verifier output, or pitch material. Class word budgets live in
+`~/.agentdocs/rules/authoring-rules.md`. Worker context profiles live in
+`~/.agentdocs/rules/context-profiles.md` and are reported by
+`~/.agentdocs/verify-agent-docs.sh --context-report`.
 
 ## Orchestrator/worker model
 
@@ -38,14 +41,14 @@ workers; it does not rewrite authoritative docs into generated summaries.
 
 Rules live at the layer that owns them:
 
-- **Universal** (`v1/rules/*.md`) - what every skill needs regardless of role.
-- **Orchestrator** (`v1/rules/orchestrator/`) - lifecycle choice, dispatch
+- **Universal** (`src/rules/*.md`) - what every skill needs regardless of role.
+- **Orchestrator** (`src/rules/orchestrator/`) - lifecycle choice, dispatch
   packet shape, worker report shape, context profiles, commit concurrency, and
   opt-in run docs.
-- **Subagent** (`v1/rules/subagent/`) - one role's job card.
-- **Context profiles** (`v1/rules/context-profiles.md`) - exact core rule
+- **Subagent** (`src/rules/subagent/`) - one role's job card.
+- **Context profiles** (`src/rules/context-profiles.md`) - exact core rule
   files, conditional overlays, mutation capability, and report-only budgets.
-- **Skill body** (`v1/skills/<name>/SKILL.md`) - one command's routing surface,
+- **Skill body** (`src/skills/<name>/SKILL.md`) - one command's routing surface,
   profile IDs, worker phases, and closeout shape.
 
 ## Focused handoffs
@@ -116,16 +119,15 @@ implementation, docs-maintenance, or plan-maintenance.
 
 | Surface | Owns |
 |---|---|
-| `v1/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
-| `v1/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
-| `v1/copy-skills.sh` | Refreshes copied agent-docs skills in Claude and Codex user skill directories after skill changes. |
-| `v1/verify-agent-docs.sh` | Non-mutating kit drift gate; `--context-report [--profile <id>]` prints profile/scenario reports; `--scaffold <repo-root>` checks a target repo's docs scaffold. |
-| `v1/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `context-profiles.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
-| `v1/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
-| `v1/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
-| `v1/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
-| `v1/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
-| `v1/plan-lifecycle.md`, `v1/plan-template.md` | Plan metadata and plan skeleton. |
+| `src/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
+| `src/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
+| `src/verify-agent-docs.sh` | Non-mutating kit drift gate (source-repo default); `--context-report [--profile <id>]` prints profile/scenario reports; `--scaffold <repo-root>` checks a target repo's docs scaffold. |
+| `src/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `context-profiles.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
+| `src/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
+| `src/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
+| `src/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
+| `src/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
+| `src/plan-lifecycle.md`, `src/plan-template.md` | Plan metadata and plan skeleton. |
 
 Editing workers commit their own slice before reporting; later workers repair
 with further commits. Editing is serial per working tree, and the orchestrator
@@ -134,40 +136,40 @@ mutations.
 
 ## Workflow commands
 
-After adding, renaming, or deleting a skill, run:
+After adding, renaming, or deleting a skill in `src/`, re-publish and verify:
 
 ```sh
-bash ~/agent-docs/v1/copy-skills.sh ~/agent-docs
-bash ~/agent-docs/v1/copy-skills.sh --check ~/agent-docs
+bash install-agentdocs-local.sh
+bash src/verify-agent-docs.sh
 ```
 
 Before shipping agent-docs kit changes, run:
 
 ```sh
-bash ~/agent-docs/v1/verify-agent-docs.sh
+bash src/verify-agent-docs.sh
 ```
 
-With no arguments, the verifier validates the `agent-docs` checkout that
-contains the script: this repo's docs, manifest, ownership data, skill registry,
-template scaffold, context profile contract, stale references, executable bits,
-and local copied adapter freshness.
+With no arguments, the verifier validates the agent-docs source checkout:
+docs, manifest, ownership data, skill registry, template scaffold, context
+profile contract, stale references, executable bits, and local adapter
+freshness. Run from outside the source repo, it prints a `--scaffold`
+directive and exits 0.
 
 For profile inspection:
 
 ```sh
-bash ~/agent-docs/v1/verify-agent-docs.sh --context-report
-bash ~/agent-docs/v1/verify-agent-docs.sh --context-report --profile implementation.code
+bash src/verify-agent-docs.sh --context-report
+bash src/verify-agent-docs.sh --context-report --profile implementation.code
 ```
 
 For a consuming repo, run the target-aware scaffold check:
 
 ```sh
-bash ~/agent-docs/v1/verify-agent-docs.sh --scaffold .
+bash ~/.agentdocs/verify-agent-docs.sh --scaffold .
 ```
 
 That mode checks the target scaffold, manifest slots, ownership paths, routes,
-and unresolved placeholders. It does not validate the kit checkout or copied
-local adapters; copied freshness stays owned by `v1/copy-skills.sh --check`.
+and unresolved placeholders. It does not validate the source checkout.
 
 - `/start-session` checks local git state, active plans, shipped cleanup
   candidates, and orchestration run docs, then routes into the owning skill.
@@ -223,10 +225,10 @@ Use the smallest command that owns the current job:
 
 ## See also
 
-- [`../../v1/agent-docs-guide.md`](../../v1/agent-docs-guide.md)
+- [`../../src/agent-docs-guide.md`](../../src/agent-docs-guide.md)
 - [`install-and-adapters.md`](install-and-adapters.md)
 - [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
-- [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md)
-- [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/)
-- [`../../v1/rules/subagent/`](../../v1/rules/subagent/)
-- [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md)
+- [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md)
+- [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/)
+- [`../../src/rules/subagent/`](../../src/rules/subagent/)
+- [`../../src/rules/authoring-rules.md`](../../src/rules/authoring-rules.md)

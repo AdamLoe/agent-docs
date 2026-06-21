@@ -1,32 +1,38 @@
 # agent-docs overview
 
 `agent-docs` is a reusable documentation-workflow kit for LLM-assisted
-codebases. The repo contains generic rules and skills under `src/`; each
-consuming repo supplies app-specific facts in its own `docs/_meta/`.
+codebases. The repo contains generic rules and skills under `src/`; the
+installed runtime lives at `~/.agentdocs/`; each consuming repo supplies
+app-specific facts in its own `docs/_meta/`.
 
-## Current layout
+## Layout
 
 ```text
-~/agent-docs/                  # canonical self-reference path
-  README.md                    # user-facing install summary
-  AGENTS.md, CLAUDE.md         # router-only auto-loaded files
-  docs/                        # this repo's dogfood docs
+~/agent-docs/                  # source checkout (dogfood)
+  install-agentdocs-local.sh   # dev/dogfood installer
   src/
     skills/                    # reusable command bodies
-    rules/                     # generic authoring, coding, repo, orchestration rules
+    rules/                     # authoring, coding, repo, orchestration rules
     template/                  # docs scaffold copied by /rebuild-agent-docs
+    install-agentdocs.sh       # GitHub installer (bundled)
+    verify-agent-docs.sh       # source-repo gate and scaffold checker
+
+~/.agentdocs/                  # installed runtime (all self-references point here)
+  skills/
+  rules/
+  template/
+  install-agentdocs.sh
+  verify-agent-docs.sh
+  .agentdocs-install-manifest  # provenance only
 ```
 
 ## Discovery adapters
 
-The repo is tool-neutral. Tool-owned paths are only adapters:
+The kit is tool-neutral. Tool-owned paths are only adapters:
 
-- `AGENTS.md` and `CLAUDE.md` are root router files that point to
-  `docs/index.md`; this overview is task-routed from that index
-- `~/.claude/skills/<name>` copied from `~/agent-docs/src/skills/<name>` by
-  `src/copy-skills.sh`
-- `~/.agents/skills/<name>` copied from `~/agent-docs/src/skills/<name>` by
-  `src/copy-skills.sh`
+- `AGENTS.md` and `CLAUDE.md` are root router files pointing to `docs/index.md`
+- `~/.claude/skills/<name>` copied from `~/.agentdocs/skills/<name>` by the installers
+- `~/.agents/skills/<name>` copied from `~/.agentdocs/skills/<name>` by the installers
 
 ## Working model
 

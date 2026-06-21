@@ -1,24 +1,46 @@
 # agent-docs decisions
 
-## Neutral checkout path
+## Source/runtime split
 
-**Decision.** `~/agent-docs` is the canonical self-reference path for the kit;
-the physical checkout may live elsewhere, and `v1/install.sh` makes the
-canonical path resolve to that checkout. Versioned kit files live under `v1/`.
+**Decision.** The editable source checkout lives at the repo root with the
+exported kit under `src/`. The installed runtime is always at `~/.agentdocs/`;
+skills, rules, templates, and consuming-repo docs self-reference
+`~/.agentdocs/...` as the only stable runtime path. `v1/` is retired as a
+runtime versioning term; `src/` is the source directory name only.
 
-**Why.** The kit is shared by Claude, Codex, and future tools. A neutral
-canonical path keeps the source from appearing owned by one tool while still
-letting docs, skills, and copied adapters use stable absolute references.
+**Why.** Separating source from runtime means local edits to the source
+checkout do not affect other projects until an installer runs explicitly. A
+fixed global runtime path keeps all consuming repos pointing at the same
+location regardless of where the source is cloned.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../README.md`](../../README.md).
 
+## Two-installer model (install equals update)
+
+**Decision.** There are two install entry points; update is the same operation
+as install. `install-agentdocs-local.sh` (top-level) is the dogfood/dev path:
+it publishes the local `src/` bundle into `~/.agentdocs/` (source kind
+`local`). `src/install-agentdocs.sh` (bundled) is the normal user path: it
+downloads a GitHub codeload archive from `AdamLoe/agent-docs` (default `main`
+branch or a named tag), validates bundle shape, then atomically replaces
+`~/.agentdocs/` (source kind `github`). Even when called from a checkout, the
+GitHub installer installs from GitHub — not local source. There is no separate
+update script.
+
+**Why.** Keeping install and update as one operation eliminates a separate
+update command that can drift. Two entry points preserve the explicit dogfood
+path without hiding it behind a flag.
+
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../install-agentdocs-local.sh`](../../install-agentdocs-local.sh), [`../../src/install-agentdocs.sh`](../../src/install-agentdocs.sh).
+
 ## Tool paths are adapters
 
-**Decision.** Claude and Codex both use copied user skill directories:
-`v1/copy-skills.sh` copies agent-docs skills into `~/.claude/skills/<name>`
-and `~/.agents/skills/<name>` and marks them with `.agent-docs-managed`.
-The tool skill roots themselves stay tool-owned; symlinked roots are conflicts
-by default. Claude plugin manifests are not a supported adapter path.
+**Decision.** Claude and Codex both use copied user skill directories: the
+installers copy agent-docs skills from `~/.agentdocs/skills/` into
+`~/.claude/skills/<name>` and `~/.agents/skills/<name>` and mark each copy
+with `.agent-docs-managed`. The tool skill roots themselves stay tool-owned;
+symlinked roots are refused. Claude plugin manifests are not a supported
+adapter path.
 
 **Why.** Tools discover skills differently, but the command bodies should not
 fork. Using the same copy model for both tools avoids adapter-specific
@@ -26,35 +48,47 @@ surprises, while the marker lets refreshes update only agent-docs copies.
 
 **Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md).
 
-## Skill updates use the copy refresh
+## Managed-skill deletion policy
 
-**Decision.** After agent-docs skills change, run `v1/copy-skills.sh` to
-refresh Claude's `~/.claude/skills` and Codex's `~/.agents/skills`
-directories with marked agent-docs-managed copies, then run
-`v1/copy-skills.sh --check` to prove those copies match the source.
-`copy-skills.sh` preflights unmanaged source-name conflicts before removing
-stale managed children or refreshing copied skills, and `--dry-run` previews the
-same mutation plan without writing.
+**Decision.** The per-skill `.agent-docs-managed` marker file is the deletion
+authority. On install, stale managed skills (marker present, no longer in the
+runtime bundle) are pruned. An unmanaged same-name skill collision stops the
+install with an error — the installer never silently deletes unowned user
+content. There is no force flag.
 
-**Why.** Tool sessions may not notice newly-created source directories. A
-dedicated copy refresh makes the update step explicit while preserving
-unrelated personal skills; the read-only check catches stale installed command
-bodies before a future agent starts from the wrong instructions.
+**Why.** Tying deletion to the per-skill marker means no external manifest is
+needed to track which skills to remove. Stopping on unmanaged conflicts
+protects personal user skills; a clear error is better than a silent override.
 
-**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/copy-skills.sh`](../../v1/copy-skills.sh).
+**Alternatives considered.** A force flag for collision override — rejected
+because it too easily destroys unowned user content without confirmation.
 
-## Installer ignores copy test destinations
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md).
 
-**Decision.** `AGENT_DOCS_SKILLS_DEST` is a public testing hook for
-`v1/copy-skills.sh`, not installer configuration. `v1/install.sh` clears it when
-calling the copy script so installs always target the documented Claude and
-Codex skill roots.
+## Install manifest is provenance only
 
-**Why.** A test-only destination is useful for isolated safety checks, but the
-installer's job is to make the canonical self-reference path and both tool
-adapters usable in `$HOME`.
+**Decision.** `~/.agentdocs/.agentdocs-install-manifest` records source kind,
+source path or tag, source URL (GitHub installs), and install timestamp. It is
+not the skill-deletion authority and is not consulted to decide what to remove.
 
-**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/install.sh`](../../v1/install.sh), [`../../v1/copy-skills.sh`](../../v1/copy-skills.sh).
+**Why.** The manifest answers "where did this runtime come from and when?" —
+a lightweight provenance record. Deletion logic belongs in the per-skill
+marker, not in a manifest that could get out of sync with actual installed
+content.
+
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md).
+
+## Skill refresh is embedded in installers
+
+**Decision.** After replacing `~/.agentdocs/`, both installers run the
+managed-skill copy logic inline. The retired `copy-skills.sh` is removed;
+there is no standalone refresh command. After skill changes in `src/`, run the
+local installer then the verifier.
+
+**Why.** Embedding refresh in the installers removes a separate script that
+could be forgotten or drift. The manifest gate checks adapter freshness.
+
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md).
 
 ## Router-only auto-loaded files
 
@@ -64,20 +98,20 @@ docs entry point. They must not own architecture, decisions, or app facts.
 **Why.** Always-loaded fact dumps drift and crowd the context window. Routers
 keep startup cheap while preserving the normal docs tree as the owner.
 
-**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md).
+**Applies to.** [`../architecture/install-and-adapters.md`](../architecture/install-and-adapters.md), [`../../src/rules/authoring-rules.md`](../../src/rules/authoring-rules.md).
 
 ## Overview is task-routed
 
-**Decision.** Standard skill startup reads `v1/rules/skill-contracts.md`, the
-manifest slots needed by the skill, and `docs/index.md`; `docs/overview.md` is
-loaded only when the task needs system-shape orientation or a skill names it as
-task input.
+**Decision.** Standard skill startup reads `~/.agentdocs/rules/skill-contracts.md`,
+the manifest slots needed by the skill, and `docs/index.md`;
+`docs/overview.md` is loaded only when the task needs system-shape orientation
+or a skill names it as task input.
 
 **Why.** The route audit showed every skill can classify from its own body,
 manifest slots, and the docs index. Making overview optional keeps repeated
 startup cache-stable without losing the one-screen orientation route.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md), [`../../v1/skills/`](../../v1/skills/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/skill-contracts.md`](../../src/rules/skill-contracts.md), [`../../src/skills/`](../../src/skills/).
 
 ## Work ships through `/ship-current-work`
 
@@ -87,43 +121,44 @@ startup cache-stable without losing the one-screen orientation route.
 **Why.** Shipping is more than chat summarization: it includes diff review,
 owning-doc updates, manifest gates, plan migration, staging, and commit.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/ship-current-work/SKILL.md`](../../v1/skills/ship-current-work/SKILL.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/ship-current-work/SKILL.md`](../../src/skills/ship-current-work/SKILL.md).
 
 ## Planning uses `/plan`
 
 **Decision.** The planning entry point is `/plan`, backed by
-`v1/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.
+`src/skills/plan/SKILL.md`; the older `fresh-planning-chat` name is retired.
 
 **Why.** Planning is a first-class workflow, not just a fresh-chat variant.
 The shorter command makes it clear that the agent owns concern-shaping,
 implementer briefs, and high-level plan/doc routing.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/plan/SKILL.md`](../../v1/skills/plan/SKILL.md), [`../../v1/install.sh`](../../v1/install.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/plan/SKILL.md`](../../src/skills/plan/SKILL.md).
 
 ## Skill contracts are shared
 
 **Decision.** Suite-wide skill metadata and reusable skill policy live in
-`v1/skills/registry.md` and `v1/rules/skill-contracts.md`.
+`src/skills/registry.md` and `src/rules/skill-contracts.md`.
 
 **Why.** Repeating mode, bootstrap, shipping, and model-tier policy inside
 every skill makes the skills drift from each other. A registry plus shared
 contracts gives the doctor and skill-review flows something concrete to
 validate.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/registry.md`](../../src/skills/registry.md), [`../../src/rules/skill-contracts.md`](../../src/rules/skill-contracts.md).
 
 ## Verifier modes are explicit
 
-**Decision.** `v1/verify-agent-docs.sh` with no arguments validates the
-agent-docs kit checkout that contains the script. Consuming repos use the
-target-aware scaffold mode:
-`v1/verify-agent-docs.sh --scaffold <repo-root>`.
+**Decision.** `src/verify-agent-docs.sh` with no arguments validates the
+agent-docs source checkout that contains the script. Consuming repos use the
+target-aware scaffold mode: `~/.agentdocs/verify-agent-docs.sh --scaffold
+<repo-root>`. When run outside the source repo, the verifier prints a
+`--scaffold` directive and exits 0.
 
-**Why.** A script reached through `~/agent-docs` resolves to the kit checkout,
-not automatically to the caller's repository. Making the target explicit
-prevents a rebuild from appearing verified when only the shared kit was checked.
+**Why.** A script reached through `~/.agentdocs/` resolves to the runtime
+bundle, not to the caller's repository. Making the target explicit prevents a
+rebuild from appearing verified when only the shared kit was checked.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh), [`../../v1/skills/rebuild-agent-docs/SKILL.md`](../../v1/skills/rebuild-agent-docs/SKILL.md), [`../../v1/skills/doctor/SKILL.md`](../../v1/skills/doctor/SKILL.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh), [`../../src/skills/rebuild-agent-docs/SKILL.md`](../../src/skills/rebuild-agent-docs/SKILL.md), [`../../src/skills/doctor/SKILL.md`](../../src/skills/doctor/SKILL.md).
 
 ## Startup checks route to existing skills
 
@@ -135,7 +170,7 @@ the existing workflow skills.
 implementation, cleanup, or orchestration path that can drift from the owning
 skills.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/start-session/SKILL.md`](../../v1/skills/start-session/SKILL.md), [`../../v1/skills/clear-plans/SKILL.md`](../../v1/skills/clear-plans/SKILL.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/start-session/SKILL.md`](../../src/skills/start-session/SKILL.md), [`../../src/skills/clear-plans/SKILL.md`](../../src/skills/clear-plans/SKILL.md).
 
 **Tradeoffs.** A startup run may immediately hand off to a mutating skill, but
 the mutation still follows that skill's verification, doc migration, and commit
@@ -151,7 +186,7 @@ tracked in local git.
 deleted latest version should remain recoverable from git history rather than
 being lost from an uncommitted working tree.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/clear-plans/SKILL.md`](../../v1/skills/clear-plans/SKILL.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/clear-plans/SKILL.md`](../../src/skills/clear-plans/SKILL.md), [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md).
 
 ## Command names favor short job labels
 
@@ -162,19 +197,19 @@ registry groups them by job family.
 compact and grouped by intent instead of exposed as one long undifferentiated
 list.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/registry.md`](../../src/skills/registry.md).
 
 ## Skill listing reports source plus freshness
 
-**Decision.** `/list-skills` reports the canonical `~/agent-docs/v1/skills/`
+**Decision.** `/list-skills` reports the canonical `~/.agentdocs/skills/`
 inventory, project-local skill directories, and freshness of the installed
 Claude/Codex adapter copies.
 
-**Why.** Source skill bodies are the contract of record, while tool adapters are
-copied discovery surfaces that can go stale. Listing both prevents an installed
-copy from being mistaken for the authoritative inventory.
+**Why.** Source skill bodies are the contract of record, while tool adapters
+are copied discovery surfaces that can go stale. Listing both prevents an
+installed copy from being mistaken for the authoritative inventory.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/list-skills/SKILL.md`](../../v1/skills/list-skills/SKILL.md), [`../../v1/skills/list-skills/list-skills.sh`](../../v1/skills/list-skills/list-skills.sh), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/list-skills/SKILL.md`](../../src/skills/list-skills/SKILL.md), [`../../src/skills/registry.md`](../../src/skills/registry.md).
 
 ## Feedback inbox is gitignored
 
@@ -186,7 +221,7 @@ inbox file.
 dogfooding inside the kit repo, without creating accidental untracked source
 changes or a required commit for every note.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/feedback-agent-docs/SKILL.md`](../../v1/skills/feedback-agent-docs/SKILL.md), [`../../.gitignore`](../../.gitignore).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/feedback-agent-docs/SKILL.md`](../../src/skills/feedback-agent-docs/SKILL.md), [`../../.gitignore`](../../.gitignore).
 
 ## Subagent-first orchestration
 
@@ -200,49 +235,51 @@ used.
 
 **Why.** Making one agent instruction set serve both "navigate the workflow" and
 "do the task" is what bloated and blurred the skills. Splitting orchestrator
-control (`v1/rules/orchestrator/`) from worker roles (`v1/rules/subagent/`) keeps
-orchestrator context lean and worker prompts clean, and passing exact rule-file
-links — instead of copied prose or open-ended "discover the system" instructions
-— keeps dispatch cheap and unambiguous. User-facing skill *names* stay the same
-because the change is internal execution model, not command surface; a missing
-worker-dispatch capability is an error to report, not a reason to inline.
+control (`src/rules/orchestrator/`) from worker roles (`src/rules/subagent/`)
+keeps orchestrator context lean and worker prompts clean, and passing exact
+rule-file links — instead of copied prose or open-ended "discover the system"
+instructions — keeps dispatch cheap and unambiguous. User-facing skill *names*
+stay the same because the change is internal execution model, not command
+surface; a missing worker-dispatch capability is an error to report, not a
+reason to inline.
 
 **Alternatives considered.** A direct/delegated boolean per skill — rejected
-because it reintroduced the two-jobs problem and a per-skill "should I delegate?"
-debate the docs spent context re-litigating.
+because it reintroduced the two-jobs problem and a per-skill "should I
+delegate?" debate the docs spent context re-litigating.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/skill-contracts.md`](../../v1/rules/skill-contracts.md), [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/), [`../../v1/rules/subagent/`](../../v1/rules/subagent/), [`../../v1/skills/registry.md`](../../v1/skills/registry.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/skill-contracts.md`](../../src/rules/skill-contracts.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/rules/subagent/`](../../src/rules/subagent/), [`../../src/skills/registry.md`](../../src/skills/registry.md).
 
 ## Commit-heavy worker shipping
 
-**Decision.** Editing workers commit their own completed slice before reporting;
-follow-up workers repair or revert through additional commits. Editing is serial
-per working tree because concurrent commits race the git index, and parallel
-editing uses worktree isolation or orchestrator-applied patches. Each mutating
-worker snapshots dirty state, preserves unrelated user changes and deletions,
-stages only owned paths by filename, and stops if unrelated dirty state blocks a
-coherent slice. The orchestrator records commit hashes and verifies the final
-observed state; the user squashes later if desired.
+**Decision.** Editing workers commit their own completed slice before
+reporting; follow-up workers repair or revert through additional commits.
+Editing is serial per working tree because concurrent commits race the git
+index, and parallel editing uses worktree isolation or orchestrator-applied
+patches. Each mutating worker snapshots dirty state, preserves unrelated user
+changes and deletions, stages only owned paths by filename, and stops if
+unrelated dirty state blocks a coherent slice. The orchestrator records commit
+hashes and verifies the final observed state; the user squashes later if
+desired.
 
 **Why.** Workers own their slice end to end, so the commit belongs with the
-worker that verified it green. Serial-by-default editing avoids index races that
-file-ownership fences cannot prevent.
+worker that verified it green. Serial-by-default editing avoids index races
+that file-ownership fences cannot prevent.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/), [`../../v1/rules/subagent/`](../../v1/rules/subagent/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/rules/subagent/`](../../src/rules/subagent/).
 
 ## Source-first compact handoffs
 
 **Decision.** Worker dispatch is source-first and compact: orchestrators pass
 exact rule links and path plus heading/search hints, workers read authoritative
-docs/source directly for exact details, and carry-forward summaries contain only
-observed decisions, findings, touched files, gates, commits, blockers, and
+docs/source directly for exact details, and carry-forward summaries contain
+only observed decisions, findings, touched files, gates, commits, blockers, and
 assumptions.
 
-**Why.** Summaries are useful continuity, but they become risky when they replace
-the document or source that owns the fact. Keeping dispatch packets and reports
-short saves output tokens without weakening evidence.
+**Why.** Summaries are useful continuity, but they become risky when they
+replace the document or source that owns the fact. Keeping dispatch packets and
+reports short saves output tokens without weakening evidence.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/subagent/`](../../v1/rules/subagent/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/rules/orchestrator/lifecycle.md`](../../src/rules/orchestrator/lifecycle.md), [`../../src/rules/subagent/`](../../src/rules/subagent/).
 
 **Tradeoffs.** Workers spend some input reading source docs directly, but the
 workflow avoids stale generated context and large prior-transcript handoffs.
@@ -250,16 +287,16 @@ workflow avoids stale generated context and large prior-transcript handoffs.
 ## Context profiles before usage reports
 
 **Decision.** Agent-docs enforces context economy with static layer contracts,
-word-count budgets, a canonical `v1/rules/context-profiles.md` owner, and the
-read-only `v1/verify-agent-docs.sh --context-report` resolver. Worker reports
+word-count budgets, a canonical `src/rules/context-profiles.md` owner, and the
+read-only `src/verify-agent-docs.sh --context-report` resolver. Worker reports
 include runtime usage counts only when raw counts are exposed by the runtime or
 explicitly requested.
 
 **Why.** Deterministic profile reports and scenario rows catch context drift
-without requiring every adapter to expose identical runtime metrics. Optional raw
-counts can inform later review, but they are not default boilerplate.
+without requiring every adapter to expose identical runtime metrics. Optional
+raw counts can inform later review, but they are not default boilerplate.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/context-profiles.md`](../../v1/rules/context-profiles.md), [`../../v1/rules/authoring-rules.md`](../../v1/rules/authoring-rules.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/verify-agent-docs.sh`](../../v1/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/rules/authoring-rules.md`](../../src/rules/authoring-rules.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
 ## Final-state shipping order
 
@@ -268,11 +305,11 @@ run-doc mutations before running the final consolidated drift gate, then report
 from that verified final state. Review and verification workers are read-only;
 findings route back to implementation, docs-maintenance, or plan-maintenance.
 
-**Why.** A gate run before plan status or doc migration does not prove the state
-the user receives. Mutation authority must match the context profile that tells
-a worker how to edit, verify, stage, and commit safely.
+**Why.** A gate run before plan status or doc migration does not prove the
+state the user receives. Mutation authority must match the context profile that
+tells a worker how to edit, verify, stage, and commit safely.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/lifecycle.md`](../../src/rules/orchestrator/lifecycle.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md).
 
 ## Orchestrate coordinates specialists
 
@@ -285,7 +322,7 @@ keep quality and context under control is to preserve specialist worker
 boundaries and let the orchestrator hold only the map, evidence, assumptions,
 and next action.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/orchestrate/SKILL.md`](../../v1/skills/orchestrate/SKILL.md), [`../../v1/rules/orchestrator/`](../../v1/rules/orchestrator/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/).
 
 ## Orchestration run docs are opt-in
 
@@ -294,35 +331,35 @@ and next action.
 docs or grants permission after the orchestrator explains a concrete resume
 risk.
 
-**Why.** Persistent run state is valuable for long multi-agent work, but making
-it the default would create extra temporary documentation for ordinary changes.
-Keeping the mode inside `/orchestrate` preserves the compact command surface
-and avoids reviving retired orchestration command names.
+**Why.** Persistent run state is valuable for long multi-agent work, but
+making it the default would create extra temporary documentation for ordinary
+changes. Keeping the mode inside `/orchestrate` preserves the compact command
+surface and avoids reviving retired orchestration command names.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/skills/orchestrate/SKILL.md`](../../v1/skills/orchestrate/SKILL.md), [`../../v1/rules/orchestrator/run-docs.md`](../../v1/rules/orchestrator/run-docs.md), [`../../v1/plan-lifecycle.md`](../../v1/plan-lifecycle.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/run-docs.md`](../../src/rules/orchestrator/run-docs.md), [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md).
 
 **Tradeoffs.** Default runs are less resumable after context loss, but they
 avoid committed coordination folders unless the user accepts that cost.
 
-## Focused v1 handoffs over generated context
+## Focused handoffs over generated context
 
-**Decision.** The active kit stays on v1 and lowers context through focused
-worker roles, planner-produced implementation briefs, and concise orchestrator
-carry-forward summaries.
+**Decision.** The active kit lowers context through focused worker roles,
+planner-produced implementation briefs, and concise orchestrator carry-forward
+summaries.
 
-**Why.** The useful part of the generated-context exploration was deterministic,
-source-backed, role-specific input. The cost was extra infrastructure: generated
-workspaces, packet helpers, YAML metadata, parser work, and launcher behavior
-that became another workflow surface to keep correct. V1 can get the benefit by
-making the handoff boundary explicit.
+**Why.** The useful part of the generated-context exploration was
+deterministic, source-backed, role-specific input. The cost was extra
+infrastructure: generated workspaces, packet helpers, YAML metadata, parser
+work, and launcher behavior that became another workflow surface to keep
+correct. The focused handoff model gets the benefit without the infrastructure.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../v1/rules/orchestrator/dispatch.md`](../../v1/rules/orchestrator/dispatch.md), [`../../v1/rules/orchestrator/lifecycle.md`](../../v1/rules/orchestrator/lifecycle.md), [`../../v1/rules/subagent/planning.md`](../../v1/rules/subagent/planning.md).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/rules/orchestrator/lifecycle.md`](../../src/rules/orchestrator/lifecycle.md), [`../../src/rules/subagent/planning.md`](../../src/rules/subagent/planning.md).
 
 **Alternatives considered.** Generated repo-local workspaces, metadata v2,
 packet helper scripts, generated context artifacts, and broader `docs/index.md`
 skill routing.
 
-**Tradeoffs.** Orchestrators still need discipline to pass compact summaries and
-route unclear work to planning workers. The upside is that handoffs remain plain
-dispatch text backed by source docs and rules, without adding a second generated
-context system.
+**Tradeoffs.** Orchestrators still need discipline to pass compact summaries
+and route unclear work to planning workers. The upside is that handoffs remain
+plain dispatch text backed by source docs and rules, without adding a second
+generated context system.
