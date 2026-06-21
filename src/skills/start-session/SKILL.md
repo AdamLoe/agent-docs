@@ -21,7 +21,7 @@ skill it routes into).
 
 Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` and
 `~/.agentdocs/rules/orchestrator/dispatch.md` for the reads-vs-dispatch test,
-dispatch packet, rule bundles, and commit concurrency.
+dispatch packet, and commit concurrency.
 
 ## Orchestrator reads
 
@@ -47,23 +47,18 @@ git), and the smallest next workflow.
 
 ## Worker phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and commit
-concurrency follow `orchestrator/dispatch.md`. start-session usually dispatches
-**no task worker** — it routes into the owning skill instead. Spawn a worker only
+start-session usually dispatches **no task worker** — it routes into the owning
+skill instead. Workers resolve context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`. Spawn a worker only
 when triage crosses the reads-vs-dispatch boundary:
 
 - **Plan-maintenance worker** when cleanup candidates need eligibility or
-  migration review before deletion. Pass the Plan-maintenance worker bundle:
-  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`,
-  `~/.agentdocs/rules/authoring-rules.md`.
+  migration review before deletion. Profile: `maintenance.plan`.
 - **Review worker** when active or recently shipped work needs a state check
-  before choosing between implementation and cleanup. Pass
-  `~/.agentdocs/rules/subagent/review.md` plus the relevant plan/source.
+  before choosing between implementation and cleanup. Profile: `review.generic`
+  plus the relevant plan/source.
 - **Verification worker** only for a narrow local git/plan-state check better
-  isolated from the orchestrator. Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`.
+  isolated from the orchestrator. Profile: `verification.readonly`.
 
 Routing into the owning skill (use existing skills; do not copy their procedures).
 When more than one mutating route is plausible, prefer preserving local git state
@@ -94,5 +89,11 @@ Record from the state reads and any worker reports:
 - cleanup candidates and any plan-history risk
 - the selected next skill and why
 - the action taken now, or the single question blocking a safe route
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/orchestrator/lifecycle.md` — reads-vs-dispatch test
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS

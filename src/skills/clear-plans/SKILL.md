@@ -16,12 +16,13 @@ Protocol** with manifest slots: `repo_name`, `code_root`, plus `change-to-doc`
 and `drift-gates`/`drift-verification` for any migration follow-up.
 
 This skill is **state-driven**: it runs directly off `docs/plans/` and git state,
-so there is no two-question intake. Honor any dials passed in `$ARGUMENTS` where
-they affect fan-out or model spend. Read `docs/plans/index.md`,
+so there is no two-question intake. Honor any dials passed in `$ARGUMENTS`. Do NOT
+pre-load `context-profiles.md`, `dispatch.md`, or `lifecycle.md` at startup.
+
+Read the coordination state inline before dispatching: `docs/plans/index.md`,
 `~/.agentdocs/plan-lifecycle.md`, and the manifest for lifecycle and ownership
-context inline; query `docs/_meta/ownership.json` for migration targets rather
-than bulk-loading it. Then read `~/.agentdocs/rules/orchestrator/lifecycle.md`
-and `~/.agentdocs/rules/orchestrator/dispatch.md` to dispatch.
+context; query `docs/_meta/ownership.json` for migration targets rather than
+bulk-loading it.
 
 A plan is working coordination, not canonical knowledge: once its work has
 shipped **and** its durable context has been migrated into
@@ -33,19 +34,14 @@ work.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, rule bundles,
-and commit concurrency follow `orchestrator/dispatch.md`. Each phase below names
-the exact rule files to pass in the dispatch packet.
+Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Use only the phases the state needs.
 
-- **Plan-maintenance worker** (the sweep and migration — the main job). Pass
-  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`,
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`. It sweeps top-level plan files
-  (skipping `index.md` and `template.md`) and run folders, buckets each one
-  (in-flight, ready-to-migrate, ready-to-delete, needs-human, long-lived),
-  migrates durable facts and rationale into the owning docs **before** any status
-  change, then:
+- **Plan-maintenance worker** (the sweep and migration — the main job). Profile:
+  `maintenance.plan`. It sweeps top-level plan files (skipping `index.md` and
+  `template.md`) and run folders, buckets each one (in-flight, ready-to-migrate,
+  ready-to-delete, needs-human, long-lived), migrates durable facts and rationale
+  into the owning docs **before** any status change, then:
   - **`okay_to_delete: true`** — sanity-checks that the owning docs carry the key
     facts, confirms the latest plan/run-doc version is tracked in local git with
     no staged/unstaged/renamed/deleted/untracked changes, and only then deletes
@@ -68,14 +64,9 @@ the exact rule files to pass in the dispatch packet.
   It commits its slice before reporting.
 - **Docs-maintenance worker** only when the migration targets need real
   architecture/decision edits beyond what the plan-maintenance worker handles
-  cleanly. Pass `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`. Architecture is rewritten in place;
-  decisions get the mandatory fields. Code paths in docs are relative to the
-  manifest's `code_root`.
+  cleanly. Profile: `maintenance.docs`.
 - **Verification worker** only when files changed and a final drift gate is
-  better isolated. Pass `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`.
+  better isolated. Profile: `verification.readonly`.
 
 Never delete a plan or run-doc whose latest version is not already in local git
 history, and never delete a freshly migrated plan in the same pass — flagging it
@@ -90,5 +81,10 @@ Record from worker reports, one line per entry:
 - **left** — in flight and long-lived
 - **needs human** — couldn't confirm shipped, or migration needs a judgment call
 - commit hash when changes were made
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS

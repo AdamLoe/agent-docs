@@ -152,3 +152,122 @@ bash src/verify-agent-docs.sh --context-report
 
 No registry row updates required. Mode, worker roles, commits, intake, and
 launch tier columns remain accurate for all 7 converted skills.
+
+## Batch 4: fresh-chat, start-session, list-skills, feedback-agent-docs, clear-plans, wrap-up-current-chat, doctor, rebuild-agent-docs
+
+### Classes applied
+
+| Skill | Class | Notes |
+|---|---|---|
+| `fresh-chat` | A — classifier | Keeps lifecycle.md load; routing/classification preserved |
+| `start-session` | A — classifier | Keeps lifecycle.md load; state-driven routing preserved |
+| `list-skills` | B — pure utility | Stripped lifecycle.md and dispatch.md loads; lean registry/frontmatter IO |
+| `feedback-agent-docs` | B — pure utility | Stripped lifecycle.md and dispatch.md loads; lean capture IO |
+| `clear-plans` | C — thin fixed recipe | Profile IDs; no startup lifecycle.md; maintenance.plan |
+| `wrap-up-current-chat` | C — thin fixed recipe | Profile IDs; no startup lifecycle.md; maintenance.docs |
+| `doctor` | C — thin fixed recipe | Profile IDs; no startup lifecycle.md; verification.readonly + repair profiles |
+| `rebuild-agent-docs` | C — thin fixed recipe | Profile IDs; no startup lifecycle.md; maintenance.docs |
+
+### Word counts
+
+| Skill | Before | After |
+|---|---:|---:|
+| `fresh-chat` | 509 | 538 |
+| `start-session` | 622 | 631 |
+| `list-skills` | 483 | 375 |
+| `feedback-agent-docs` | 709 | 622 |
+| `clear-plans` | 662 | 637 |
+| `wrap-up-current-chat` | 572 | 535 |
+| `doctor` | 594 | 576 |
+| `rebuild-agent-docs` | 576 | 576 |
+
+### Shared policy removed
+
+- **Spelled-out worker bundles replaced with profile IDs**: All Class C skills
+  previously listed full rule file paths in dispatch (e.g.,
+  `~/.agentdocs/rules/subagent/plan-maintenance.md` + `plan-lifecycle.md` +
+  `authoring-rules.md` + `repo-rules.md`). Replaced with profile IDs throughout:
+  `maintenance.plan`, `maintenance.docs`, `verification.readonly`,
+  `implementation.code-docs`.
+- **"Do NOT pre-load" prohibition added** to Class C skills: `clear-plans`,
+  `wrap-up-current-chat`, `doctor`, and `rebuild-agent-docs` all now explicitly
+  prohibit pre-loading `context-profiles.md`, `dispatch.md`, or `lifecycle.md`
+  at startup.
+- **lifecycle.md and dispatch.md stripped** from Class B: `list-skills` and
+  `feedback-agent-docs` no longer load `orchestrator/lifecycle.md` or
+  `orchestrator/dispatch.md`. The reads-vs-dispatch boundary is now implicit
+  (inline for pure IO utilities).
+- **Resolver reference added** to all skills: Workers told to resolve context
+  via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+- **References sections added** to Class C skills (where absent) and classifiers.
+- **Copied dispatch prose removed**: "dispatch shape follows orchestrator/dispatch.md"
+  inline prose removed from worker phase descriptions; pointed to References instead.
+
+### lifecycle.md startup handling
+
+| Skill | Class | Loads orchestrator/lifecycle.md? |
+|---|---|---|
+| `fresh-chat` | A | Yes — once request is known (deferred, not startup) |
+| `start-session` | A | Yes — during bootstrap after Standard Intake |
+| `list-skills` | B | No — stripped entirely |
+| `feedback-agent-docs` | B | No — stripped entirely |
+| `clear-plans` | C | No — "Do NOT pre-load" prohibition; plan-lifecycle.md only as deferred coordination reading |
+| `wrap-up-current-chat` | C | No — "Do NOT pre-load" prohibition; plan-lifecycle.md only when chat wrapped a plan |
+| `doctor` | C | No — "Do NOT pre-load" prohibition |
+| `rebuild-agent-docs` | C | No — "Do NOT pre-load" prohibition |
+
+### Profile IDs used
+
+| Skill | Profiles |
+|---|---|
+| `fresh-chat` | `review.generic`, `review.docs` |
+| `start-session` | `maintenance.plan`, `review.generic`, `verification.readonly` |
+| `list-skills` | `verification.readonly` |
+| `feedback-agent-docs` | `maintenance.docs`, `verification.readonly` |
+| `clear-plans` | `maintenance.plan`, `maintenance.docs`, `verification.readonly` |
+| `wrap-up-current-chat` | `maintenance.docs`, `maintenance.plan`, `verification.readonly` |
+| `doctor` | `verification.readonly`, `maintenance.docs`, `implementation.code-docs` |
+| `rebuild-agent-docs` | `maintenance.docs`, `implementation.code-docs`, `verification.readonly`, `maintenance.plan` |
+
+### Classifier launch measurements
+
+```
+bash src/verify-agent-docs.sh --measure-launch fresh-chat
+  skill-body             538
+  skill-contracts        637
+  context-profiles       680
+  dispatch               811
+  lifecycle              1037
+  docs-index             114
+  manifest-slots         430
+  TOTAL                  4247
+MEASURE-LAUNCH PASS
+
+bash src/verify-agent-docs.sh --measure-launch start-session
+  skill-body             631
+  skill-contracts        637
+  context-profiles       680
+  dispatch               811
+  lifecycle              1037
+  docs-index             114
+  manifest-slots         430
+  TOTAL                  4340
+MEASURE-LAUNCH PASS
+```
+
+Both classifiers legitimately include lifecycle.md (Class A allowlist).
+
+### Gate results
+
+```
+bash src/verify-agent-docs.sh
+→ exit 0  ALL AGENT-DOCS GATES PASS
+
+bash src/verify-agent-docs.sh --context-report
+→ exit 0  CONTEXT REPORT PASS
+```
+
+### Registry rows
+
+No registry row updates required. Mode, worker roles, commits, intake, launch
+tier, and normal-input columns remain accurate for all 8 converted skills.

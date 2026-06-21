@@ -16,14 +16,13 @@ Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `drift-gates`. doctor
 is **state-driven**: it runs off existing disk and git state, so it skips both
 intake questions and does not stop to ask for a task. It still honors dials
-passed in `$ARGUMENTS`.
+passed in `$ARGUMENTS`. Do NOT pre-load `context-profiles.md`, `dispatch.md`, or
+`lifecycle.md` at startup.
 
-Then read, inline, the coordination state this check validates:
-`docs/_meta/manifest.md`, `docs/_meta/ownership.json`, `~/.agentdocs/skills/registry.md`,
-`~/.agentdocs/rules/skill-contracts.md`, and the static gate commands recorded in the
-manifest `drift-gates` slot. To classify and dispatch, read
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md`.
+Read the coordination state inline: `docs/_meta/manifest.md`,
+`docs/_meta/ownership.json`, `~/.agentdocs/skills/registry.md`,
+`~/.agentdocs/rules/skill-contracts.md`, and the static gate commands recorded in
+the manifest `drift-gates` slot.
 
 ## What gets validated
 
@@ -50,35 +49,27 @@ The verification worker confirms:
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape and bundles
-follow `orchestrator/dispatch.md`. Run the verification worker first, every
-invocation; the two fix workers run only when the user asks to repair failures.
+Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Run the verification worker first, every invocation; fix workers run only when
+the user asks to repair failures.
 
-- **Verification worker** (the health check). Pass the Verification worker
-  bundle: `~/.agentdocs/rules/subagent/verification.md`,
-  `~/.agentdocs/rules/repo-rules.md`. It runs the scaffold, manifest,
-  registry, and stale-reference checks above. In this kit repo, that typically
-  means `~/.agentdocs/verify-agent-docs.sh` plus the manifest `drift-gates`; in a
-  consuming repo, the scaffold portion is
+- **Verification worker** (the health check). Profile: `verification.readonly`.
+  It runs the scaffold, manifest, registry, and stale-reference checks above. In
+  this kit repo, that typically means `~/.agentdocs/verify-agent-docs.sh` plus the
+  manifest `drift-gates`; in a consuming repo, the scaffold portion is
   `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>` plus the target
   manifest `drift-gates`. It reports each failure with the exact file, path, or
   gate that failed. It stays read-only.
 - **Docs-maintenance worker** only when authorized to repair doc-scaffold
   failures (missing required files, manifest-slot or routing gaps, dead ownership
-  paths). Pass `~/.agentdocs/rules/subagent/docs-maintenance.md`,
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`. It makes the smallest repair and
-  commits its slice.
+  paths). Profile: `maintenance.docs`. It makes the smallest repair and commits
+  its slice.
 - **Implementation worker** only when authorized to repair a failing verifier or
-  gate script. Pass `~/.agentdocs/rules/subagent/implementation.md`,
-  `~/.agentdocs/rules/coding-style.md`,
-  `~/.agentdocs/rules/authoring-rules.md`,
-  `~/.agentdocs/rules/repo-rules.md`. It fixes the script, re-runs the gate,
-  and commits.
+  gate script. Profile: `implementation.code-docs`. It fixes the script, re-runs
+  the gate, and commits.
 
 Repair work follows the shared shipping shape: a fix worker commits its slice,
-then re-run the verification worker to confirm green before closeout. Editing is
-serial — run at most one fix worker at a time on the shared tree.
+then re-run the verification worker to confirm green before closeout.
 
 ## Closeout
 
@@ -92,5 +83,10 @@ Record from worker reports:
 - **Gates run** — the exact commands and their pasted results.
 - **Next step** — fix now (and which worker), run a deeper drift sweep, or leave
   clean.
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS

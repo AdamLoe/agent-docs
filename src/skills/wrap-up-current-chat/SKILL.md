@@ -21,16 +21,14 @@ Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol** with manifest slots: `repo_name`, `code_root`, `decisions-domains`.
 
 This skill is **state-driven**: it runs directly off this session's history, with
-no two-question intake. Read `docs/_meta/ownership.json` and the
-architecture/decision docs named by the chat or pointed to by that ownership data
-inline — that is coordination routing, not worker dispatch. If this chat wrapped
-a plan, also read `docs/plans/index.md` and
-`~/.agentdocs/plan-lifecycle.md`. Honor any dials passed in `$ARGUMENTS`.
+no two-question intake. Do NOT pre-load `context-profiles.md`, `dispatch.md`, or
+`lifecycle.md` at startup.
 
-Once you know what the chat produced, read
-`~/.agentdocs/rules/orchestrator/lifecycle.md` and
-`~/.agentdocs/rules/orchestrator/dispatch.md` to choose worker phases and
-dispatch.
+Read the coordination state inline: `docs/_meta/ownership.json` and the
+architecture/decision docs named by the chat or pointed to by that ownership
+data — that is routing, not worker dispatch. If this chat wrapped a plan, also
+read `docs/plans/index.md` and `~/.agentdocs/plan-lifecycle.md`. Honor any dials
+passed in `$ARGUMENTS`.
 
 ## Capture Policy
 
@@ -52,29 +50,19 @@ passes goes down.
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, bundles, and
-commit concurrency follow `orchestrator/dispatch.md`. Editing workers are serial
-on the shared tree. Use only the phases the chat needs.
+Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Use only the phases the chat needs.
 
-- **Docs-maintenance worker** (the durable-context migration). Pass
-  `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`, plus the candidate facts/rationale and
-  the owning docs from `ownership.json`. It decides what is durable, updates the
-  owning architecture/decisions docs in place, and commits its slice.
+- **Docs-maintenance worker** (the durable-context migration). Profile:
+  `maintenance.docs`. Pass the candidate facts/rationale and the owning docs from
+  `ownership.json`. It decides what is durable, updates the owning
+  architecture/decisions docs in place, and commits its slice.
 - **Plan-maintenance worker** only when this chat wrapped a plan and its status
-  should change. Pass `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`, and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`. It migrates the plan's durable context
-  first, then sets `status`, `last_updated`, and `okay_to_delete` truthfully per
-  `docs/plans/index.md`.
+  should change. Profile: `maintenance.plan`. It migrates the plan's durable
+  context first, then sets `status`, `last_updated`, and `okay_to_delete`
+  truthfully per `docs/plans/index.md`.
 - **Verification worker** only if repo files changed and a gate is warranted.
-  Pass `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`.
-
-Editing workers stage by filename and commit their own slice before reporting;
-record the hashes and verify the final state. Never push unless explicitly told.
+  Profile: `verification.readonly`.
 
 ## Closeout
 
@@ -85,5 +73,10 @@ Record from worker reports, in a line or two the user can confirm against:
 - plan status changes, if any
 - checks run and result
 - commit hash for edited work, or an explicit no-change result
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS

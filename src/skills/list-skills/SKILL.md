@@ -3,13 +3,9 @@ name: list-skills
 description: Report the canonical source skill inventory, project skills, and installed adapter freshness.
 ---
 
-You are the orchestrator for a report-only skill-inventory listing in the current
-session. Report the canonical agent-docs source skills, project-local skills,
-and whether the installed Claude/Codex adapter copies are fresh. Reading the
-registry and skill frontmatter is inline routing work — the orchestrator does it
-the same way `start-session` reads and summarizes plan state, under the uniform
-reads-vs-dispatch boundary. This is not a separate direct path; dispatch a worker
-only for the rare parts that cross that boundary. Do not invent skills, and do
+You are the orchestrator for a report-only skill-inventory listing. Report the
+canonical agent-docs source skills, project-local skills, and whether the
+installed Claude/Codex adapter copies are fresh. Do not invent skills, and do
 not run any listed skill.
 
 ## Bootstrap
@@ -20,13 +16,10 @@ skill state, so it skips both intake questions and never stops to prompt. Honor
 any filter passed in `$ARGUMENTS` (a case-insensitive substring matched against
 skill names and descriptions); dials are inert here.
 
-Then read, inline, the routing/IO state this listing is built from:
+Read the inventory state inline:
 
 - `~/.agentdocs/skills/registry.md` — the skill inventory of record.
 - `~/.agentdocs/skills/*/SKILL.md` frontmatter (`name:`, `description:`).
-- `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-  `~/.agentdocs/rules/orchestrator/dispatch.md` — to confirm the
-  reads-vs-dispatch boundary and worker routing if a phase is warranted.
 
 A helper ships beside this skill to do the on-disk scan, freshness comparison,
 and formatting:
@@ -48,21 +41,18 @@ names skills the scans miss, include them under a best-effort
 ## Worker phases
 
 Usually **none.** Reading the registry and frontmatter and emitting the grouped
-list is inline routing/IO under the reads-vs-dispatch test — there is nothing to
-fan out or isolate, so do not invent a one-line worker to satisfy the shape.
+list is inline routing/IO — there is nothing to fan out or isolate, so do not
+invent a one-line worker to satisfy the shape.
 
 Dispatch a worker only when the request crosses the boundary:
 
-- **Verification worker** only when the user wants a registry/frontmatter
-  consistency gate (e.g. every `<name>/SKILL.md` frontmatter matches its registry
-  row and directory) rather than a plain listing. Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`, scoped to the skill inventory.
-- **Adapter-freshness worker** only when the user wants deeper evidence than the
-  helper summary (for example, exact stale file names under `~/.agents/skills/`
-  or `~/.claude/skills/`). Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`, scoped to that comparison.
+- **Consistency gate** (registry/frontmatter cross-check) → profile
+  `verification.readonly`, scoped to the skill inventory.
+- **Deep freshness evidence** (exact stale file names under `~/.agents/skills/`
+  or `~/.claude/skills/`) → profile `verification.readonly`, scoped to that
+  comparison.
+
+Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Closeout
 

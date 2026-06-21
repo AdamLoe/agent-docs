@@ -15,7 +15,8 @@ Read `~/.agentdocs/rules/skill-contracts.md` and run the **Standard Intake
 Protocol**. This skill is **state-driven**: it operates on the target repo's
 existing docs path and scaffold rather than a user-described task, so it skips
 the two-question intake and runs directly off that state. Honor any dials passed
-in `$ARGUMENTS`; default `cost-medium`.
+in `$ARGUMENTS`; default `cost-medium`. Do NOT pre-load `context-profiles.md`,
+`dispatch.md`, or `lifecycle.md` at startup.
 
 Read the orchestration state inline (this is routing, not worker dispatch):
 
@@ -27,8 +28,6 @@ Read the orchestration state inline (this is routing, not worker dispatch):
   `_meta/manifest.md`, `_meta/ownership.json`.
 - the current docs path (default `docs/`) and any existing `_meta/manifest.md`
   and `_meta/ownership.json` — to inventory what is present, partial, or stale.
-- `~/.agentdocs/rules/orchestrator/lifecycle.md` and
-  `~/.agentdocs/rules/orchestrator/dispatch.md` to classify and dispatch.
 
 ## Scope Policy
 
@@ -44,14 +43,11 @@ Read the orchestration state inline (this is routing, not worker dispatch):
 
 ## Worker Phases
 
-Dials and model policy follow `skill-contracts.md`; dispatch shape, rule
-bundles, and commit concurrency follow `orchestrator/dispatch.md`. Use only the
-phases the repo's state needs.
+Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Use only the phases the repo's state needs.
 
 - **Docs-maintenance worker** (scaffold inventory + migration — the core
-  phase). Pass `~/.agentdocs/rules/subagent/docs-maintenance.md` and
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`. It inventories the current docs against
+  phase). Profile: `maintenance.docs`. It inventories the current docs against
   the v1 scaffold, **seeds each missing file from
   `~/.agentdocs/template/docs/` before adapting it** to the repo, applies the
   recoverability test (keep map/why/routing; collapse recoverable transcription
@@ -61,23 +57,15 @@ phases the repo's state needs.
   unique. Larger rebuilds fan this worker out by subtree at `cost-high`/`max`,
   serial on the shared tree.
 - **Implementation worker** only when the rebuild needs a script or template
-  repair (not just doc edits). Pass `~/.agentdocs/rules/subagent/implementation.md`,
-  `~/.agentdocs/rules/coding-style.md`,
-  `~/.agentdocs/rules/authoring-rules.md`,
-  `~/.agentdocs/rules/repo-rules.md`.
-- **Verification worker** for the scaffold gate. Pass
-  `~/.agentdocs/rules/subagent/verification.md` and
-  `~/.agentdocs/rules/repo-rules.md`; have it run
-  `~/.agentdocs/verify-agent-docs.sh --scaffold <target-repo-root>` against
-  the rebuilt tree plus any target manifest `drift-gates`, and paste the
-  result. The verifier without `--scaffold` checks the shared kit checkout, not
-  the consuming repo.
+  repair (not just doc edits). Profile: `implementation.code-docs`.
+- **Verification worker** for the scaffold gate. Profile:
+  `verification.readonly`. Have it run
+  `~/.agentdocs/verify-agent-docs.sh --scaffold <target-repo-root>` against the
+  rebuilt tree plus any target manifest `drift-gates`, and paste the result. The
+  verifier without `--scaffold` checks the shared kit checkout, not the consuming
+  repo.
 - **Plan-maintenance worker** only when the rebuild creates or retires plan
-  material under `docs/plans/`. Pass
-  `~/.agentdocs/rules/subagent/plan-maintenance.md`,
-  `~/.agentdocs/plan-lifecycle.md`,
-  `~/.agentdocs/rules/authoring-rules.md`, and
-  `~/.agentdocs/rules/repo-rules.md`.
+  material under `docs/plans/`. Profile: `maintenance.plan`.
 
 ## Closeout
 
@@ -89,5 +77,10 @@ Record from worker reports:
   manifest drift gates) and result
 - commit hash(es)
 - assumptions made and any follow-up that remains
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS

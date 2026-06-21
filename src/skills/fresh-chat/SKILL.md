@@ -56,15 +56,14 @@ implementer, planner, or reviewer yourself.
 
 Dispatch one **context-reading worker** only when the request is a broad,
 read-only context question that crosses more than a couple of files (per the
-reads-vs-dispatch test in `orchestrator/lifecycle.md`). Pick the role by what the
-question wants:
+reads-vs-dispatch test in `orchestrator/lifecycle.md`). Workers resolve context
+via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Pick the role by
+what the question wants:
 
-- **Explanatory** ("how does X work / why is it this way") → Review worker:
-  `~/.agentdocs/rules/subagent/review.md` plus the relevant docs/source to
-  read.
-- **Docs-quality** ("are these docs right / drifted") → Docs-maintenance worker:
-  `~/.agentdocs/rules/subagent/docs-maintenance.md`,
-  `~/.agentdocs/rules/authoring-rules.md`.
+- **Explanatory** ("how does X work / why is it this way") → profile
+  `review.generic` plus the relevant docs/source to read.
+- **Docs-quality** ("are these docs right / drifted") → profile
+  `review.docs`.
 
 Both run read-only here — the worker reports findings; it does not edit unless
 the user pivots into an editing skill. If the runtime cannot spawn a required
@@ -77,5 +76,11 @@ Record:
 - the command routed to, or the context question answered
 - any docs/code routes loaded
 - the next skill the user should invoke, if fresh-chat could not directly route
+
+## References (do not auto-load)
+
+- `~/.agentdocs/rules/orchestrator/dispatch.md` — dispatch and commit contract
+- `~/.agentdocs/rules/orchestrator/lifecycle.md` — reads-vs-dispatch test
+- `~/.agentdocs/rules/context-profiles.md` — profile IDs and resolver
 
 $ARGUMENTS
