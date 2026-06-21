@@ -30,17 +30,17 @@ scenario rows, and verifier checks agree.
 
 | id | purpose | core_rule_paths | overlays | mutation_capability | budget_words | enforcement_status |
 |---|---|---|---|---|---:|---|
-| `planning.brief` | inline implementation brief | `src/rules/subagent/planning.md` | task owner docs/source by concern | read-only | 700 | report-only |
-| `planning.tracked` | persisted plan material | `src/rules/subagent/planning.md`, `src/plan-lifecycle.md`, `src/plan-template.md`, `src/rules/repo-rules.md` | authoring rules when plan edits touch durable docs | mutating | 1600 | report-only |
-| `implementation.code` | bounded code change | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md` | source/tests selected by task; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 1700 | report-only |
-| `implementation.code-docs` | code plus owning docs | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md` | manifest and ownership rows for touched surfaces; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | report-only |
-| `implementation.tracked` | selected tracked-plan implementation and closeout; may close the selected plan when dispatch grants `plan_closeout` | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md`, `src/plan-lifecycle.md` | selected plans and owning architecture/decisions; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | report-only |
-| `review.generic` | generic independent review | `src/rules/subagent/review.md` | named lens sources only | read-only | 700 | report-only |
-| `review.docs` | docs/rules review | `src/rules/subagent/review.md`, `src/rules/authoring-rules.md` | named docs and ownership rows | read-only | 1200 | report-only |
-| `review.plan` | plan review | `src/rules/subagent/review.md`, `src/plan-lifecycle.md` | selected plans and optional template | read-only | 1000 | report-only |
-| `maintenance.docs` | docs repair or migration | `src/rules/subagent/docs-maintenance.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | manifest and ownership rows for touched docs | mutating | 1700 | report-only |
-| `maintenance.plan` | plan/run lifecycle maintenance | `src/rules/subagent/plan-maintenance.md`, `src/plan-lifecycle.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | selected plans/run docs and owning docs | mutating | 2100 | report-only |
-| `verification.readonly` | final or targeted gate execution | `src/rules/subagent/verification.md` | manifest drift-gates and named command output | read-only | 500 | report-only |
+| `planning.brief` | inline implementation brief | `src/rules/subagent/planning.md` | task owner docs/source by concern | read-only | 700 | enforced |
+| `planning.tracked` | persisted plan material | `src/rules/subagent/planning.md`, `src/plan-lifecycle.md`, `src/plan-template.md`, `src/rules/repo-rules.md` | authoring rules when plan edits touch durable docs | mutating | 1600 | enforced |
+| `implementation.code` | bounded code change | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md` | source/tests selected by task; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 1700 | enforced |
+| `implementation.code-docs` | code plus owning docs | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md` | manifest and ownership rows for touched surfaces; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | enforced |
+| `implementation.tracked` | selected tracked-plan implementation and closeout; may close the selected plan when dispatch grants `plan_closeout` | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md`, `src/plan-lifecycle.md` | selected plans and owning architecture/decisions; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | enforced |
+| `review.generic` | generic independent review | `src/rules/subagent/review.md` | named lens sources only | read-only | 700 | enforced |
+| `review.docs` | docs/rules review | `src/rules/subagent/review.md`, `src/rules/authoring-rules.md` | named docs and ownership rows | read-only | 1200 | enforced |
+| `review.plan` | plan review | `src/rules/subagent/review.md`, `src/plan-lifecycle.md` | selected plans and optional template | read-only | 1000 | enforced |
+| `maintenance.docs` | docs repair or migration | `src/rules/subagent/docs-maintenance.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | manifest and ownership rows for touched docs | mutating | 1700 | enforced |
+| `maintenance.plan` | plan/run lifecycle maintenance | `src/rules/subagent/plan-maintenance.md`, `src/plan-lifecycle.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | selected plans/run docs and owning docs | mutating | 2100 | enforced |
+| `verification.readonly` | final or targeted gate execution | `src/rules/subagent/verification.md` | manifest drift-gates and named command output | read-only | 500 | enforced |
 
 ## Scenario Contract
 
@@ -66,6 +66,28 @@ to hide drift.
 | `planning.tracked` | 1300 | 1600 | 1542 |
 | `review.docs` | 1000 | 1200 | 1148 |
 | `maintenance.plan` | 1800 | 2100 | 2016 |
+
+## Launch budgets
+
+A skill's controlled launch is its body plus the irreducible startup surface:
+the shared skill-contracts contract, the docs index, and its requested manifest
+slots (a classifier additionally reads `orchestrator/lifecycle.md`). After the
+Wave-5b honest `--measure-launch` fix — a `rules/...` path counts as a startup
+load only when a sentence genuinely instructs reading it at launch, never when
+it appears only in a prohibition, a `load only when/after` deferred-load gloss,
+or a References pointer — the enforced launch budgets are E3 measured floors:
+
+| Launch kind | Budget | Honest max | Headroom |
+|---|---:|---|---:|
+| fixed skill | 2000 | 1922 (`review-app`) | ~4% |
+| classifier (`orchestrate`, `fresh-chat`, `start-session`) | 3300 | 3118 (`orchestrate`) | ~6% |
+
+The aspirational 1200/2000 targets are unreachable: the shared startup surface
+(skill-contracts 637 + docs index 114 + manifest slots 430 = 1181) loads on
+every launch, and a classifier irreducibly reads lifecycle.md (1037). Per E3
+these floors are documented target changes, not inflation to hide drift. The
+verifier (`src/verify-agent-docs.sh`) holds the operative values and now gates on
+them; this table is the human-owned record.
 
 ## See also
 

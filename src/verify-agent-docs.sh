@@ -19,19 +19,25 @@ Usage:
 Default mode validates the agent-docs kit checkout that contains this script.
 The --context-report mode prints the read-only context profile and scenario
 contract, including exact files, conditions, word totals, and budget exceptions.
+It may print measurements even when red, but it exits nonzero and does not print
+PASS while an enforced profile is over budget or a contract check fails.
 Scenario rows are read from the never-auto-loaded fixture
 src/verify-fixtures/workflow-scenarios.json.
-The --contract-check mode runs the Wave-5a source-bound contract checks
+The --contract-check mode runs the source-bound contract checks
 (launch budgets, lifecycle startup loads, subagent-bundle spell-outs, read-only
 role authority, plan_closeout consistency, review-app pre-audit/eager loads,
-scenario source-binding, report fields, and final-ordering). All checks are
-REPORT-ONLY: it warns and prints a violation count but exits 0.
+scenario source-binding, report fields, and final-ordering). These checks GATE:
+it prints every violation with file:line where possible, then exits nonzero and
+does not print PASS when any violation exists.
 The --resolve mode prints one profile's core rule paths, conditional overlays,
 mutation capability, and budget so a skill can resolve a single profile without
 loading the whole table.
 The --measure-launch mode prints the controlled launch word total for one skill
 (skill body, shared startup contract, startup orchestrator/role rules, docs
-index, and requested manifest slots), excluding task-routed source/tests.
+index, and requested manifest slots), excluding task-routed source/tests. An
+orchestrator/role rule counts only when the skill body genuinely instructs
+reading it at startup; a rules/... path appearing only in a prohibition, a
+deferred-load gloss, or a References pointer does not count.
 The --scaffold mode validates only the target repo's docs/ scaffold, manifest,
 ownership JSON, routing, and unresolved scaffold placeholders.
 EOF
@@ -517,6 +523,8 @@ context_report() {
   local id purpose core_paths overlays mutation budget status total exception
   local display_paths
   local display_profiles
+  local enforced_violations=0
+  local contract_violations=0
 
   section "context profiles"
   while IFS=$'\t' read -r id purpose core_paths overlays mutation budget status; do
@@ -525,7 +533,17 @@ context_report() {
     total=$(profile_word_total "$core_paths")
     exception="none"
     if [ "$total" -gt "$budget" ]; then
-      exception="over budget in report-only status; correctness requires listed core files"
+      # Wave 5b: an over-budget profile in an enforced status is a hard
+      # violation; in report-only it is still merely reported.
+      case "$status" in
+        pilot-enforced|enforced)
+          exception="OVER BUDGET in $status status: $total>$budget (enforced violation)"
+          enforced_violations=$((enforced_violations + 1))
+          ;;
+        *)
+          exception="over budget in $status status; correctness requires listed core files"
+          ;;
+      esac
     fi
     display_paths=${core_paths//\`/}
     printf 'PROFILE %s\n' "$id"
@@ -552,7 +570,13 @@ context_report() {
   fi
 
   if [ -z "$profile_filter" ]; then
-    contract_check
+    contract_check || contract_violations=$?
+  fi
+
+  # Wave 5b: --context-report may print measurements even when red, but it must
+  # exit nonzero and must not print PASS while an enforced violation exists.
+  if [ "$enforced_violations" -ne 0 ] || [ "$contract_violations" -ne 0 ]; then
+    fail "context report found enforced violations: $enforced_violations over-budget enforced profile(s), $contract_violations contract violation(s)"
   fi
 
   printf 'CONTEXT REPORT PASS\n'
@@ -593,6 +617,69 @@ resolve_profile() {
   printf 'RESOLVE PASS\n'
 }
 
+# skill_startup_loads_rule <skill-file> <rule-relpath>: exit 0 iff the skill body
+# GENUINELY instructs reading the named rule at startup. Sentence/paragraph
+# aware (markdown wraps a "read ... <path>" instruction across soft line breaks),
+# mirroring the contract-check sentence logic. A rule is a startup load only when
+# some sentence both (a) names the `rules/<rule>` path and (b) carries a read/
+# load/open verb, AND that sentence is NOT a prohibition ("do not", "never",
+# "n't", "no pre-load", "without loading"), NOT a deferred load ("load only
+# when/after <condition>"), and NOT a References/See-also pointer bullet. The
+# trailing "References (do not auto-load)" / "See also" section is dropped whole
+# because those are non-loading pointers. Writes nothing. Honest --measure-launch
+# (Wave 5b): a `rules/...` path string appearing only in a prohibition, a
+# deferred-load gloss, or a References pointer no longer counts as a startup load.
+skill_startup_loads_rule() {
+  local skill_file=$1
+  local rule_relpath=$2
+  local python_cmd
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot detect startup loads; install python"
+
+  "$python_cmd" - "$skill_file" "$rule_relpath" <<'PY'
+import re, sys, pathlib
+
+skill_file = pathlib.Path(sys.argv[1])
+rule_relpath = sys.argv[2]
+text = skill_file.read_text(encoding="utf-8")
+
+# Drop trailing non-loading pointer sections (References / See also). Bullets
+# there only point at a file, they do not instruct a startup read.
+body = re.split(r"^##\s+(?:References|See also)\b", text, maxsplit=1,
+                flags=re.MULTILINE | re.IGNORECASE)[0]
+
+# Unwrap soft line breaks so a "read ... <path>" instruction split across lines
+# is one contiguous sentence; split paragraphs on blank lines, sentences on
+# enders.
+sentences = []
+for para in re.split(r"\n\s*\n", body):
+    flat = re.sub(r"\s+", " ", para).strip()
+    if not flat:
+        continue
+    sentences.extend(s.strip() for s in re.split(r"(?<=[.;])\s+", flat) if s.strip())
+
+# Match the rule path as it appears in skill bodies (runtime ~/.agentdocs/ form
+# or repo-relative src/ form), anchored on the rules/<relpath> tail.
+PATH = re.compile(r"rules/" + re.escape(rule_relpath))
+LOAD_VERB = re.compile(r"\b(read|load|pre-load|open)\b", re.I)
+NEGATION = re.compile(r"\bdo not\b|\bdon't\b|\bdon’t\b|\bnever\b|n't\b|"
+                      r"n’t\b|no pre-load|not load|without loading", re.I)
+# "load only when/after <condition>" is a deferred load, not a startup load.
+DEFERRED = re.compile(r"\b(load|read|open)\b[^.;]*\bonly (when|after|once)\b", re.I)
+# A reference-pointer bullet: "- `...path` — gloss" (em-dash gloss, no verb).
+POINTER = re.compile(r"^- `[^`]*` —")
+
+for s in sentences:
+    if not PATH.search(s) or not LOAD_VERB.search(s):
+        continue
+    if NEGATION.search(s) or DEFERRED.search(s) or POINTER.match(s):
+        continue
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
 # --measure-launch <skill-name>: print the controlled launch word total for one
 # skill using the Wave-0 formula: skill body + shared startup contract
 # (skill-contracts.md) + the orchestrator/role rules that skill loads at startup
@@ -627,9 +714,11 @@ measure_launch() {
   add_startup_file "$repo_root/src/rules/skill-contracts.md" "skill-contracts"
 
   # Orchestrator/role rules this skill names in its startup body. Only count what
-  # the skill actually loads at launch, not task-routed overlays.
+  # the skill actually loads at launch, not task-routed overlays, and not a path
+  # that appears only in a prohibition, a deferred-load gloss, or a References
+  # pointer (honest measurement; see skill_startup_loads_rule).
   for rule in context-profiles.md orchestrator/dispatch.md orchestrator/lifecycle.md; do
-    if grep -Fq "rules/$rule" "$skill_file"; then
+    if skill_startup_loads_rule "$skill_file" "$rule"; then
       label=${rule##*/}
       add_startup_file "$repo_root/src/rules/$rule" "${label%.md}"
     fi
@@ -667,7 +756,7 @@ launch_total() {
   add_quiet "$skill_file"
   add_quiet "$repo_root/src/rules/skill-contracts.md"
   for rule in context-profiles.md orchestrator/dispatch.md orchestrator/lifecycle.md; do
-    grep -Fq "rules/$rule" "$skill_file" && add_quiet "$repo_root/src/rules/$rule"
+    skill_startup_loads_rule "$skill_file" "$rule" && add_quiet "$repo_root/src/rules/$rule"
   done
   add_quiet "$repo_root/docs/index.md"
   add_quiet "$repo_root/docs/_meta/manifest.md"
@@ -675,27 +764,40 @@ launch_total() {
   printf '%s' "$total"
 }
 
-# --contract-check: Wave-5a SOURCE-BOUND contract checks. Every check below is an
+# --contract-check: SOURCE-BOUND contract checks. Every check below is an
 # assertion over actual files (skill bodies, role cards, profile owner, scenario
-# fixture), NOT a phrase match over a self-authored table. They are REPORT-ONLY:
-# each prints a CLEAN line or one WARN line per violation (with file:line where
-# possible) and increments a violation counter. The function never exits nonzero,
-# never prints FAIL, and never changes enforcement_status. Flipping these to hard
-# gates is Wave 5b. Also surfaced as a section inside --context-report.
+# fixture), NOT a phrase match over a self-authored table. Each prints a CLEAN
+# line or one WARN line per violation (with file:line where possible) and
+# increments a violation counter. As of Wave 5b these checks GATE: the function
+# returns the violation count, and every caller (default gate, --contract-check,
+# --context-report) FAILs (exits nonzero) and refuses to print PASS when the
+# count is nonzero. The function still prints all WARN lines first so a red run
+# is fully diagnosable. Also surfaced as a section inside --context-report.
 #
-# Budgets (E3 floors, recorded as the report-only documented budgets):
-#   fixed skill controlled launch  <= 1800   (measured floor ~1683)
-#   classifier controlled launch   <= 3200   (allowlist: orchestrate, fresh-chat,
+# Budgets (E3 measured floors, now ENFORCED launch budgets in Wave 5b):
+#   fixed skill controlled launch  <= 2000   (honest max 1922 = review-app;
+#                                              floor + ~4% headroom)
+#   classifier controlled launch   <= 3300   (honest max 3118 = orchestrate;
+#                                              floor + ~6% headroom; allowlist:
+#                                              orchestrate, fresh-chat,
 #                                              start-session)
+# These floors are irreducible: the shared startup contract (skill-contracts 637)
+# + docs index (114) + requested manifest slots (430) = 1181 words load on every
+# launch regardless of skill body, and a classifier additionally reads
+# lifecycle.md (1037). The aspirational 1200/2000 targets are unreachable without
+# deleting that irreducible normative startup surface (Decision E3). After the
+# honest --measure-launch fix (path strings in prohibitions, deferred-load
+# glosses, and References pointers no longer count as startup loads), zero skills
+# exceed these floors.
 contract_check() {
-  local fixed_budget=1800
-  local classifier_budget=3200
+  local fixed_budget=2000
+  local classifier_budget=3300
   local classifier_allowlist=" orchestrate fresh-chat start-session "
   local violations=0
   local skill_dir skill_name skill_file total budget kind clean
   local match python_cmd
 
-  section "wave-5a source-bound contract checks (report-only)"
+  section "source-bound contract checks (enforced; gating)"
 
   python_cmd=$(find_python_cmd)
   [ -n "$python_cmd" ] || fail "cannot run contract checks; install python"
@@ -1012,8 +1114,11 @@ PY
   [ "$clean" -eq 1 ] && printf 'CLEAN: report fields and final-ordering rule present\n'
 
   # ---- Total -------------------------------------------------------------
-  printf 'CONTRACT-CHECK TOTAL VIOLATIONS: %s (report-only; not gating)\n' "$violations"
-  printf 'CONTRACT-CHECK PASS\n'
+  # Wave 5b: these checks GATE. Report the count, then return it so callers fail
+  # (and refuse to print PASS) on any nonzero violation. WARN lines above remain
+  # so a red run is fully diagnosable before the failure.
+  printf 'CONTRACT-CHECK TOTAL VIOLATIONS: %s (enforced; gating)\n' "$violations"
+  return "$violations"
 }
 
 validate_context_profiles() {
@@ -1191,7 +1296,12 @@ case "${1:-}" in
     ;;
   --contract-check)
     [ "$#" -eq 1 ] || { usage >&2; exit 2; }
-    contract_check
+    contract_violations=0
+    contract_check || contract_violations=$?
+    if [ "$contract_violations" -ne 0 ]; then
+      fail "contract check found $contract_violations source-bound violation(s)"
+    fi
+    printf 'CONTRACT-CHECK PASS\n'
     exit 0
     ;;
   --resolve)
@@ -1391,6 +1501,17 @@ require_text "src/rules/context-profiles.md" "bounded-quick-fix" \
 
 section "context profile checks"
 validate_context_profiles
+
+# Wave 5b: the source-bound contract checks (launch budgets, lifecycle startup
+# loads, subagent-bundle spell-outs, read-only role authority, plan_closeout
+# consistency, review-app pre-audit/eager loads, scenario source-binding, report
+# fields, final-ordering) now GATE the default run. Any nonzero violation count
+# fails the whole gate.
+section "source-bound contract checks"
+contract_violations=0
+contract_check || contract_violations=$?
+[ "$contract_violations" -eq 0 ] ||
+  fail "source-bound contract check found $contract_violations violation(s)"
 
 section "documentation budget checks"
 validate_word_budgets

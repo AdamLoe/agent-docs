@@ -1,7 +1,7 @@
 ---
 stream: wave5
 skill: verify-agent-docs.sh
-status: 5a complete (report-only); 5b pending (flip enforcement)
+status: 5a complete (report-only); 5b complete (enforced)
 ---
 
 # Wave 5 stream: source-bound contract + launch-budget checks
@@ -118,3 +118,65 @@ lines to FAIL and stop the report-only carve-out.
   green; checks are report-only).
 - `bash src/verify-agent-docs.sh --contract-check` → exit 0,
   `CONTRACT-CHECK TOTAL VIOLATIONS: 7 (report-only; not gating)`.
+
+## 5b: honest measure-launch + floored budgets + enforcement flip
+
+### measure-launch fix
+
+`launch_total`/`measure_launch` counted any orchestrator rule whose
+`rules/...` path string appeared anywhere in a skill body (`grep -Fq`),
+including prohibition lines, `load only when/after` deferred-load glosses, and
+References pointers. New helper `skill_startup_loads_rule` (paragraph-unwrapped
+Python, mirroring check 6) counts a rule only when a sentence both names the
+path and carries a read/load/open verb and is not a negation, deferred load, or
+`- \`...\` —` pointer; the References/See-also section is dropped whole.
+
+### honest launch totals
+
+Fixed: check-docs 1666, clear-plans 1818, doctor 1757, feedback-agent-docs
+1803, fix-docs-drift 1826, list-skills 1556, plan 1799, quick-fix 1683,
+rebuild-agent-docs 1757, review-app 1922, review-docs-shape 1746,
+review-plans-health 1788, review-plans 1658, review-shipped-work 1558,
+review-skills 1689, ship-current-work 1554, ship-plans 1664,
+wrap-up-current-chat 1716. Classifiers: fresh-chat 2778, orchestrate 3118,
+start-session 2862. (Was: clear-plans/doctor/rebuild 3248-3309, review-app
+3413, wrap-up 3207 — all inflated by false-positive path strings.)
+
+### floored budgets (E3)
+
+Irreducible startup floor per fixed launch = skill-contracts 637 + docs-index
+114 + manifest 430 = 1181 + body; a classifier adds lifecycle 1037. Honest max
+fixed = 1922 (review-app) → fixed budget 2000 (~4% headroom). Honest max
+classifier = 3118 (orchestrate) → classifier budget 3300 (~6% headroom).
+Recorded in `context-profiles.md` "Launch budgets" and as the verifier's
+operative `fixed_budget`/`classifier_budget`. 1200/2000 aspirational targets
+unreachable without deleting irreducible startup surface. 0 launch violations.
+
+### enforcement flip
+
+All 11 profile rows flipped `report-only` → `enforced` (confirmed each resolved
+≤ budget first; tightest implementation.tracked 2498/2500). `contract_check`
+now returns its violation count; default gate, `--contract-check`, and
+`--context-report` all FAIL (nonzero, no PASS) on any nonzero count.
+`--context-report` flags an over-budget enforced profile as an enforced
+violation. `validate_context_profiles` already gated per-profile budgets for
+enforced status.
+
+### gate now bites (negative tests, all reverted clean)
+
+- Tracked budget 2500→100: default `word budget exceeded 2498>100` exit 1;
+  context-report `OVER BUDGET ... enforced violation` exit 1.
+- `fixed_budget` 2000→1900: review-app 1922 over; default + `--contract-check`
+  exit 1 (1 violation, no PASS).
+- Injected genuine `read lifecycle.md` into quick-fix: detector correctly
+  counted lifecycle (total 2725), check 1 + check 2 both fired, exit 1 —
+  proving the honest detector still counts real reads.
+
+### final gate (5b)
+
+- `bash src/verify-agent-docs.sh` → exit 0, `ALL AGENT-DOCS GATES PASS`
+  (enforcement live).
+- `bash src/verify-agent-docs.sh --contract-check` → exit 0,
+  `CONTRACT-CHECK TOTAL VIOLATIONS: 0 (enforced; gating)`.
+- `bash src/verify-agent-docs.sh --context-report` → exit 0, all 11 profiles
+  enforced + within budget, `CONTEXT REPORT PASS`.
