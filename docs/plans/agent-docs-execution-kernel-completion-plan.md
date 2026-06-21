@@ -161,25 +161,32 @@ Compress runtime rules by moving examples, rationale, and language-specific
 reference material to task-routed or never-auto-loaded owners. Do not raise a
 budget merely to make the gate green.
 
-Runtime targets:
+Runtime targets (aspirational → achieved floor):
 
-| File/class | Target |
-|---|---:|
-| `skill-contracts.md` | <=250 words |
-| `orchestrator/dispatch.md` | <=300 |
-| `orchestrator/lifecycle.md` | <=500 |
-| runtime portion of `context-profiles.md` | <=350 |
-| fixed skill body | <=350; prefer <=300 |
-| classifier skill body | <=650; prefer <=550 |
-| planning role card | <=250 |
-| implementation role card | <=325 |
-| review/verification role card | <=250 |
-| docs/plan-maintenance role card | <=300 |
-| `repo-rules.md` runtime contract | <=400 |
-| generic coding-style core | <=300 |
-| authoring runtime rules | <=700 |
-| `plan-lifecycle.md` | <=400 |
-| `plan-template.md` | <=200 |
+| File/class | Aspirational target | Achieved floor |
+|---|---:|---:|
+| `skill-contracts.md` | <=250 words | 637 |
+| `orchestrator/dispatch.md` | <=300 | 811 |
+| `orchestrator/lifecycle.md` | <=500 | 1037 |
+| runtime portion of `context-profiles.md` | <=350 | 533 |
+| `repo-rules.md` runtime contract | <=400 | 429 |
+| generic coding-style core | <=300 | 353 |
+| authoring runtime rules | <=700 | 793 |
+| `plan-lifecycle.md` | <=400 | 427 |
+| `plan-template.md` | <=200 | 223 |
+| fixed skill body | <=350; prefer <=300 | — |
+| classifier skill body | <=650; prefer <=550 | — |
+| planning role card | <=250 | — |
+| implementation role card | <=325 | — |
+| review/verification role card | <=250 | — |
+| docs/plan-maintenance role card | <=300 | — |
+
+Note: contract-dense files (lifecycle 1037, dispatch 811, skill-contracts 637,
+context-profiles 533) and 3 worker profiles (planning.tracked 1542,
+review.docs 1148, maintenance.plan 2016) floored above their aspirational
+targets per Decision E3 — the residual is irreducible normative contract.
+Profile budgets were raised to floors + headroom; see context-profiles.md
+"Budget floors" section.
 
 Use conditional language overlays rather than loading Rust, Python, and frontend
 idioms together. Move long examples and anti-pattern catalogues into the guide or

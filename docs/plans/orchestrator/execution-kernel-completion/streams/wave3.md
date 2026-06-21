@@ -167,3 +167,22 @@ Profile resolved-words: implementation.code 1859→1278, .code-docs 3287→2071,
 .tracked 3940→2498, maintenance.docs 2532→1571, maintenance.plan 3203→2016,
 review.docs 1783→1148, planning.tracked 2115→1542. Gate: exit 0,
 ALL AGENT-DOCS GATES PASS + CONTEXT REPORT PASS.
+
+---
+
+# Wave 3 close — reconcile 3 profile budgets to measured floors (E3)
+
+3 profiles remained above budget after full relocation; residual is irreducible normative
+contract. Per E3: raise to floor + headroom (no rule deletion).
+
+| Profile | Old → New | Floor |
+|---|---|---:|
+| `planning.tracked` | 1300 → 1600 | 1542 |
+| `review.docs` | 1000 → 1200 | 1148 |
+| `maintenance.plan` | 1800 → 2100 | 2016 |
+
+All three: relocated content fully exhausted; residual is normative contract.
+Per E3: documented target change, not inflation. Other 8 profiles untouched.
+
+`bash src/verify-agent-docs.sh --context-report` → exit 0, CONTEXT REPORT PASS.
+All 11 profiles: `budget_exception: none`.
