@@ -44,10 +44,11 @@ time on the shared tree; each wave ends with a green
 |---|---|---|---|---|
 | 0 | Lock decisions + freeze baseline fixtures | **done** | 742658f | green (after f606c76) |
 | 0-fix | Trim build plan under 2600 plan-budget cap | **done** | f606c76 | green (exit 0) |
-| 1a | Kernel JSON shadow + `--equivalence` | pending | — | — |
-| 1b | Atomic single-authority cutover (one commit) | pending | — | — |
-| 1b-review | Independent review of the cutover | pending | — | — |
-| 2 | `planning.scope` fixed `/orchestrate` entry | pending | — | — |
+| 1a | Kernel JSON shadow + `--equivalence` | **done** | 7aa6298 | green + EQUIVALENCE PASS |
+| 1b | Atomic single-authority cutover (one commit) | **done** | f7ff819 | green; VIOLATIONS 0 |
+| 1b-review | Independent review of the cutover | **done** | — | found blocking D1 |
+| 1b-fix | Drop kernel-duplicated budget tables + honest guard | **done** | bb69545 | green; EQUIVALENCE PASS (honest) |
+| 2 | `planning.scope` fixed `/orchestrate` entry | in progress | — | — |
 | 3 | `docs.inspect`/`plans.inspect` + exact-context resolver | pending | — | — |
 | 4 | `execution.yaml` + all 8 quality packs | pending | — | — |
 | 4-review | Independent review of execution binding + packs | pending | — | — |
