@@ -15,6 +15,7 @@ for workflow surfaces, use
 | `docs/` | Dogfood docs for this repo. |
 | `docs/_meta/manifest.md` | Repo bindings, change-to-doc map, drift gates, and decision domains. |
 | `docs/_meta/ownership.json` | Structured concept ownership data. |
+| `docs/_meta/execution.yaml` | Per-repo execution binding: commands, services, paths, and Q9 layers. |
 | `docs/architecture/` | Current architecture for install/adapters and workflow kit surfaces. |
 | `docs/decisions/` | Current rationale for agent-docs architecture choices. |
 | `docs/agent-context/` | Repo-local operating rules for agents working here. |
@@ -25,6 +26,7 @@ for workflow surfaces, use
 | `src/plan-template.md` | Generic tracked-plan skeleton. |
 | `src/skills/` | Reusable workflow skill directories plus the shared registry. |
 | `src/rules/` | Generic rules shared by every consuming repo. |
+| `src/kernel/` | Machine-authored JSON kernel: profiles, scenarios, workflows, packs. |
 | `src/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
 | `export-chatgpt-context.sh` | Top-level source-repo tool: exports this repo as grouped Markdown chunks for ChatGPT planning. Not bundled into the runtime. |
 | `src/install.sh` | Installer for the neutral checkout and copied skill adapters. |

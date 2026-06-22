@@ -9,6 +9,7 @@ code_root: .
 | Changed surface | Owning doc |
 |---|---|
 | Agent-docs manifest bindings and ownership data | docs/_meta/manifest.md, docs/_meta/ownership.json |
+| Per-repo execution binding (commands, services, Q9 layers) | docs/_meta/execution.yaml |
 | Docs routing and overview | docs/index.md, docs/overview.md |
 | Repository layout inventory | docs/repository-layout.md |
 

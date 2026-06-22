@@ -1,0 +1,99 @@
+# execution.yaml — per-repo execution binding (TEMPLATE).
+#
+# Required immediately when you adopt agent-docs. Human-authored YAML read by
+# execution workers and validated by the kit's verifier. Replace every
+# placeholder below with HONEST values for your repo. If your repo genuinely
+# has none for a section, leave it EMPTY ([] or {}) — do NOT delete the key;
+# the schema gate requires every top-level key to be present.
+#
+# Honesty rule: name the real command and let an absent tool be RESIDUAL RISK.
+# Do not invent a formatter/linter/test you do not actually have.
+#
+# Operational fields: language, roots, commands, path_to_check, services,
+#   browser, database, protected_paths, forbidden_paths, generated_paths,
+#   scarce_resources, pack_routes.
+# Q9 layers (what a feature worker hits first): bootstrap, secrets,
+#   observability, test_data, network.
+
+schema_version: 1
+
+# Languages / stacks in this repo.
+language:
+  - replace-me        # e.g. rust, typescript, python
+
+# Named source roots (label → path).
+roots:
+  app: .              # e.g. crates/, services/api, web/
+
+# Operational command strings. Use null when the repo has none — do not invent.
+commands:
+  format: null        # e.g. cargo fmt   |  npm run format
+  lint: null          # e.g. cargo clippy |  npm run lint
+  typecheck: null     # e.g. tsc --noEmit
+  targeted_test: null # the cheapest test for a touched path
+  full_test: null     # the full suite the end gate runs
+  build: null         # e.g. cargo build  |  npm run build
+  smoke: null         # fast "does it boot" check
+
+# Which gate covers which path.
+path_to_check:
+  - path: src/
+    check: replace-me # the command that validates changes under this path
+
+# Long-running services: {name, startup, health, ports}.
+services: []
+  # - name: api
+  #   startup: docker compose up -d api
+  #   health: curl -fsS http://localhost:8080/health
+  #   ports: [8080]
+
+# UI exercise hooks for frontend repos: {workflow, screenshot}.
+browser: {}
+  # workflow: npm run dev  # start the app for manual/automated exercise
+  # screenshot: npx playwright screenshot
+
+# Database / migration commands.
+database: {}
+  # migrate: ...
+  # seed: ...
+  # reset: ...
+
+# Edit-with-care paths (generated/machine-authored but in-tree).
+protected_paths: []
+# Never-edit paths (vendored, live runtime, secrets).
+forbidden_paths: []
+# Build outputs; never hand-edit.
+generated_paths: []   # e.g. dist/, target/, node_modules/
+
+# Single-instance or contended resources a worker must serialize on.
+scarce_resources: []  # e.g. a single GPU, a shared test database
+
+# Path/risk → quality pack routes. Leave empty until you adopt packs.
+pack_routes: []
+  # - path: web/        # frontend changes
+  #   pack: frontend-ui
+  # - risk: auth        # scoper-tagged risk
+  #   pack: auth-security
+
+# --- Q9 layers ---------------------------------------------------------------
+
+bootstrap:
+  toolchain: replace-me   # runtimes/versions a fresh worker must have
+  install: null           # e.g. npm ci  |  cargo fetch  |  uv sync
+  notes: null
+
+secrets:
+  required: []            # named credentials a worker needs (NOT the values)
+  provisioning: null      # how to obtain them (e.g. "copy .env.example to .env")
+
+observability:
+  logs: null              # how to read app logs
+  metrics: null           # how to read metrics/traces
+
+test_data:
+  fixtures: null          # where fixtures live
+  seed: null              # command to seed test data
+
+network:
+  external_services: []   # external dependencies the repo reaches
+  boundaries: null        # what is reachable vs. mocked in tests

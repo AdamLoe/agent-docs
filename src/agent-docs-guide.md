@@ -139,6 +139,14 @@ ownership map and the app bindings are **data**, not prose:
   concept → its one canonical owner doc (+ allowed referencers). When two
   docs could explain the same thing, this decides; the loser links. Query
   it; don't bulk-load it.
+- **`_meta/execution.yaml`** — the **required** per-repo execution binding
+  (human-authored YAML). Operational fields (language, roots,
+  format/lint/typecheck/test/build/smoke commands, path-to-check, services,
+  browser, database, protected/forbidden/generated paths, scarce resources,
+  path/risk→pack routes) plus the **Q9 layers** a feature worker hits first
+  (bootstrap, secrets, observability, test-data, network). Name real commands;
+  an absent tool is residual risk, not a fake gate. PyYAML validates the full
+  schema; absent, the gate degrades to a presence check.
 - **`repository-layout.md`** — a file/directory inventory. Read only when
   you need to find where code lives, never proactively.
 
@@ -332,13 +340,6 @@ This kit is probably more process than you need for a tiny throwaway script, a
 repo where agents rarely collaborate, docs written mainly for human narrative
 reading, or a project unwilling to keep plans temporary and migrated into
 architecture/decisions when work ships.
-
-## Future roadmap
-
-One larger direction is intentionally not part of the current workflow:
-
-- Treat `_meta/ownership.json` as a richer routing API with aliases,
-  canonical owners, allowed referencers, and update triggers.
 
 ## Adopting / repairing agent-docs
 

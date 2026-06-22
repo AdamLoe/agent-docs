@@ -25,7 +25,7 @@ Read the orchestration state inline (this is routing, not worker dispatch):
 - the `~/.agentdocs/template/docs/` inventory — the canonical seed set:
   `index.md`, `overview.md`, `repository-layout.md`, `architecture/index.md`,
   `decisions/index.md`, `agent-context/index.md`, `plans/index.md`,
-  `_meta/manifest.md`, `_meta/ownership.json`.
+  `_meta/manifest.md`, `_meta/ownership.json`, `_meta/execution.yaml`.
 - the current docs path (default `docs/`) and any existing `_meta/manifest.md`
   and `_meta/ownership.json` — to inventory what is present, partial, or stale.
 
@@ -40,6 +40,10 @@ Read the orchestration state inline (this is routing, not worker dispatch):
 - `docs/_meta/manifest.md` binds repo-specific facts; `docs/_meta/ownership.json`
   is the tie-breaker when two docs could own the same fact. Both must stay
   visible from `docs/index.md` and `docs/overview.md`.
+- `docs/_meta/execution.yaml` is **required**: seed it from the template and
+  fill HONEST per-repo values (operational commands, services, paths, and the
+  Q9 bootstrap/secrets/observability/test-data/network layers). Name real
+  commands and leave absent tooling as residual risk; do not invent gates.
 
 ## Worker Phases
 

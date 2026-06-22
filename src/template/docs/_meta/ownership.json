@@ -11,6 +11,11 @@
       "owns": ["manifest bindings", "concept ownership data"]
     },
     {
+      "surface": "execution-binding",
+      "paths": ["docs/_meta/execution.yaml"],
+      "owns": ["per-repo execution binding", "operational commands", "Q9 layers"]
+    },
+    {
       "surface": "docs-routing",
       "paths": ["docs/index.md", "docs/overview.md"],
       "owns": ["top-level docs routing", "one-screen repo overview"]

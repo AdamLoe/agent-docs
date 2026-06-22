@@ -473,6 +473,103 @@ validate_word_budgets() {
   require_word_limit "docs/repository-layout.md" 350 "repository layout budget"
 }
 
+# execution.yaml is the per-repo execution binding (human-authored YAML). The
+# kernel stays JSON read by stdlib json; execution.yaml needs a YAML parser. Per
+# the PyYAML-optional policy, this validator TRIES to import a YAML parser:
+# present, it validates the FULL schema (every required top-level key, scalar
+# types, and the {} / [] container shapes); absent, it degrades to a shallow
+# presence/text check plus an "install pyyaml" remediation. Both branches leave
+# the gate GREEN so the core gate runs offline on any bash + stdlib-python host.
+EXECUTION_YAML_REQUIRED_KEYS="schema_version language roots commands path_to_check services browser database protected_paths forbidden_paths generated_paths scarce_resources pack_routes bootstrap secrets observability network test_data"
+
+validate_execution_yaml() {
+  validate_execution_yaml_under "$repo_root" "$1" "$2"
+}
+
+validate_execution_yaml_under() {
+  local root=$1
+  local path=$2
+  local label=$3
+  local python_cmd
+
+  [ -f "$root/$path" ] ||
+    fail "$label missing required execution binding: $path"
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot validate execution.yaml; install python"
+
+  "$python_cmd" - "$root/$path" "$label" "$EXECUTION_YAML_REQUIRED_KEYS" <<'PY' || fail "$label execution.yaml validation failed: $path"
+import sys, pathlib
+
+path = pathlib.Path(sys.argv[1])
+label = sys.argv[2]
+required = sys.argv[3].split()
+text = path.read_text(encoding="utf-8")
+
+try:
+    import yaml
+except ImportError:
+    # Graceful degradation: no parser, so we cannot validate the schema. Run a
+    # shallow presence/text check (each required key visibly present as a
+    # top-level `key:` line) and emit a clear remediation. Still GREEN.
+    missing = [k for k in required if not any(
+        line.split("#", 1)[0].rstrip().startswith(k + ":")
+        for line in text.splitlines())]
+    if missing:
+        print(f"EXECUTION-YAML FAIL ({label}): missing top-level keys "
+              f"{', '.join(missing)} in {path}", file=sys.stderr)
+        raise SystemExit(1)
+    print(f"  {label}: execution.yaml present, {len(required)} required keys "
+          f"text-checked (install pyyaml for full execution.yaml validation)")
+    raise SystemExit(0)
+
+# Parser present: validate the full schema.
+try:
+    data = yaml.safe_load(text)
+except yaml.YAMLError as exc:
+    print(f"EXECUTION-YAML FAIL ({label}): not valid YAML: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+if not isinstance(data, dict):
+    print(f"EXECUTION-YAML FAIL ({label}): top level must be a mapping", file=sys.stderr)
+    raise SystemExit(1)
+
+errors = []
+for key in required:
+    if key not in data:
+        errors.append(f"missing required key: {key}")
+
+# Type contracts for the keys whose shape the resolver and workers rely on.
+list_keys = ["language", "path_to_check", "services", "protected_paths",
+             "forbidden_paths", "generated_paths", "scarce_resources",
+             "pack_routes"]
+map_keys = ["roots", "commands", "browser", "database", "bootstrap",
+            "secrets", "observability", "network", "test_data"]
+for key in list_keys:
+    if key in data and data[key] is not None and not isinstance(data[key], list):
+        errors.append(f"{key} must be a list")
+for key in map_keys:
+    if key in data and data[key] is not None and not isinstance(data[key], dict):
+        errors.append(f"{key} must be a mapping")
+if "schema_version" in data and not isinstance(data["schema_version"], int):
+    errors.append("schema_version must be an integer")
+# commands must name every operational command slot (null is allowed).
+if isinstance(data.get("commands"), dict):
+    for slot in ("format", "lint", "typecheck", "targeted_test",
+                 "full_test", "build", "smoke"):
+        if slot not in data["commands"]:
+            errors.append(f"commands missing slot: {slot}")
+
+if errors:
+    for e in errors:
+        print(f"EXECUTION-YAML FAIL ({label}): {e} in {path}", file=sys.stderr)
+    raise SystemExit(1)
+
+print(f"  {label}: execution.yaml full-schema valid "
+      f"({len(required)} required keys, parser=PyYAML)")
+PY
+}
+
 # Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
 # authority for worker context profiles since the Wave 1b cutover. Emits one
 # tab-separated row per profile in the legacy column order so every downstream
@@ -776,15 +873,39 @@ if manifest_path.is_file():
 else:
     notices.append(f"no manifest at {manifest_path} (repo not scaffolded)")
 
-# --- 4. execution.yaml fields (Wave 4 adds the file; degrade until then) -------
+# --- 4. execution.yaml fields (the per-repo execution binding) -----------------
+# Surface which operational + Q9 sections the binding carries as references the
+# worker routes through; never copy the field VALUES (PyYAML may be absent, so
+# parse only when available and fall back to a top-level-key text scan).
 exec_path = repo / "docs" / "_meta" / "execution.yaml"
 exec_fields = []
+EXEC_SECTIONS = [
+    "language", "roots", "commands", "path_to_check", "services", "browser",
+    "database", "protected_paths", "forbidden_paths", "generated_paths",
+    "scarce_resources", "pack_routes", "bootstrap", "secrets", "observability",
+    "test_data", "network",
+]
 if exec_path.is_file():
+    etext = exec_path.read_text(encoding="utf-8")
+    present = []
+    try:
+        import yaml  # optional; references-only either way
+        edata = yaml.safe_load(etext)
+        if isinstance(edata, dict):
+            present = [s for s in EXEC_SECTIONS if s in edata]
+    except ImportError:
+        notices.append("pyyaml absent: execution.yaml sections detected by "
+                       "top-level-key scan (install pyyaml for full validation)")
+        present = [s for s in EXEC_SECTIONS if any(
+            line.split("#", 1)[0].rstrip().startswith(s + ":")
+            for line in etext.splitlines())]
     exec_fields.append(("execution.yaml", str(exec_path)))
+    if present:
+        exec_fields.append(("sections", ", ".join(present)))
 else:
-    notices.append("no docs/_meta/execution.yaml yet (Wave 4 adds the repo "
-                   "execution binding); operational/pack-routing fields "
-                   "unavailable - resolving with kernel + manifest only")
+    notices.append(f"no execution binding at {exec_path} (repo not scaffolded "
+                   "with docs/_meta/execution.yaml); operational/pack-routing "
+                   "fields unavailable - resolving with kernel + manifest only")
 
 # --- 5. Allowed packs: (path-routes ∪ scoper-tags) ∩ execution-allowlist -------
 # packs.json is an empty scaffold until Wave 4, and a read-only profile is never
@@ -1757,6 +1878,7 @@ check_scaffold_tree() {
   require_file_under "$root" "docs/repository-layout.md" "$label"
   require_file_under "$root" "$manifest_path" "$label"
   require_file_under "$root" "$ownership_path" "$label"
+  require_file_under "$root" "docs/_meta/execution.yaml" "$label"
   require_dir_under "$root" "docs/architecture" "$label"
   require_dir_under "$root" "docs/decisions" "$label"
   require_dir_under "$root" "docs/agent-context" "$label"
@@ -1782,6 +1904,8 @@ check_scaffold_tree() {
   validate_ownership_paths_under "$root" "$ownership_path" "$label"
   require_ownership_surface_path_under \
     "$root" "$ownership_path" "repository-layout" "docs/repository-layout.md" "$label"
+
+  validate_execution_yaml_under "$root" "docs/_meta/execution.yaml" "$label"
 
   require_no_scaffold_placeholders "$root" "docs" "$label"
 }
@@ -2055,6 +2179,10 @@ contract_check || contract_violations=$?
 
 section "documentation budget checks"
 validate_word_budgets
+
+section "execution.yaml binding checks"
+validate_execution_yaml "docs/_meta/execution.yaml" "dogfood"
+validate_execution_yaml "src/template/docs/_meta/execution.yaml" "template"
 
 section "scaffold template checks"
 check_scaffold_tree "$repo_root/src/template" "template docs scaffold"

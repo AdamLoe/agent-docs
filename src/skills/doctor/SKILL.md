@@ -30,8 +30,11 @@ The verification worker confirms:
 
 - Required scaffold files exist: `docs/index.md`, `docs/overview.md`,
   `docs/repository-layout.md`, `docs/_meta/manifest.md`,
-  `docs/_meta/ownership.json`, and the four doc roots `architecture/`,
-  `decisions/`, `agent-context/`, `plans/`.
+  `docs/_meta/ownership.json`, `docs/_meta/execution.yaml`, and the four doc
+  roots `architecture/`, `decisions/`, `agent-context/`, `plans/`.
+- `docs/_meta/execution.yaml` is present and schema-valid (full schema when a
+  YAML parser is installed; a presence/text check plus an "install pyyaml"
+  notice when absent — both still gate green).
 - Manifest slots exist: `repo_name`, `agent_docs_version`, `code_root`,
   `change-to-doc`, `drift-gates`, `drift-verification`, `decisions-domains`.
 - `docs/index.md` visibly routes app bindings and ownership questions to

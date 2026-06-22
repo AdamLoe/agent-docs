@@ -1,0 +1,103 @@
+# execution.yaml — agent-docs (dogfood) repo execution binding.
+#
+# Per-repo operational binding for execution workers. Human-authored YAML;
+# the verifier validates the full schema when a YAML parser (PyYAML) is
+# present and degrades to a presence/text check when it is absent.
+#
+# Schema reference (every top-level key is required; leave a section empty
+# with {} or [] when the repo genuinely has none — do NOT delete the key):
+#
+#   schema_version            int   — binding schema version (1).
+#   language                  list  — languages/stacks in this repo.
+#   roots                     map   — named source roots (label → path).
+#   commands                  map   — operational command strings:
+#                                     format, lint, typecheck, targeted_test,
+#                                     full_test, build, smoke (null when none).
+#   path_to_check             list  — {path, check} routes (which gate covers
+#                                     which path).
+#   services                  list  — {name, startup, health, ports} entries.
+#   browser                   map   — {workflow, screenshot} UI exercise hooks.
+#   database                  map   — {migrate, seed, reset} commands.
+#   protected_paths           list  — edit-with-care paths (machine-authored).
+#   forbidden_paths           list  — never-edit-during-build paths.
+#   generated_paths           list  — build outputs; never hand-edit.
+#   scarce_resources          list  — single-instance/contended resources.
+#   pack_routes               list  — {path|risk, pack} routes into quality
+#                                     packs. EMPTY here; Wave 4b populates it.
+#   bootstrap                 map   — Q9: dependency/toolchain install.
+#   secrets                   map   — Q9: credential provisioning.
+#   observability             map   — Q9: log/metric access.
+#   test_data                 map   — Q9: fixture/seed provisioning.
+#   network                   map   — Q9: external-service boundaries.
+
+schema_version: 1
+
+language:
+  - bash
+  - markdown
+
+roots:
+  kit: src/
+  docs: docs/
+
+# Honest commands. agent-docs has no formatter/linter/typechecker/build;
+# name null rather than inventing tooling. The verifier IS the test.
+commands:
+  format: null
+  lint: null
+  typecheck: null
+  targeted_test: bash src/verify-agent-docs.sh
+  full_test: bash src/verify-agent-docs.sh
+  build: null
+  # Smoke = both installers preview their plan without mutating $HOME.
+  smoke: bash install-agentdocs-local.sh --dry-run && bash src/install-agentdocs.sh --dry-run
+
+path_to_check:
+  - path: src/
+    check: bash src/verify-agent-docs.sh
+  - path: docs/
+    check: bash src/verify-agent-docs.sh
+
+# No long-running services, browser/UI, or database in this repo.
+services: []
+browser: {}
+database: {}
+
+# SOURCE-ONLY: machine-authored kernel JSON and the live runtime are off-limits
+# during the build. ~/.agentdocs/ and any installer run require explicit user
+# authorization (see rules/repo-rules.md → Destructive command checklist).
+protected_paths:
+  - src/kernel/        # machine-authored kernel JSON; edit via the owning wave only
+forbidden_paths:
+  - ~/.agentdocs/      # live runtime; never touched during SOURCE-ONLY build
+generated_paths: []    # the kit has no build outputs; src/ is the source
+
+scarce_resources: []
+
+# Pack routes are defined here but intentionally EMPTY; Wave 4b authors the
+# eight quality-pack leaves and populates these path/risk → pack routes.
+pack_routes: []
+
+# --- Q9 layers a feature worker hits first -----------------------------------
+
+bootstrap:
+  # Toolchain needed to run the gate. python3 is stdlib-only here.
+  toolchain: bash, python3 (stdlib; PyYAML optional for full execution.yaml validation)
+  install: null         # no dependency manager; nothing to install
+  notes: PyYAML absent only downgrades execution.yaml validation, not the core gate.
+
+secrets:
+  required: []          # offline gate; no credentials
+  provisioning: null
+
+observability:
+  logs: null            # no runtime logs; the gate prints to stdout
+  metrics: null
+
+test_data:
+  fixtures: src/verify-fixtures/   # frozen launch/scenario fixtures for the gate
+  seed: null
+
+network:
+  external_services: []  # the gate is fully offline
+  boundaries: No network access; the verifier and installers' --dry-run run offline.

@@ -57,8 +57,18 @@
     },
     {
       "surface": "verifier-fixtures",
-      "paths": ["src/kernel/", "src/verify-fixtures/baseline.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md"],
-      "owns": ["source-bound scenario contract gate", "frozen launch baseline", "verifier fixture data", "kernel profile/scenario/budget authority"]
+      "paths": ["src/verify-fixtures/baseline.md", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md"],
+      "owns": ["source-bound scenario contract gate", "frozen launch baseline", "verifier fixture data"]
+    },
+    {
+      "surface": "kernel-machine-authority",
+      "paths": ["src/kernel/", "src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md"],
+      "owns": ["kernel profile authority", "kernel scenario authority", "kernel workflow authority", "kernel pack authority", "JSON machine-fact authority"]
+    },
+    {
+      "surface": "execution-binding",
+      "paths": ["docs/_meta/execution.yaml", "src/template/docs/_meta/execution.yaml", "src/verify-agent-docs.sh", "src/agent-docs-guide.md", "src/skills/rebuild-agent-docs/SKILL.md", "src/skills/doctor/SKILL.md"],
+      "owns": ["per-repo execution binding", "execution.yaml schema", "operational command routing", "Q9 bootstrap/secrets/observability/test-data/network layers", "path/risk pack-route field"]
     },
     {
       "surface": "reference-leaves",
