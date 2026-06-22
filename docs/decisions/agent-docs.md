@@ -243,39 +243,40 @@ whether workers run.
 **Why.** One instruction set serving both "navigate the workflow" and "do the
 task" bloated and blurred the skills. Splitting orchestrator control
 (`src/rules/orchestrator/`) from worker roles (`src/rules/subagent/`) keeps both
-lean; exact rule-file links instead of copied prose keep dispatch cheap. Skill
-*names* are unchanged — internal execution model, not command surface. A missing
-dispatch capability is an error to report, not a reason to inline.
+lean. Skill *names* are unchanged — internal execution model, not command
+surface. A missing dispatch capability is an error to report, not a reason to
+inline.
 
 **Alternatives considered.** A direct/delegated boolean per skill — rejected for
 reviving the two-jobs problem and a per-skill "should I delegate?" debate.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/skill-contracts.md`](../../src/rules/skill-contracts.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/rules/subagent/`](../../src/rules/subagent/), [`../../src/skills/registry.md`](../../src/skills/registry.md).
 
-## Commit-heavy worker shipping
+## Clean-handoff git invariant
 
-**Decision.** Editing workers commit their own completed slice before reporting;
-follow-up workers repair or revert through additional commits. Editing is serial
-per working tree because concurrent commits race the git index; parallel editing
-uses worktree isolation or orchestrator-applied patches. Each mutating worker
-snapshots dirty state, preserves unrelated user changes and deletions, stages
-only owned paths by filename, and stops if unrelated dirt blocks a coherent
-slice. The orchestrator records commit hashes and verifies the final observed
-state; the user squashes later if desired.
+**Decision.** Supersedes "Commit-heavy worker shipping". A mutating worker never
+hands off unexplained owned dirt. It ends in one of three terminal states:
+**committed** (owned slice committed, gate green); **clean no-op** (tree clean);
+or **explicit blocked handoff** recording the dirty paths, the check/gate state,
+why a safe commit is impossible, and the resume profile. A **discharge gate**
+binds every blocked-handoff record to its resolution — committed or reverted —
+before final verification; no run ends undischarged. Long work may take
+**constrained checkpoint commits** but must not revive the per-slice micro-commit
+cadence this replaces. Editing stays serial per tree; `repo-rules.md` owns the
+snapshot/staging rules.
 
-**Why.** Workers own their slice end to end, so the commit belongs with the
-worker that verified it green. Serial editing avoids index races that
-file-ownership fences cannot prevent.
+**Why.** Committing every slice churned history and stranded half-done work; the
+invariant keeps the outcome — no unexplained dirt — with a blocked state
+auditable and discharged.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/rules/subagent/`](../../src/rules/subagent/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/rules/subagent/`](../../src/rules/subagent/), [`../../src/rules/repo-rules.md`](../../src/rules/repo-rules.md).
 
 ## Source-first compact handoffs
 
 **Decision.** Dispatch is source-first and compact: orchestrators pass exact rule
 links plus path/heading hints, workers read authoritative docs/source directly,
-and carry-forward summaries hold only observed decisions, findings, touched
-files, gates, commits, blockers, and assumptions — never a copy of the owning
-source.
+and carry-forward summaries hold only the observed facts dispatch.md lists —
+never a copy of the source.
 
 **Why.** Summaries become risky when they replace the source that owns the fact;
 short packets save tokens without weakening evidence.

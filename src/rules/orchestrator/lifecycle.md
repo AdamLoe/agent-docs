@@ -3,7 +3,7 @@
 GENERIC. App-independent. Workflow-control contract for **orchestrators** — the
 user-facing skills that enter at a deterministic first phase, drive a lifecycle,
 and hold the coordination surface. Role execution: [`../subagent/`](../subagent/).
-Dispatch packet, report shape, profiles, commit concurrency: [`dispatch.md`](dispatch.md).
+Dispatch packet, report shape, profiles, clean-handoff invariant: [`dispatch.md`](dispatch.md).
 Run folders: [`run-docs.md`](run-docs.md). App-specific orchestration notes stay
 in the app's `docs/agent-context/orchestrating.md`.
 
@@ -122,8 +122,8 @@ plan-status, and run-doc edits.**
   one consolidated final gate, not a per-phase check.
 - **Sequence by file overlap, parallelize by disjointness.** Two workers editing
   the same file or a shared central type WILL collide. Read-only workers
-  parallelize freely; editing is serial by default — see commit concurrency in
-  [`dispatch.md`](dispatch.md).
+  parallelize freely; editing is serial by default — see the clean-handoff
+  invariant in [`dispatch.md`](dispatch.md).
 
 ## Human stops
 
@@ -151,8 +151,8 @@ blocker into concrete questions yourself before involving the user.
 
 - [`lifecycle-reference.md`](lifecycle-reference.md) — rationale, examples, dial
   table, workflow walk-through (do not auto-load).
-- [`dispatch.md`](dispatch.md) — dispatch packet, report shape, profiles, commit
-  concurrency.
+- [`dispatch.md`](dispatch.md) — dispatch packet, report shape, profiles,
+  clean-handoff invariant.
 - [`run-docs.md`](run-docs.md) — opt-in stateful run folders.
 - [`../skill-contracts.md`](../skill-contracts.md) — intake, dials, model policy,
   human stops.

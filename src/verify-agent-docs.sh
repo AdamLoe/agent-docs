@@ -1113,10 +1113,11 @@ equivalence_check() {
   fi
   printf 'ok   superseded Markdown profile table and JSON scenario fixture are gone\n'
 
-  # 2. The kernel still parses and resolves all 14 profiles + 12 scenarios.
+  # 2. The kernel still parses and resolves all 14 profiles + 13 scenarios.
   #    (Wave 2 added the read-only planning.scope profile and the
   #    orchestrate-planning-scope-first scenario row; Wave 3 added the read-only
-  #    docs.inspect and plans.inspect inspection profiles.)
+  #    docs.inspect and plans.inspect inspection profiles; Wave 5 added the
+  #    blocked-handoff-discharge scenario row.)
   if ! "$python_cmd" - \
        "$repo_root/src/kernel/profiles.json" \
        "$(scenario_fixture)" <<'PY'
@@ -1125,8 +1126,8 @@ profiles = json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
 scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
 if len(profiles) != 14:
     raise SystemExit(f"kernel profiles count {len(profiles)} != 14")
-if len(scenarios) != 12:
-    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 12")
+if len(scenarios) != 13:
+    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 13")
 print(f"ok   kernel resolves {len(profiles)} profiles and {len(scenarios)} scenarios")
 PY
   then
@@ -1860,6 +1861,116 @@ PY
   printf '%s\n' "$scope_out" | grep -v '^__VIOLATIONS__'
   violations=$((violations + ${scope_violations:-0}))
   [ "${scope_violations:-0}" -eq 0 ] && printf 'CLEAN: planning.scope is the fixed first /orchestrate phase\n'
+
+  # ---- Check 10: clean-handoff git invariant consistency -----------------
+  # Wave 5 replaced "a mutating worker commits every completed slice" with the
+  # clean-handoff invariant. This GATES that the invariant is stated CONSISTENTLY
+  # across the orchestrator dispatch rule, the universal git rule, and every
+  # mutating role card, and that NONE of them has reverted to commit-every-slice
+  # language. A file fails if it is missing the invariant's load-bearing concepts
+  # (three terminal states + discharge), OR if it re-introduces the retired
+  # micro-commit cadence ("commit your/its/their completed slice before
+  # reporting", "commit-heavy by design", "commit every slice"). It bites if any
+  # one of the five files drifts.
+  printf -- '-- check 10: clean-handoff git invariant consistency --\n'
+  local handoff_out handoff_violations
+  handoff_out=$(
+    "$python_cmd" - "$repo_root" <<'PY'
+import pathlib, re, sys
+
+repo_root = pathlib.Path(sys.argv[1])
+
+# The canonical home (repo-rules.md) must carry the full invariant; dispatch.md
+# (and its rationale leaf) likewise. The three mutating role cards must carry the
+# three terminal states. Every file in the set must avoid commit-every-slice
+# language.
+full = [
+    "src/rules/repo-rules.md",
+    "src/rules/orchestrator/dispatch.md",
+]
+cards = [
+    "src/rules/subagent/implementation.md",
+    "src/rules/subagent/docs-maintenance.md",
+    "src/rules/subagent/plan-maintenance.md",
+]
+
+# Retired commit-every-slice cadence: the exact phrasings the invariant replaces.
+# Each alternative is a POSITIVE mandate; the negations the surviving docs use
+# ("must not micro-commit every slice", "do not micro-commit per slice") are
+# excluded by requiring the cadence verb not be a "micro-commit" and by the
+# NEGATED guard applied at the call site.
+REVERTED = re.compile(
+    r"commit(?:s|ed)?\s+(?:your|its|their|the)\s+completed\s+slice\s+before\s+reporting"
+    r"|commit\s+it\s+before\s+reporting"
+    r"|commit-heavy\s+by\s+design"
+    r"|(?<!micro-)(?<!micro )commit\s+every\s+(?:completed\s+)?slice"
+    r"|commit\s+each\s+slice",
+    re.I,
+)
+# A reverted match inside a prohibition ("must not", "never", "do not", "n't")
+# is the invariant being RESTATED, not violated.
+NEGATED_CADENCE = re.compile(
+    r"(?:must not|never|do not|don't|don’t|not)\s+(?:\w+[- ]){0,3}"
+    r"(?:micro-)?commit\s+(?:every|each)\s+(?:completed\s+)?slice",
+    re.I,
+)
+# Load-bearing concepts of the invariant.
+NO_DIRT = re.compile(r"never\s+hands?\s+off\s+unexplained\s+owned\s+dirt", re.I)
+COMMITTED = re.compile(r"\bcommitted\b", re.I)
+CLEAN_NOOP = re.compile(r"clean\s+no-op", re.I)
+BLOCKED = re.compile(r"blocked\s+handoff", re.I)
+DISCHARGE = re.compile(
+    r"(committed\s+or\s+reverted|commit\s+or\s+revert).{0,40}before\s+final\s+verification"
+    r"|discharge",
+    re.I,
+)
+
+violations = 0
+
+def check(rel, require_full):
+    global violations
+    path = repo_root / rel
+    if not path.is_file():
+        print(f"WARN clean-handoff source missing: {rel}")
+        violations += 1
+        return
+    text = path.read_text(encoding="utf-8")
+    flat = re.sub(r"\s+", " ", text)
+    m = REVERTED.search(flat)
+    if m and not NEGATED_CADENCE.search(flat[max(0, m.start() - 40):m.end()]):
+        print(f"WARN {rel} reverts to commit-every-slice language: {m.group(0)!r}")
+        violations += 1
+    # Every file must name the three terminal states.
+    missing = []
+    if not COMMITTED.search(flat):
+        missing.append("committed")
+    if not CLEAN_NOOP.search(flat):
+        missing.append("clean no-op")
+    if not BLOCKED.search(flat):
+        missing.append("blocked handoff")
+    if require_full:
+        if not NO_DIRT.search(flat):
+            missing.append("never-hands-off-unexplained-owned-dirt")
+        if not DISCHARGE.search(flat):
+            missing.append("discharge-before-final-verification")
+    if missing:
+        print(f"WARN {rel} missing clean-handoff concepts: {missing}")
+        violations += 1
+    else:
+        print(f"ok   {rel} states the clean-handoff invariant consistently")
+
+for rel in full:
+    check(rel, require_full=True)
+for rel in cards:
+    check(rel, require_full=False)
+
+print(f"__VIOLATIONS__ {violations}")
+PY
+  )
+  handoff_violations=$(printf '%s\n' "$handoff_out" | awk '/^__VIOLATIONS__/{print $2}')
+  printf '%s\n' "$handoff_out" | grep -v '^__VIOLATIONS__'
+  violations=$((violations + ${handoff_violations:-0}))
+  [ "${handoff_violations:-0}" -eq 0 ] && printf 'CLEAN: clean-handoff git invariant is consistent across dispatch, repo-rules, and mutating role cards\n'
 
   # ---- Total -------------------------------------------------------------
   # Wave 5b: these checks GATE. Report the count, then return it so callers fail

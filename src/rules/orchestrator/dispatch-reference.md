@@ -116,20 +116,24 @@ does not perform the worker's job inline — silently doing the work in the
 orchestrator's own context is exactly the implementer-drift the lifecycle
 forbids.
 
-## Commit concurrency — why editing is serial
+## Clean-handoff git invariant — why editing is serial
 
-The workflow is commit-heavy by design: workers that edit repo files commit their
-completed slice before reporting, and later workers may repair or revert with
-additional commits. Before editing, a mutating worker snapshots
-`git status --short`, preserves unrelated user changes and deletions, and stages
-only owned paths by filename; if unrelated dirty state blocks a coherent slice or
-a clean gate, it stops with the concrete blocker.
+A mutating worker never hands off unexplained owned dirt; it ends **committed**
+(owned slice green and committed), a **clean no-op** (tree clean), or a **blocked
+handoff** recording the exact owned dirty paths, the check/gate state, why a safe
+commit is impossible, and the resume profile. The blocked-handoff record must be
+committed or reverted before final verification — no run ends undischarged. Long
+or resume-sensitive work may take constrained checkpoint commits but must not
+revive the per-slice micro-commit cadence this replaces. Before editing, a
+mutating worker snapshots `git status --short`, preserves unrelated user changes
+and deletions, and stages only owned paths by filename; if unrelated dirty state
+blocks a coherent slice or a clean gate, it stops with the concrete blocker.
 
 Editing is serial by default because concurrent commits race the git index. Run
-at most one editing worker at a time on the shared tree; it commits its slice
-before the next editing worker starts. Read-only workers may run in parallel
-except when a scarce-resource or final-state gate must observe a specific state.
-When parallel editing is worth the cost, give each editing worker its own git
+at most one editing worker at a time on the shared tree; the next starts only
+after it reaches a terminal state. Read-only workers may run in parallel except
+when a scarce-resource or final-state gate must observe a specific state. When
+parallel editing is worth the cost, give each editing worker its own git
 worktree, or have workers return patches the orchestrator applies and commits —
 file-ownership fences alone do not make concurrent commits safe.
 

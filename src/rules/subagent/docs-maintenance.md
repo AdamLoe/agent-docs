@@ -26,8 +26,10 @@ names. Do not add rule files beyond the resolved profile.
   Report command, exit code, and the shortest proof line or failure excerpt.
 - Stay in the docs-maintenance lane. Do not implement app behavior or close plan
   lifecycle unless your dispatch separately assigns that role.
-- When you edit repo files, commit your slice before reporting and follow
-  [`../repo-rules.md`](../repo-rules.md).
+- When you edit repo files, hand off with no unexplained owned dirt: end
+  **committed**, a **clean no-op**, or a **blocked handoff** recording the owned
+  dirty paths, check/gate state, why no safe commit, and the resume profile
+  ([`../repo-rules.md`](../repo-rules.md)).
 
 ## What you report
 
@@ -37,7 +39,7 @@ Per [`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
 - docs fixed, or recommended fixes if report-only
 - deferred human decisions (hard ownership/rationale calls)
 - gates run and result
-- commit hash for edited work, or an explicit no-change result
+- commit hash, an explicit clean no-op, or a blocked-handoff record
 - raw runtime usage only when exposed by the runtime or requested
 
 Target `<=600` output tokens for routine repair/check work, or `<=1,200` when

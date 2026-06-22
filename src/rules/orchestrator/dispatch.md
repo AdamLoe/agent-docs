@@ -2,9 +2,9 @@
 
 GENERIC. App-independent. The canonical rule for **how an orchestrator dispatches
 a worker**: packet shape, context-profile use, worker reports, mutation
-authority, resume, dispatch-failure behavior, and commit concurrency. Lifecycle
-and phase choice live in [`lifecycle.md`](lifecycle.md). Profile definitions live
-in [`../context-profiles.md`](../context-profiles.md).
+authority, resume, dispatch-failure behavior, and the clean-handoff git
+invariant. Lifecycle and phase choice live in [`lifecycle.md`](lifecycle.md).
+Profile definitions live in [`../context-profiles.md`](../context-profiles.md).
 
 Expanded rationale + examples + standard preamble (do not auto-load):
 [`dispatch-reference.md`](dispatch-reference.md).
@@ -107,20 +107,30 @@ Runtimes are expected to support worker dispatch. If an adapter or environment
 cannot spawn a required worker, the skill reports a clear error and stops. It
 does not perform the worker's job inline.
 
-## Commit Concurrency
+## Clean-Handoff Git Invariant
 
-The workflow is commit-heavy by design. Workers that edit repo files commit their
-completed slice before reporting; later workers may repair or revert with more
-commits. Before editing, a mutating worker snapshots `git status --short`,
-preserves unrelated user changes and deletions, and stages only owned paths by
-filename; if unrelated dirty state blocks a coherent slice or clean gate, it
-stops with the concrete blocker.
+A mutating worker **never hands off unexplained owned dirt.** It ends in exactly
+one of three terminal states:
+
+1. **committed** — owned slice committed, its gate green;
+2. **clean no-op** — nothing to change, tree left clean;
+3. **blocked handoff** — records the exact owned dirty paths, the check/gate
+   state, why a safe commit is impossible, and the resume profile to continue
+   from.
+
+**Discharge gate.** A blocked-handoff record must be committed or reverted before
+final verification — no run ends with an undischarged blocked handoff. Long or
+resume-sensitive work may take **constrained checkpoint commits** but must not
+revive the per-slice micro-commit cadence this invariant replaces. Before
+editing, a worker snapshots `git status --short`, preserves unrelated user
+changes and deletions, and stages only owned paths by filename; if unrelated dirt
+blocks a coherent slice or clean gate, it stops with the concrete blocker.
 
 Editing is serial by default because concurrent commits race the git index. Run
-at most one editing worker at a time on the shared tree; it commits its slice
-before the next editing worker starts. Read-only workers may run in parallel
-except when a scarce-resource or final-state gate must observe a specific state.
-When parallel editing is worth the cost, give each editing worker its own git
+at most one editing worker at a time on the shared tree; the next starts only
+after it reaches a terminal state. Read-only workers may run in parallel except
+when a scarce-resource or final-state gate must observe a specific state. When
+parallel editing is worth the cost, give each editing worker its own git
 worktree, or have workers return patches the orchestrator applies and commits;
 file-ownership fences alone do not make concurrent commits safe.
 

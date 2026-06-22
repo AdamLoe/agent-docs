@@ -1,5 +1,5 @@
 {
-  "_comment": "Kernel machine authority for the workflow scenario matrix. The first 11 rows are reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same fields); Wave 2 added orchestrate-planning-scope-first, asserting planning.scope is the fixed entry phase of every /orchestrate run. NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. This is the SOLE authority for scenario rows.",
+  "_comment": "Kernel machine authority for the workflow scenario matrix. The first 11 rows are reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same fields); Wave 2 added orchestrate-planning-scope-first, asserting planning.scope is the fixed entry phase of every /orchestrate run; Wave 5 added blocked-handoff-discharge, asserting a mutating worker that ends blocked records the handoff and discharges it (commits or reverts) before final verification. NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. This is the SOLE authority for scenario rows.",
   "scenarios": [
     {
       "scenario_id": "orchestrate-planning-scope-first",
@@ -132,6 +132,17 @@
       "state_basis_fields": "intervening commit and dirty overlap",
       "final_ordering": "no stale resume before reread",
       "budget_expectation": "report-only"
+    },
+    {
+      "scenario_id": "blocked-handoff-discharge",
+      "task_shape": "mutating worker cannot land a safe commit and ends blocked",
+      "expected_questions": "none; the worker records the blocker, not a user question",
+      "expected_profiles": "a mutating profile (implementation.*, maintenance.*), then the resume profile the record names",
+      "expected_phases": "worker records a blocked handoff (owned dirty paths, check/gate state, why no safe commit, resume profile); the orchestrator discharges it by committing or reverting before final verification",
+      "expected_mutator_count": "1 blocked, then 1 discharging",
+      "state_basis_fields": "HEAD plus the exact owned dirty paths the record names",
+      "final_ordering": "blocked-handoff record discharged (committed or reverted) before final verification; no run ends undischarged",
+      "budget_expectation": "report-only; constrained checkpoint commits allowed, no per-slice micro-commit cadence"
     }
   ]
 }
