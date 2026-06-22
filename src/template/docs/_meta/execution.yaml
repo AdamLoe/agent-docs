@@ -68,12 +68,29 @@ generated_paths: []   # e.g. dist/, target/, node_modules/
 # Single-instance or contended resources a worker must serialize on.
 scarce_resources: []  # e.g. a single GPU, a shared test database
 
-# Path/risk → quality pack routes. Leave empty until you adopt packs.
+# Path/risk → quality pack routes. This list is the EXECUTION-ALLOWLIST: a pack
+# activates only when (path-routes ∪ scoper-tags) intersects it. Route ONLY the
+# packs your repo actually needs — an unrouted pack never activates (that is the
+# point). The eight available pack ids are: frontend, accessibility, backend-api,
+# auth-security, db-migration, testing-reliability, performance-concurrency,
+# deployment-ops. Each entry is {path|risk, pack}. Delete the lines you don't use.
 pack_routes: []
-  # - path: web/        # frontend changes
-  #   pack: frontend-ui
-  # - risk: auth        # scoper-tagged risk
+  # - path: web/                  # frontend/UI changes
+  #   pack: frontend
+  # - risk: a11y                  # accessibility-tagged work
+  #   pack: accessibility
+  # - path: services/api          # backend/API changes
+  #   pack: backend-api
+  # - risk: auth                  # auth/security-tagged work
   #   pack: auth-security
+  # - path: migrations/           # schema/data changes
+  #   pack: db-migration
+  # - path: src/                  # core logic / test-critical paths
+  #   pack: testing-reliability
+  # - risk: performance           # hot/concurrent paths
+  #   pack: performance-concurrency
+  # - path: deploy/               # install/CI/release surfaces
+  #   pack: deployment-ops
 
 # --- Q9 layers ---------------------------------------------------------------
 

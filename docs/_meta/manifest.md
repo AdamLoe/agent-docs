@@ -20,9 +20,9 @@ code_root: src/
 | Verifier-only fixtures (scenario, launch baseline) | src/verify-fixtures/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |
 | Docs scaffold template and consuming-repo scaffold checks | src/template/docs/, src/verify-agent-docs.sh, src/skills/rebuild-agent-docs/SKILL.md, src/skills/doctor/SKILL.md, src/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Execution binding (execution.yaml schema, operational + Q9 fields) | docs/_meta/execution.yaml, src/template/docs/_meta/execution.yaml, src/verify-agent-docs.sh, src/agent-docs-guide.md |
-| Kernel machine authority (profiles/scenarios/workflows/packs) | src/kernel/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |
+| Kernel machine authority (profiles/scenarios/workflows/packs), quality-pack leaves | src/kernel/, src/rules/packs/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |
 | Doc-authoring rules, adapter-file policy | src/rules/authoring-rules.md |
-| Reference leaves for runtime rules | src/rules/authoring-rules-reference.md, src/rules/skill-contracts-reference.md, src/rules/context-profiles-reference.md, src/rules/repo-rules-reference.md, src/rules/orchestrator/lifecycle-reference.md, src/rules/orchestrator/dispatch-reference.md, docs/architecture/workflow-kit.md |
+| Reference leaves for runtime rules | src/rules/*-reference.md, src/rules/orchestrator/*-reference.md, docs/architecture/workflow-kit.md |
 | Conditional language-idiom overlays | src/rules/coding-style-rust.md, src/rules/coding-style-python.md, src/rules/coding-style-frontend.md, src/rules/context-profiles.md, docs/architecture/workflow-kit.md |
 | Orchestrator workflow control, dispatch, run docs, dials | src/rules/orchestrator/, src/skills/orchestrate/SKILL.md, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Subagent worker-role rules | src/rules/subagent/, docs/architecture/workflow-kit.md |

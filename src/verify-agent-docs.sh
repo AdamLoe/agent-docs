@@ -570,6 +570,56 @@ print(f"  {label}: execution.yaml full-schema valid "
 PY
 }
 
+# validate_kernel_packs: the kernel pack gates (Wave 4b). Every pack in packs.json
+# must (a) carry a trigger — at least one path_glob or risk_tag (a pack without a
+# trigger FAILS, since the merge rule cannot route an un-triggered pack), (b) name
+# a rule_leaf that exists on disk, and (c) name an evidence requirement. Reads the
+# kernel with stdlib json only (no YAML); writes nothing.
+validate_kernel_packs() {
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot validate kernel packs; install python"
+
+  "$python_cmd" - "$repo_root/src/kernel/packs.json" "$repo_root" <<'PY' || fail "kernel pack validation failed: src/kernel/packs.json"
+import json, pathlib, sys
+
+packs_path = pathlib.Path(sys.argv[1])
+repo_root = pathlib.Path(sys.argv[2])
+data = json.loads(packs_path.read_text(encoding="utf-8"))
+packs = data.get("packs", [])
+
+errors = []
+seen = set()
+for i, p in enumerate(packs):
+    pid = p.get("id")
+    if not pid:
+        errors.append(f"pack #{i} missing id")
+        continue
+    if pid in seen:
+        errors.append(f"duplicate pack id: {pid}")
+    seen.add(pid)
+    trig = p.get("trigger") or {}
+    globs = trig.get("path_globs") or []
+    tags = trig.get("risk_tags") or []
+    if not globs and not tags:
+        errors.append(f"pack {pid} has NO trigger (needs path_globs or risk_tags)")
+    leaf = p.get("rule_leaf")
+    if not leaf:
+        errors.append(f"pack {pid} missing rule_leaf")
+    elif not (repo_root / leaf).is_file():
+        errors.append(f"pack {pid} rule_leaf missing on disk: {leaf}")
+    if not p.get("evidence"):
+        errors.append(f"pack {pid} missing evidence requirement")
+
+if errors:
+    for e in errors:
+        print(f"KERNEL-PACK FAIL: {e}", file=sys.stderr)
+    raise SystemExit(1)
+print(f"  kernel packs valid: {len(packs)} packs, each with a trigger, an "
+      f"existing rule_leaf, and an evidence requirement")
+PY
+}
+
 # Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
 # authority for worker context profiles since the Wave 1b cutover. Emits one
 # tab-separated row per profile in the legacy column order so every downstream
@@ -746,9 +796,10 @@ resolve_profile() {
 # merge mode takes named flags and emits the merged exact-context resolution a
 # worker needs to start: the kernel profile (core rule paths + overlays + budget
 # + EXACT resolved size) joined with the consuming repo's manifest fields,
-# execution.yaml fields (when present; a clear notice when absent since Wave 4
-# adds it), task-routed docs with heading hints, source/test hints, allowed packs
-# (from packs.json - an empty scaffold until Wave 4), and the named checks. It is
+# execution.yaml fields (when present; a clear notice when absent), task-routed
+# docs with heading hints, source/test hints, and the ACTIVATED packs computed by
+# the sole pack loader — (path-routes ∪ scoper-tags) ∩ execution-allowlist — as
+# references (leaf path + trigger + evidence), plus the named checks. It is
 # REFERENCES-ONLY and READ-ONLY: every line is a path + heading hint + size, it
 # copies NO rule/doc/source body, and it WRITES NO artifact (no file, no temp,
 # no generated context). No-self-upgrade invariant: the merge reports the kernel
@@ -885,6 +936,15 @@ EXEC_SECTIONS = [
     "scarce_resources", "pack_routes", "bootstrap", "secrets", "observability",
     "test_data", "network",
 ]
+# pack_routes drives pack activation in section 5: each entry routes a path OR a
+# risk to a pack id. We parse it (when a YAML parser is present) into the two
+# halves the merge rule needs: the ids reachable by a PATH route and the ids
+# reachable by a RISK route (keyed by the risk tag). Without a parser we can only
+# detect section presence, so activation degrades to empty with a clear notice.
+route_path_pack_ids = set()          # pack ids the repo routes by a path entry
+route_risk_pack_ids = {}             # risk-tag -> {pack ids routed by that risk}
+exec_allowlist_ids = set()           # union of all routed pack ids (allowlist)
+pack_routes_parsed = False
 if exec_path.is_file():
     etext = exec_path.read_text(encoding="utf-8")
     present = []
@@ -893,9 +953,24 @@ if exec_path.is_file():
         edata = yaml.safe_load(etext)
         if isinstance(edata, dict):
             present = [s for s in EXEC_SECTIONS if s in edata]
+            routes = edata.get("pack_routes") or []
+            if isinstance(routes, list):
+                pack_routes_parsed = True
+                for entry in routes:
+                    if not isinstance(entry, dict):
+                        continue
+                    pid = entry.get("pack")
+                    if not pid:
+                        continue
+                    exec_allowlist_ids.add(pid)
+                    if "path" in entry:
+                        route_path_pack_ids.add(pid)
+                    if "risk" in entry:
+                        route_risk_pack_ids.setdefault(entry["risk"], set()).add(pid)
     except ImportError:
         notices.append("pyyaml absent: execution.yaml sections detected by "
-                       "top-level-key scan (install pyyaml for full validation)")
+                       "top-level-key scan (install pyyaml for full validation); "
+                       "pack activation needs a parser and is reported empty")
         present = [s for s in EXEC_SECTIONS if any(
             line.split("#", 1)[0].rstrip().startswith(s + ":")
             for line in etext.splitlines())]
@@ -907,14 +982,49 @@ else:
                    "with docs/_meta/execution.yaml); operational/pack-routing "
                    "fields unavailable - resolving with kernel + manifest only")
 
-# --- 5. Allowed packs: (path-routes ∪ scoper-tags) ∩ execution-allowlist -------
-# packs.json is an empty scaffold until Wave 4, and a read-only profile is never
-# granted a mutator pack (no self-upgrade). Report references only.
-pack_ids = [p.get("id") for p in packs.get("packs", []) if p.get("id")]
-allowed_packs = []  # empty until Wave 4 populates packs + execution allowlist
-if not pack_ids:
-    notices.append("packs.json is an empty scaffold (Wave 4 populates pack "
-                   "leaves + the execution allowlist); no packs to activate")
+# --- 5. Activated packs: (path-routes ∪ scoper-tags) ∩ execution-allowlist ------
+# This is the SOLE pack loader. Three sets, intersected deterministically:
+#   path-routes      = pack ids the repo routes by a `path:` entry in pack_routes
+#                      (a diff would narrow these per-file; the resolver has no
+#                      diff, so it surfaces the full routed-by-path set);
+#   scoper-tags      = pack ids reachable from the scope brief's risk tag (--risk):
+#                      a `risk:` route whose tag matches, OR a pack whose own
+#                      trigger.risk_tags name the requested risk and that the repo
+#                      also routed (in the allowlist);
+#   execution-allowlist = every pack id the repo's pack_routes references.
+# A pack NOT in the allowlist can never activate (the pack non-activation
+# property). Read-only profiles are reported but never gain a mutator pack
+# (no self-upgrade). Report references only: leaf path + trigger + evidence; copy
+# no leaf body; write no artifact.
+pack_by_id = {p["id"]: p for p in packs.get("packs", []) if p.get("id")}
+
+def pack_risk_tags(p):
+    trig = p.get("trigger") or {}
+    return set(trig.get("risk_tags") or [])
+
+# path-routes ∪ scoper-tags (the requested activation set), before allowlist gating.
+requested = set(route_path_pack_ids)
+if risk:
+    requested |= route_risk_pack_ids.get(risk, set())
+    requested |= {pid for pid, p in pack_by_id.items() if risk in pack_risk_tags(p)}
+
+# ∩ execution-allowlist — and the pack must exist in the kernel.
+activated_pack_ids = sorted(
+    pid for pid in (requested & exec_allowlist_ids) if pid in pack_by_id
+)
+
+# Allowlisted-but-unknown ids (routed to a pack the kernel does not define) are a
+# binding error worth surfacing, not silently dropping.
+unknown_routed = sorted(exec_allowlist_ids - set(pack_by_id))
+if unknown_routed:
+    notices.append("execution.yaml routes unknown pack id(s): "
+                   + ", ".join(unknown_routed))
+
+if not pack_by_id:
+    notices.append("packs.json defines no packs; nothing can activate")
+elif not exec_allowlist_ids and pack_routes_parsed:
+    notices.append("repo pack_routes is empty: no pack is in the execution "
+                   "allowlist, so no pack activates (pack non-activation)")
 
 # --- 6. Emit references-only merged resolution ---------------------------------
 print(f"MERGE-RESOLVE skill={skill or '-'} phase={phase or '-'} "
@@ -942,12 +1052,28 @@ print("    - <named in dispatch> [path → heading hint]")
 print("  source_test_hints (path → symbol; selected by task, never line "
       "numbers):")
 print("    - <named in dispatch> [path → symbol]")
-print("  allowed_packs (path-routes ∪ scoper-tags) ∩ execution-allowlist:")
-if allowed_packs:
-    for pid in allowed_packs:
+print("  execution_allowlist (repo pack_routes): "
+      + (", ".join(sorted(exec_allowlist_ids)) or "(none)"))
+print("  activated_packs (path-routes ∪ scoper-tags) ∩ execution-allowlist "
+      "(references only — leaf path + trigger + evidence):")
+if activated_pack_ids:
+    for pid in activated_pack_ids:
+        p = pack_by_id[pid]
+        trig = p.get("trigger") or {}
+        globs = ", ".join(trig.get("path_globs") or []) or "-"
+        tags = ", ".join(trig.get("risk_tags") or []) or "-"
         print(f"    - {pid}")
+        print(f"        rule_leaf: {p.get('rule_leaf')}")
+        print(f"        trigger: paths[{globs}] risks[{tags}]")
+        print(f"        evidence: {p.get('evidence')}")
 else:
     print("    - (none)")
+# Pack non-activation, made explicit: packs the kernel defines but the repo did
+# NOT route stay unloaded. Naming them proves the property in the resolver output.
+unactivated = sorted(set(pack_by_id) - set(activated_pack_ids))
+if unactivated:
+    print("  unactivated_packs (defined but not routed by this repo — NOT "
+          "loaded): " + ", ".join(unactivated))
 print("  checks (run the cheapest sufficient gate named by the dispatch / "
       "manifest drift-gates):")
 print(f"    - {manifest_path}#drift-gates")
@@ -2183,6 +2309,48 @@ validate_word_budgets
 section "execution.yaml binding checks"
 validate_execution_yaml "docs/_meta/execution.yaml" "dogfood"
 validate_execution_yaml "src/template/docs/_meta/execution.yaml" "template"
+
+section "kernel pack checks"
+# Gate (a) + (b): every pack carries a trigger and an existing rule_leaf.
+validate_kernel_packs
+
+# Gates (c) + (d): the deterministic pack-merge rule, proven against the dogfood
+# repo. The resolver is the SOLE pack loader; agent-docs (bash + markdown) routes
+# only testing-reliability + deployment-ops, so the irrelevant packs MUST stay
+# unactivated, and the resolver MUST write no artifact. Capture the resolver
+# output and a clean-tree snapshot, then assert.
+pack_resolve_out=$(bash "$repo_root/src/verify-agent-docs.sh" \
+  --resolve --skill quick-fix --repo "$repo_root" 2>&1) ||
+  fail "pack-merge resolve (dogfood) did not run"
+pack_tree_after=$(cd "$repo_root" && git status --porcelain 2>/dev/null)
+
+# (c) pack non-activation: frontend/accessibility/db-migration/auth-security are
+# NOT in the dogfood pack_routes, so they must NOT appear as activated packs.
+for unrouted in frontend accessibility db-migration auth-security \
+                backend-api performance-concurrency; do
+  if printf '%s\n' "$pack_resolve_out" |
+       awk '/^  activated_packs/{f=1;next} /^  unactivated_packs/{f=0} f' |
+       grep -Eq -- "^    - ${unrouted}\$"; then
+    fail "pack non-activation broken: '$unrouted' activated on the dogfood repo "
+  fi
+done
+# Positive control: a routed pack DOES activate (proves the merge actually fires).
+printf '%s\n' "$pack_resolve_out" |
+  awk '/^  activated_packs/{f=1;next} /^  unactivated_packs/{f=0} f' |
+  grep -Eq -- '^    - testing-reliability$' ||
+  fail "pack-merge broken: routed pack 'testing-reliability' did NOT activate"
+printf '  pack non-activation proven: irrelevant packs stay unloaded; '
+printf 'routed testing-reliability activates\n'
+
+# (d) the resolver writes no artifact: the tree is no dirtier after resolving.
+git_clean_before=$(cd "$repo_root" && git status --porcelain 2>/dev/null)
+if [ "$pack_tree_after" != "$git_clean_before" ]; then
+  fail "resolver wrote an artifact: git status changed across --resolve"
+fi
+printf '%s\n' "$pack_resolve_out" |
+  grep -Fq 'references only; no rule/doc/source body copied; no artifact written' ||
+  fail "resolver did not certify references-only / no-artifact output"
+printf '  resolver is references-only and wrote no artifact\n'
 
 section "scaffold template checks"
 check_scaffold_tree "$repo_root/src/template" "template docs scaffold"

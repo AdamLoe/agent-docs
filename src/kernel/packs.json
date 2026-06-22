@@ -1,5 +1,78 @@
 {
-  "_comment": "Kernel machine authority for conditional app-quality packs (frontend/UI, accessibility, backend/API, auth/security, db-migration/data-safety, testing/reliability, performance/concurrency, deployment/ops). Wave 1a scope is a minimal valid scaffold only - the pack leaves, activation triggers, and the deterministic merge rule (path-routes union scoper-tags) intersect execution-allowlist are populated in Wave 4. The empty list keeps this schema-valid and non-authoritative until then.",
+  "_comment": "Kernel machine authority for conditional app-quality packs. Each pack is a first-class rule leaf under src/rules/packs/ plus this kernel entry (id, trigger, rule_leaf, evidence). The resolver is the SOLE loader: a pack activates only when (path-routes union scoper-tags) intersect execution-allowlist selects it - path_globs/risk_tags here describe what a pack RESPONDS to, and the repo's pack_routes in execution.yaml is the allowlist that gates activation. Every pack MUST carry a trigger (path_globs and/or risk_tags); a pack present without a trigger FAILS the gate. The resolver copies no leaf body and writes no artifact.",
   "merge_rule": "(path-routes ∪ scoper-tags) ∩ execution-allowlist",
-  "packs": []
+  "packs": [
+    {
+      "id": "frontend",
+      "trigger": {
+        "path_globs": ["**/web/**", "**/ui/**", "**/components/**", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.css"],
+        "risk_tags": ["frontend", "ui"]
+      },
+      "rule_leaf": "src/rules/packs/frontend.md",
+      "evidence": "App started and the changed view exercised in a browser; screenshots; responsive + accessibility passes; loading/error/empty/populated states each shown. Missing UI tooling is residual risk, not green."
+    },
+    {
+      "id": "accessibility",
+      "trigger": {
+        "path_globs": ["**/web/**", "**/ui/**", "**/components/**"],
+        "risk_tags": ["accessibility", "a11y"]
+      },
+      "rule_leaf": "src/rules/packs/accessibility.md",
+      "evidence": "Keyboard-only walkthrough with visible focus order; accessibility checker run on the changed view; contrast/labeling confirmed. Missing checker is residual risk, not green."
+    },
+    {
+      "id": "backend-api",
+      "trigger": {
+        "path_globs": ["**/api/**", "**/services/**", "**/handlers/**", "**/routes/**", "**/*.proto", "**/openapi*.yaml"],
+        "risk_tags": ["backend", "api"]
+      },
+      "rule_leaf": "src/rules/packs/backend-api.md",
+      "evidence": "Contract verified against the authoritative schema/spec (not a fixture); endpoint exercised against a running instance (happy + primary error path); backward-compatibility confirmed or the break called out."
+    },
+    {
+      "id": "auth-security",
+      "trigger": {
+        "path_globs": ["**/auth/**", "**/session*/**", "**/login/**", "**/security/**", "**/*secret*"],
+        "risk_tags": ["auth", "security"]
+      },
+      "rule_leaf": "src/rules/packs/auth-security.md",
+      "evidence": "Positive AND denial paths exercised (an unauthorized actor is refused); no secret in diff/logs/output; relevant injection/encoding class checked. Unverified authorization is residual risk, not green."
+    },
+    {
+      "id": "db-migration",
+      "trigger": {
+        "path_globs": ["**/migrations/**", "**/migrate/**", "**/schema*/**", "**/*.sql"],
+        "risk_tags": ["db-migration", "data-safety"]
+      },
+      "rule_leaf": "src/rules/packs/db-migration.md",
+      "evidence": "Migration applied AND rolled back cleanly against a real non-production database; re-run proves idempotency; data-loss/backfill impact stated. Unrun migration is residual risk, not green."
+    },
+    {
+      "id": "testing-reliability",
+      "trigger": {
+        "path_globs": ["**/src/**", "**/tests/**", "src/verify-agent-docs.sh"],
+        "risk_tags": ["testing", "reliability"]
+      },
+      "rule_leaf": "src/rules/packs/testing-reliability.md",
+      "evidence": "targeted_test (and full_test when dispatched) run green with command/exit code/proof; new failure case fails before and passes after; no test silently disabled."
+    },
+    {
+      "id": "performance-concurrency",
+      "trigger": {
+        "path_globs": ["**/worker*/**", "**/queue*/**", "**/cache*/**", "**/concurrent/**"],
+        "risk_tags": ["performance", "concurrency"]
+      },
+      "rule_leaf": "src/rules/packs/performance-concurrency.md",
+      "evidence": "Changed path measured against the prior baseline (not a guess); contended path exercised under load or a race/sanitizer pass; any regression stated with its tradeoff."
+    },
+    {
+      "id": "deployment-ops",
+      "trigger": {
+        "path_globs": ["**/install*.sh", "**/*deploy*", "**/.github/workflows/**", "**/Dockerfile", "**/ci/**"],
+        "risk_tags": ["deployment", "ops"]
+      },
+      "rule_leaf": "src/rules/packs/deployment-ops.md",
+      "evidence": "Change previewed without mutating the live target (--dry-run/plan/smoke); rollback path named and available; live apply only on explicit authorization, then post-apply state confirmed."
+    }
+  ]
 }

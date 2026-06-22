@@ -26,6 +26,7 @@ for workflow surfaces, use
 | `src/plan-template.md` | Generic tracked-plan skeleton. |
 | `src/skills/` | Reusable workflow skill directories plus the shared registry. |
 | `src/rules/` | Generic rules shared by every consuming repo. |
+| `src/rules/packs/` | Conditional quality-pack rule leaves, task-routed by the resolver via `execution.yaml` pack routes (never auto-loaded). |
 | `src/kernel/` | Machine-authored JSON kernel: profiles, scenarios, workflows, packs. |
 | `src/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
 | `export-chatgpt-context.sh` | Top-level source-repo tool: exports this repo as grouped Markdown chunks for ChatGPT planning. Not bundled into the runtime. |

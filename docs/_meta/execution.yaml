@@ -74,9 +74,25 @@ generated_paths: []    # the kit has no build outputs; src/ is the source
 
 scarce_resources: []
 
-# Pack routes are defined here but intentionally EMPTY; Wave 4b authors the
-# eight quality-pack leaves and populates these path/risk → pack routes.
-pack_routes: []
+# Pack routes are the execution-allowlist: the SOLE gate for pack activation.
+# A pack activates only when (path-routes ∪ scoper-tags) intersects this list.
+# agent-docs is bash + markdown — no frontend/UI, accessibility, backend/API,
+# auth, db, or hot concurrent paths — so only two packs are honestly routed.
+# The rest (frontend, accessibility, backend-api, auth-security, db-migration,
+# performance-concurrency) stay UNROUTED and therefore never activate here.
+pack_routes:
+  - path: src/                     # kit logic + the verifier itself
+    pack: testing-reliability
+  - path: src/verify-agent-docs.sh
+    pack: testing-reliability
+  - risk: reliability
+    pack: testing-reliability
+  - path: install-agentdocs-local.sh   # installer = the deploy/ops surface
+    pack: deployment-ops
+  - path: src/install-agentdocs.sh
+    pack: deployment-ops
+  - risk: ops
+    pack: deployment-ops
 
 # --- Q9 layers a feature worker hits first -----------------------------------
 

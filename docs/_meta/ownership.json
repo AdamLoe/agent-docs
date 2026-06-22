@@ -111,6 +111,11 @@
       "owns": ["orchestrator/worker split", "orchestration dials", "worker dispatch contract", "worker-role rules", "orchestration run docs"]
     },
     {
+      "surface": "quality-packs",
+      "paths": ["src/rules/packs/", "src/kernel/packs.json", "docs/_meta/execution.yaml", "src/template/docs/_meta/execution.yaml", "src/verify-agent-docs.sh"],
+      "owns": ["conditional quality-pack rule leaves", "pack triggers and evidence", "deterministic pack-merge rule", "pack non-activation property"]
+    },
+    {
       "surface": "plan-lifecycle",
       "paths": ["src/plan-lifecycle.md", "src/plan-template.md", "docs/plans/"],
       "owns": ["plan statuses", "plan templates", "plan cleanup semantics"]
