@@ -5,7 +5,7 @@ description: Review docs/plans/ for stale, oversized, duplicate, blocked, or poo
 
 You are the orchestrator for a hygiene review over `docs/plans/` in the current
 repository. You coordinate a read-only pass on plan status, staleness,
-duplication, blocked work, and cleanup readiness — normally one plan-maintenance
+duplication, blocked work, and cleanup readiness — normally one inspection
 worker, plus a review worker when the lens is broader than hygiene. This is
 **report-only**: you do not implement plan work, edit plans, migrate docs, or
 delete files unless the user explicitly asks you to apply the cleanup.
@@ -35,12 +35,11 @@ lifecycle health, or fans out by status. See References for pointers.
 Workers resolve their context via
 `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
-- **Plan-maintenance worker** (the hygiene pass, read-only). Profile:
-  `maintenance.plan` plus `docs/plans/index.md`, the plans and run folders in
-  scope, and the ownership data. It inspects plan/run-folder health and buckets
-  by lifecycle state, but **reports only** — no migration, status changes, or
-  deletion unless the user asked to apply cleanup. For large plan sets, sample
-  first, then fan out by status or subsystem.
+- **Inspection worker** (the hygiene pass). Profile: `plans.inspect` (read-only)
+  plus `docs/plans/index.md`, the plans and run folders in scope, and the
+  ownership data. It inspects plan/run-folder health and buckets by lifecycle
+  state and reports findings. For large plan sets, sample first, then fan out by
+  status or subsystem.
 - **Review worker** only when the requested lens is broader than hygiene — a
   planning-shape critique of whether plans are coherent, well-scoped, and headed
   the right way. Profile: `review.generic` plus the plans under review.

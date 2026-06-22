@@ -117,6 +117,24 @@
       "mutation_capability": "read-only",
       "budget_words": 500,
       "enforcement_status": "enforced"
+    },
+    {
+      "id": "docs.inspect",
+      "purpose": "read-only doc drift/shape inspection: report findings against code and the authoring rules, never edit",
+      "core_rule_paths": "src/rules/subagent/review.md`, `src/rules/authoring-rules.md",
+      "overlays": "named docs and ownership rows for the checked surfaces",
+      "mutation_capability": "read-only",
+      "budget_words": 1200,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "plans.inspect",
+      "purpose": "read-only plan-health inspection: report lifecycle/staleness/migration findings, never edit",
+      "core_rule_paths": "src/rules/subagent/review.md`, `src/plan-lifecycle.md",
+      "overlays": "selected plans/run docs and ownership rows",
+      "mutation_capability": "read-only",
+      "budget_words": 850,
+      "enforcement_status": "enforced"
     }
   ]
 }

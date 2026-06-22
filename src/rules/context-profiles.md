@@ -30,6 +30,27 @@ Budget exceptions must name the exact files and the correctness reason in the
 context report. Enforcement is enabled only after the profile, converted skills,
 scenario rows, and verifier checks agree.
 
+Two read-only inspection profiles — `docs.inspect` (doc drift/shape inspection)
+and `plans.inspect` (plan-health inspection) — let the read-only inspection
+skills resolve a genuinely read-only profile instead of selecting a mutating
+maintenance profile and then subtracting authority in prose. Their rows live in
+the kernel like every other profile; read them with
+`bash src/verify-agent-docs.sh --resolve <id>`.
+
+## Resolver merge mode
+
+`--resolve <profile-id>` resolves one profile. `--resolve` with
+`--skill`/`--phase`/`--repo`/`--risk` flags runs the exact-context **merge**: it
+joins the kernel profile (core rules + overlays + budget + exact resolved size)
+with the repo's manifest fields, `execution.yaml` fields (a notice when absent,
+since the repo binding lands later), task-routed doc and source/test hints,
+allowed packs from `src/kernel/packs.json` (an empty scaffold until packs ship),
+and the named checks. The merge is references-only and read-only: it emits paths,
+heading hints, and sizes — never a rule/doc/source body — and writes no artifact.
+A read-only profile is never resolved into a mutation capability or a mutator
+pack; the no-self-upgrade rule lives in
+[`orchestrator/dispatch.md`](orchestrator/dispatch.md).
+
 ## Where the rows live
 
 The profile rows (the eleven `id`/`purpose`/`core_rule_paths`/`overlays`/

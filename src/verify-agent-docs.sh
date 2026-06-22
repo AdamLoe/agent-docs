@@ -13,6 +13,7 @@ Usage:
   bash src/verify-agent-docs.sh --context-report [--profile <id>]
   bash src/verify-agent-docs.sh --contract-check
   bash src/verify-agent-docs.sh --resolve <profile-id>
+  bash src/verify-agent-docs.sh --resolve --skill <name> [--phase <id>] [--repo <path>] [--risk <tag>]
   bash src/verify-agent-docs.sh --equivalence
   bash src/verify-agent-docs.sh --measure-launch <skill-name>
   bash src/verify-agent-docs.sh --scaffold <repo-root>
@@ -32,7 +33,14 @@ it prints every violation with file:line where possible, then exits nonzero and
 does not print PASS when any violation exists.
 The --resolve mode prints one profile's core rule paths, conditional overlays,
 mutation capability, and budget so a skill can resolve a single profile without
-loading the whole table.
+loading the whole table. With --skill/--phase/--repo/--risk flags instead of a
+positional id, --resolve runs the exact-context MERGE: it joins the kernel
+profile (core rules + overlays + budget + exact resolved size) with the repo's
+manifest fields, execution.yaml fields (a notice when absent, since Wave 4 adds
+it), task-routed doc/source hints, allowed packs (packs.json - empty until Wave
+4), and the named checks. The merge is references-only and read-only: it copies
+no rule/doc/source body and writes no artifact, and a read-only profile is never
+resolved into a mutation capability or a mutator pack (no self-upgrade).
 The --equivalence mode is the single-authority proof for the kernel
 (src/kernel/*.json): it asserts the superseded Markdown profile table and JSON
 scenario fixture are gone, the kernel still resolves all profiles/scenarios, and
@@ -636,6 +644,205 @@ resolve_profile() {
   printf 'RESOLVE PASS\n'
 }
 
+# --resolve --skill/--phase/--repo/--risk: EXACT-CONTEXT MERGE resolution. The
+# back-compat single-profile mode above takes one positional profile id; this
+# merge mode takes named flags and emits the merged exact-context resolution a
+# worker needs to start: the kernel profile (core rule paths + overlays + budget
+# + EXACT resolved size) joined with the consuming repo's manifest fields,
+# execution.yaml fields (when present; a clear notice when absent since Wave 4
+# adds it), task-routed docs with heading hints, source/test hints, allowed packs
+# (from packs.json - an empty scaffold until Wave 4), and the named checks. It is
+# REFERENCES-ONLY and READ-ONLY: every line is a path + heading hint + size, it
+# copies NO rule/doc/source body, and it WRITES NO artifact (no file, no temp,
+# no generated context). No-self-upgrade invariant: the merge reports the kernel
+# profile's mutation_capability verbatim, so a read-only profile can never be
+# resolved into a mutating capability or an allowed mutator pack (the no-self-
+# upgrade rule lives in src/rules/orchestrator/dispatch.md).
+resolve_merge() {
+  local skill="" phase="" repo="" risk=""
+  local python_cmd
+
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --skill) skill=$2; shift 2 ;;
+      --phase) phase=$2; shift 2 ;;
+      --repo)  repo=$2;  shift 2 ;;
+      --risk)  risk=$2;  shift 2 ;;
+      *) usage >&2; exit 2 ;;
+    esac
+  done
+
+  [ -n "$skill" ] || [ -n "$phase" ] || { usage >&2; exit 2; }
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot resolve merged context; install python"
+
+  # Default the consuming repo to the source checkout when --repo is omitted.
+  [ -n "$repo" ] || repo=$repo_root
+
+  "$python_cmd" - \
+    "$repo_root/src/kernel/profiles.json" \
+    "$repo_root/src/kernel/workflows.json" \
+    "$repo_root/src/kernel/packs.json" \
+    "$repo_root" \
+    "$skill" "$phase" "$repo" "$risk" <<'PY' || fail "merged context resolution failed"
+import json, re, sys, pathlib
+
+profiles_path = pathlib.Path(sys.argv[1])
+workflows_path = pathlib.Path(sys.argv[2])
+packs_path = pathlib.Path(sys.argv[3])
+repo_root = pathlib.Path(sys.argv[4])
+skill, phase, repo, risk = sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8]
+repo = pathlib.Path(repo)
+
+profiles = {p["id"]: p for p in json.loads(profiles_path.read_text(encoding="utf-8"))["profiles"]}
+workflows = {w["skill"]: w for w in json.loads(workflows_path.read_text(encoding="utf-8"))["workflows"]}
+packs = json.loads(packs_path.read_text(encoding="utf-8"))
+
+notices = []
+
+# --- 1. Pick the profile from --skill or --phase -------------------------------
+# A skill names the profile(s) it dispatches in its body ("Profile: `id`"). The
+# resolver picks the profile the skill body names that the skill's kernel
+# workflow also allows; this never copies the skill body, only matches ids.
+profile_id = None
+wf = workflows.get(skill) if skill else None
+allowed = set(wf.get("allowed_profiles", [])) if wf else set()
+
+if skill:
+    body_path = repo_root / "src" / "skills" / skill / "SKILL.md"
+    if not body_path.is_file():
+        print(f"MERGE-RESOLVE FAIL: unknown skill {skill!r}", file=sys.stderr)
+        raise SystemExit(1)
+    body = body_path.read_text(encoding="utf-8")
+    # Profiles named in the body, ordered by FIRST appearance: the primary worker
+    # phase (and so the primary profile) is described before secondary phases
+    # like a verification gate, so the earliest-named profile is the primary one.
+    named = sorted(
+        (pid for pid in profiles if re.search(r"`%s`" % re.escape(pid), body)),
+        key=lambda pid: body.index("`%s`" % pid),
+    )
+    # Prefer a named profile the workflow allows; else earliest named; else workflow first.
+    pick = [p for p in named if not allowed or p in allowed] or named
+    if pick:
+        profile_id = pick[0]
+    elif wf and wf.get("allowed_profiles"):
+        profile_id = wf["allowed_profiles"][0]
+elif phase:
+    # A phase id is a profile id (or a workflow first_phase that is a profile id).
+    if phase in profiles:
+        profile_id = phase
+    else:
+        for w in workflows.values():
+            if w.get("first_phase") == phase and w.get("allowed_profiles"):
+                profile_id = w["allowed_profiles"][0]
+                break
+
+if profile_id is None or profile_id not in profiles:
+    print(f"MERGE-RESOLVE FAIL: could not resolve a profile from "
+          f"skill={skill!r} phase={phase!r}", file=sys.stderr)
+    raise SystemExit(1)
+
+prof = profiles[profile_id]
+
+# --- 2. EXACT resolved size of the profile's core rule paths -------------------
+# Reference (path + word size) only; never the rule body itself.
+core_refs = []
+resolved_words = 0
+for raw in prof["core_rule_paths"].split(","):
+    rel = raw.strip().strip("`")
+    target = repo_root / rel
+    size = len(target.read_text(encoding="utf-8").split()) if target.is_file() else None
+    if size is None:
+        print(f"MERGE-RESOLVE FAIL: missing rule path {rel}", file=sys.stderr)
+        raise SystemExit(1)
+    resolved_words += size
+    core_refs.append((rel, size))
+
+# --- 3. Manifest fields from the (consuming) repo ------------------------------
+# References to the manifest slots a worker routes through, not their contents.
+manifest_path = repo / "docs" / "_meta" / "manifest.md"
+manifest_fields = []
+if manifest_path.is_file():
+    mtext = manifest_path.read_text(encoding="utf-8")
+    for slot in ("repo_name", "code_root"):
+        m = re.search(r"^%s:\s*(.+)$" % slot, mtext, re.MULTILINE)
+        if m:
+            manifest_fields.append((slot, m.group(1).strip()))
+    for section in ("change-to-doc", "drift-gates", "drift-verification"):
+        if re.search(r"^##\s+%s\b" % re.escape(section), mtext, re.MULTILINE):
+            manifest_fields.append((f"manifest §{section}",
+                                    f"{manifest_path}#{section}"))
+else:
+    notices.append(f"no manifest at {manifest_path} (repo not scaffolded)")
+
+# --- 4. execution.yaml fields (Wave 4 adds the file; degrade until then) -------
+exec_path = repo / "docs" / "_meta" / "execution.yaml"
+exec_fields = []
+if exec_path.is_file():
+    exec_fields.append(("execution.yaml", str(exec_path)))
+else:
+    notices.append("no docs/_meta/execution.yaml yet (Wave 4 adds the repo "
+                   "execution binding); operational/pack-routing fields "
+                   "unavailable - resolving with kernel + manifest only")
+
+# --- 5. Allowed packs: (path-routes ∪ scoper-tags) ∩ execution-allowlist -------
+# packs.json is an empty scaffold until Wave 4, and a read-only profile is never
+# granted a mutator pack (no self-upgrade). Report references only.
+pack_ids = [p.get("id") for p in packs.get("packs", []) if p.get("id")]
+allowed_packs = []  # empty until Wave 4 populates packs + execution allowlist
+if not pack_ids:
+    notices.append("packs.json is an empty scaffold (Wave 4 populates pack "
+                   "leaves + the execution allowlist); no packs to activate")
+
+# --- 6. Emit references-only merged resolution ---------------------------------
+print(f"MERGE-RESOLVE skill={skill or '-'} phase={phase or '-'} "
+      f"repo={repo} risk={risk or '-'}")
+print(f"  profile: {profile_id}")
+print(f"  purpose: {prof['purpose']}")
+print(f"  mutation_capability: {prof['mutation_capability']}")
+print(f"  budget_words: {prof['budget_words']}")
+print(f"  resolved_words: {resolved_words}")
+within = "within" if resolved_words <= int(prof["budget_words"]) else "OVER"
+print(f"  budget_status: {within} ({resolved_words}/{prof['budget_words']})")
+print("  core_rule_paths (reference only, sizes in words):")
+for rel, size in core_refs:
+    print(f"    - {rel} [{size}w]")
+print(f"  overlays: {prof['overlays']}")
+print("  manifest_fields:")
+for name, val in manifest_fields or [("(none)", "")]:
+    print(f"    - {name}: {val}")
+print("  execution_yaml:")
+for name, val in exec_fields or [("(absent)", "see notices")]:
+    print(f"    - {name}: {val}")
+print("  task_routed_docs (heading hints from dispatch; route via manifest "
+      "change-to-doc + ownership):")
+print("    - <named in dispatch> [path → heading hint]")
+print("  source_test_hints (path → symbol; selected by task, never line "
+      "numbers):")
+print("    - <named in dispatch> [path → symbol]")
+print("  allowed_packs (path-routes ∪ scoper-tags) ∩ execution-allowlist:")
+if allowed_packs:
+    for pid in allowed_packs:
+        print(f"    - {pid}")
+else:
+    print("    - (none)")
+print("  checks (run the cheapest sufficient gate named by the dispatch / "
+      "manifest drift-gates):")
+print(f"    - {manifest_path}#drift-gates")
+if prof["mutation_capability"] == "read-only":
+    print("  self_upgrade: DENIED - read-only profile; resolution grants no "
+          "mutation capability and no mutator pack")
+else:
+    print("  self_upgrade: profile is mutating by dispatch; a worker may "
+          "request an ALLOWED pack post-discovery but may not change role")
+for n in notices:
+    print(f"  notice: {n}")
+print("MERGE-RESOLVE PASS (references only; no rule/doc/source body copied; "
+      "no artifact written)")
+PY
+}
+
 # --equivalence: single-authority proof. Before the Wave 1b cutover this proved
 # the shadow kernel byte-identical to the Markdown table + JSON fixture; those
 # live comparison targets are gone now, so the byte-identity check has been
@@ -659,17 +866,18 @@ equivalence_check() {
   fi
   printf 'ok   superseded Markdown profile table and JSON scenario fixture are gone\n'
 
-  # 2. The kernel still parses and resolves all 12 profiles + 12 scenarios.
+  # 2. The kernel still parses and resolves all 14 profiles + 12 scenarios.
   #    (Wave 2 added the read-only planning.scope profile and the
-  #    orchestrate-planning-scope-first scenario row.)
+  #    orchestrate-planning-scope-first scenario row; Wave 3 added the read-only
+  #    docs.inspect and plans.inspect inspection profiles.)
   if ! "$python_cmd" - \
        "$repo_root/src/kernel/profiles.json" \
        "$(scenario_fixture)" <<'PY'
 import json, sys
 profiles = json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
 scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
-if len(profiles) != 12:
-    raise SystemExit(f"kernel profiles count {len(profiles)} != 12")
+if len(profiles) != 14:
+    raise SystemExit(f"kernel profiles count {len(profiles)} != 14")
 if len(scenarios) != 12:
     raise SystemExit(f"kernel scenarios count {len(scenarios)} != 12")
 print(f"ok   kernel resolves {len(profiles)} profiles and {len(scenarios)} scenarios")
@@ -1467,7 +1675,7 @@ required_profiles = {
     "planning.brief", "planning.tracked", "implementation.code",
     "implementation.code-docs", "implementation.tracked", "review.generic",
     "review.docs", "review.plan", "maintenance.docs", "maintenance.plan",
-    "verification.readonly",
+    "verification.readonly", "docs.inspect", "plans.inspect",
 }
 seen_profiles = {row[0] for row in profile_rows}
 missing = required_profiles - seen_profiles
@@ -1478,7 +1686,9 @@ for row in profile_rows:
     profile_id, _, paths, _, mutation, budget, status = row
     if mutation not in {"read-only", "mutating", "conditional"}:
         raise SystemExit(f"{profile_id}: invalid mutation capability {mutation}")
-    if (profile_id.startswith("review.") or profile_id == "verification.readonly") and mutation != "read-only":
+    if (profile_id.startswith("review.")
+            or profile_id == "verification.readonly"
+            or profile_id.endswith(".inspect")) and mutation != "read-only":
         raise SystemExit(f"{profile_id}: read-only profile has mutation capability {mutation}")
     if status not in {"report-only", "pilot-enforced", "enforced"}:
         raise SystemExit(f"{profile_id}: invalid enforcement status {status}")
@@ -1607,9 +1817,22 @@ case "${1:-}" in
     exit 0
     ;;
   --resolve)
-    [ "$#" -eq 2 ] || { usage >&2; exit 2; }
-    resolve_profile "$2"
-    exit 0
+    # Back-compat: `--resolve <profile-id>` resolves one profile (positional
+    # arg, no leading dash). Merge mode: `--resolve --skill/--phase/--repo/--risk`
+    # emits the merged exact-context resolution (references only, writes nothing).
+    case "${2:-}" in
+      "") usage >&2; exit 2 ;;
+      --skill|--phase|--repo|--risk)
+        shift
+        resolve_merge "$@"
+        exit 0
+        ;;
+      *)
+        [ "$#" -eq 2 ] || { usage >&2; exit 2; }
+        resolve_profile "$2"
+        exit 0
+        ;;
+    esac
     ;;
   --equivalence)
     [ "$#" -eq 1 ] || { usage >&2; exit 2; }

@@ -5,10 +5,10 @@ description: Check named docs for code drift and house-rule issues, then report 
 
 You are the orchestrator for a **read-only mechanical drift check** over one or
 more named docs in `docs/`. You coordinate the check by dispatching one or more
-docs-maintenance workers — one per doc or doc cluster — with a drift lens, then
-aggregate their concise reports. This is **report-only**: you edit nothing and
-commit nothing. If findings should be applied, that is a follow-up edit pass or
-the `fix-docs-drift` whole-tree sweep.
+read-only inspection workers — one per doc or doc cluster — with a drift lens,
+then aggregate their concise reports. This is **report-only**: you edit nothing
+and commit nothing. If findings should be applied, that is a follow-up edit pass
+or the `fix-docs-drift` whole-tree sweep.
 
 This is the mechanical lane of the three doc-maintenance skills: it asks whether
 each named doc still matches the code and the house authoring rules. The
@@ -31,26 +31,24 @@ ownership. See References for pointers.
 
 ## Worker Phases
 
-Dispatch read-only workers in parallel — one doc-maintenance worker per doc, or
-one per doc cluster when several docs share a subtree. Workers resolve their
-context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Dispatch workers in parallel — one inspection worker per doc, or one per doc
+cluster when several docs share a subtree. Workers resolve their context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
-- **Docs-maintenance worker** per doc/cluster, with a **drift lens** and
-  **read-only** dispatch. Profile: `maintenance.docs`. Tell it to check accuracy
-  vs code (resolve `path → symbol` pointers and code anchors by name not line,
-  check literal constants, flag contradictions and possible code bugs) and
-  clarity vs the authoring rules (altitude, what-IS framing, no transcription or
-  ungated counts, ownership), and to **report findings without editing or
-  committing**. Point it at the `drift-verification` slot for app-specific
-  high-risk surfaces.
+- **Inspection worker** per doc/cluster, with a **drift lens**. Profile:
+  `docs.inspect` (read-only). Tell it to check accuracy vs code (resolve
+  `path → symbol` pointers and code anchors by name not line, check literal
+  constants, flag contradictions and possible code bugs) and clarity vs the
+  authoring rules (altitude, what-IS framing, no transcription or ungated counts,
+  ownership), and to report findings. Point it at the `drift-verification` slot
+  for app-specific high-risk surfaces.
 - **Verification worker** only when a named drift gate is cheap and directly
   relevant to a literal count or contract the docs assert. Profile:
   `verification.readonly`, naming the exact gate to run. Skip it when no gate
   bears directly on the check.
 
-A single named doc still goes through a docs-maintenance worker — the
-cross-file read and the house-rule judgment are the dispatch boundary, not an
-inline exception.
+A single named doc still goes through an inspection worker — the cross-file read
+and the house-rule judgment are the dispatch boundary, not an inline exception.
 
 ## Closeout
 
