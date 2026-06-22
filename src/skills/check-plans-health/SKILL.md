@@ -1,5 +1,5 @@
 ---
-name: review-plans-health
+name: check-plans-health
 description: Review docs/plans/ for stale, oversized, duplicate, blocked, or poorly migrated plans and report cleanup recommendations.
 ---
 

@@ -2681,7 +2681,9 @@ reject_unapproved_retired_name() {
   while IFS= read -r file; do
     relative_file=${file#$repo_root/}
     case "$relative_file" in
-      docs/plans/orchestrator/*) continue ;;
+      # Plans are transient migration scratch, not durable context; they may
+      # document a rename in old->new form. Durable surfaces are still scanned.
+      docs/plans/*) continue ;;
     esac
     while IFS= read -r match; do
       [ -n "$match" ] || continue
@@ -2699,6 +2701,8 @@ reject_unapproved_retired_name 'fresh-planning-chat' 'fresh-planning-chat'
 reject_unapproved_retired_name 'grand-orchestrator|fresh-orchestrator' 'retired orchestration skill'
 reject_unapproved_retired_name 'agent-docs-doctor' 'agent-docs-doctor'
 reject_unapproved_retired_name 'check-docs-consistency-some' 'check-docs-consistency-some'
+reject_unapproved_retired_name '(^|[^-])check-docs([^a-z-]|$)' 'check-docs'
+reject_unapproved_retired_name 'review-plans-health' 'review-plans-health'
 reject_unapproved_retired_name 'fix-docs-drift-all' 'fix-docs-drift-all'
 reject_unapproved_retired_name 'implement-plans' 'implement-plans'
 reject_unapproved_retired_name 'review-agent-docs-skills' 'review-agent-docs-skills'

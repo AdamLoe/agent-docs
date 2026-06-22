@@ -193,7 +193,7 @@ and unresolved placeholders. It does not validate the source checkout.
 - `/review-shipped-work` reviews completed or in-progress work against named
   plans.
 - `/review-plans` reviews named plans with a high-level or custom lens.
-- `/review-plans-health` reviews the health of `docs/plans/`, including
+- `/check-plans-health` reviews the health of `docs/plans/`, including
   orchestration run folders under `docs/plans/orchestrator/`.
 - `/review-skills` reviews this kit's skill suite for drift and lifecycle gaps.
 - `/ship-current-work` finishes ordinary work and commits if gates pass.
@@ -223,8 +223,8 @@ Use the smallest command that owns the current job:
 | Implement existing plan files | `/ship-plans` |
 | Verify shipped or in-progress plan work | `/review-shipped-work` |
 | Finish the current dirty tree | `/ship-current-work` |
-| Check scaffolding and mechanical drift | `/doctor`, `/check-docs`, `/fix-docs-drift` |
-| Review doc or plan quality | `/review-docs-shape`, `/review-plans`, `/review-plans-health` |
+| Check scaffolding and mechanical drift | `/doctor`, `/check-docs-drift`, `/fix-docs-drift` |
+| Review doc or plan quality | `/review-docs-shape`, `/review-plans`, `/check-plans-health` |
 
 ## See also
 

@@ -1,5 +1,5 @@
 ---
-name: check-docs
+name: check-docs-drift
 description: Check named docs for code drift and house-rule issues, then report findings.
 ---
 

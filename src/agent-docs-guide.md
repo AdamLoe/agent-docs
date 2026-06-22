@@ -241,14 +241,14 @@ docs) and action (fix vs. check vs. review):
 - a **fix** sweep (`/fix-docs-drift`) that walks the whole tree,
   verifies every `path → symbol` pointer still resolves, scans for
   forbidden transcription, and fixes drift in place;
-- a **check** pass (`/check-docs`) that grades named docs
+- a **check** pass (`/check-docs-drift`) that grades named docs
   against the rules and reports without changing anything;
 - an **editorial review** (`/review-docs-shape`) that asks the higher question —
   is this even the *right* doc, in the right shape?
 
 Plus the chat/lifecycle commands: `/start-session`, `/fresh-chat`, `/doctor`,
 `/orchestrate`, `/plan`, `/quick-fix`, `/ship-plans`,
-`/review-shipped-work`, `/review-plans`, `/review-plans-health`,
+`/review-shipped-work`, `/review-plans`, `/check-plans-health`,
 `/review-skills`, `/ship-current-work`, `/wrap-up-current-chat`,
 `/clear-plans`, `/rebuild-agent-docs`, `/list-skills`, and
 `/feedback-agent-docs`. The principle — *the rules for maintaining the
@@ -313,7 +313,7 @@ Use `/review-shipped-work` after implementation when you need an independent rea
 whether named plans actually shipped, what remains, whether app state has been
 verified, and whether any obvious follow-up fixes should be applied.
 
-Use `/review-plans-health` when `docs/plans/` needs a hygiene pass for stale,
+Use `/check-plans-health` when `docs/plans/` needs a hygiene pass for stale,
 duplicate, blocked, oversized, or poorly migrated plans before cleanup.
 
 Use `/review-skills` to dogfood the workflow commands themselves:

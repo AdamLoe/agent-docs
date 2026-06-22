@@ -45,10 +45,10 @@ Context profile IDs and mutation capability are defined only in
 | `review-app` | review with approved planning | run a configured app audit, report findings, then create approved cleanup plans | review, planning, plan-maintenance, verification | yes, via plan-maintenance worker for opted-in run docs and approved plans | asks | strong | app scope, lenses, run-doc choice, plan approval |
 | `review-shipped-work` | review with optional fixes | review work against named plans | review, implementation, docs-maintenance, plan-maintenance, verification | yes, only if a fix worker runs | asks | strong | plan paths |
 | `review-plans` | report-only by default | critique named plans with a high-level or custom lens | review, planning | only if user asks to apply edits | asks | strong | plan paths and optional custom lens |
-| `review-plans-health` | report-only | review `docs/plans/` hygiene | plan-maintenance, review | no | no-prompt | mid | optional scope |
+| `check-plans-health` | report-only | review `docs/plans/` hygiene | plan-maintenance, review | no | no-prompt | mid | optional scope |
 | `review-docs-shape` | report-only | editorial review of docs shape and direction | docs-maintenance, review | no | no-prompt | strong | doc/subtree scope |
 | `review-skills` | report-only | review this skill suite for drift and gaps | review, docs-maintenance, verification | no | no-prompt | strong | optional lens |
-| `check-docs` | report-only | check named docs for mechanical drift | docs-maintenance, verification | no | asks | mid | doc paths |
+| `check-docs-drift` | report-only | check named docs for mechanical drift | docs-maintenance, verification | no | asks | mid | doc paths |
 | `fix-docs-drift` | mutating | repair docs drift across the tree | docs-maintenance, review, verification, implementation | yes, via workers | no-prompt | mid | optional scope/dials |
 | `doctor` | report-only by default | validate scaffold, manifest, ownership, registry, and stale references | verification, docs-maintenance, implementation | only if user asks to fix failures | no-prompt | mid | optional scope |
 | `list-skills` | report-only | list source skills and adapter freshness | none (inline); optional verification | no | no-prompt | mid | optional filter |

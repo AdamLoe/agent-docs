@@ -33,14 +33,14 @@
       ]
     },
     {
-      "id": "check-docs",
-      "skill": "check-docs",
+      "id": "check-docs-drift",
+      "skill": "check-docs-drift",
       "first_phase": "inspection",
       "allowed_profiles": ["review.docs"]
     },
     {
-      "id": "review-plans-health",
-      "skill": "review-plans-health",
+      "id": "check-plans-health",
+      "skill": "check-plans-health",
       "first_phase": "inspection",
       "allowed_profiles": ["review.plan"]
     },

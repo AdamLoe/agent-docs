@@ -67,7 +67,7 @@ Record from worker reports, synthesized into one opinionated editorial:
   as they apply. Be concrete.
 - **Structural recommendations** — splits, merges, relocations, new homes for
   homeless concepts, and what to leave alone so it isn't churned.
-- **Suggested next skill** — `fix-docs-drift` or `check-docs` for the mechanical
+- **Suggested next skill** — `fix-docs-drift` or `check-docs-drift` for the mechanical
   cleanup this surfaced, a new plan for structural moves (offer to draft it into
   `docs/plans/`), or "leave clean" when nothing needs doing.
 

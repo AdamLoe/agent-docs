@@ -119,7 +119,7 @@ See the reference leaf for the detailed workflow and anti-patterns to refuse.
 
 ## See also
 
-- Maintenance skills: `fix-docs-drift`, `check-docs`, `review-docs-shape`.
+- Maintenance skills: `fix-docs-drift`, `check-docs-drift`, `review-docs-shape`.
 - `../plan-lifecycle.md` — plan status metadata and migration rules.
 - `../agent-docs-guide.md` — why the system is shaped this way.
 - [`authoring-rules-reference.md`](authoring-rules-reference.md) — anti-patterns,
