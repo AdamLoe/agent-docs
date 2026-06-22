@@ -63,11 +63,17 @@ original aspirational targets would reduce correctness, not improve context
 economy. Raising the budgets is a documented target change per E3, not inflation
 to hide drift.
 
-| Profile | Old budget | New budget | Measured floor |
-|---|---:|---:|---:|
-| `planning.tracked` | 1300 | 1600 | 1542 |
-| `review.docs` | 1000 | 1200 | 1148 |
-| `maintenance.plan` | 1800 | 2100 | 2016 |
+The *measured floor* below is the resolved word total of each profile's core
+rule files — a human-owned observation, NOT a kernel fact (the kernel holds the
+enforced `budget_words`, never the measured floor). The enforced budget for each
+profile lives only in `src/kernel/profiles.json`; read it with
+`bash src/verify-agent-docs.sh --resolve <id>` or `--context-report`.
+
+| Profile | Measured floor |
+|---|---:|
+| `planning.tracked` | 1542 |
+| `review.docs` | 1148 |
+| `maintenance.plan` | 2016 |
 
 ## Launch budgets
 
@@ -77,19 +83,24 @@ slots (a classifier additionally reads `orchestrator/lifecycle.md`). After the
 Wave-5b honest `--measure-launch` fix — a `rules/...` path counts as a startup
 load only when a sentence genuinely instructs reading it at launch, never when
 it appears only in a prohibition, a `load only when/after` deferred-load gloss,
-or a References pointer — the enforced launch budgets are E3 measured floors:
+or a References pointer — the enforced launch budgets sit at their E3 measured
+floors.
 
-| Launch kind | Budget | Honest max | Headroom |
-|---|---:|---|---:|
-| fixed skill | 2000 | 1922 (`review-app`) | ~4% |
-| classifier (`orchestrate`, `fresh-chat`, `start-session`) | 3300 | 3118 (`orchestrate`) | ~6% |
+The two enforced launch budgets (one for fixed skills, one for the allowlisted
+classifiers) and the classifier allowlist itself are kernel facts in
+`src/kernel/profiles.json` (`budgets`). Read the operative numbers and the
+allowlist with `bash src/verify-agent-docs.sh --context-report`; the
+`--measure-launch` mode reports each skill's actual launch total.
 
-The aspirational 1200/2000 targets are unreachable: the shared startup surface
+The aspirational targets are unreachable: the shared startup surface
 (skill-contracts 637 + docs index 114 + manifest slots 430 = 1181) loads on
-every launch, and a classifier irreducibly reads lifecycle.md (1037). Per E3
-these floors are documented target changes, not inflation to hide drift. The
-verifier (`src/verify-agent-docs.sh`) holds the operative values and now gates on
-them; this table is the human-owned record.
+every launch, and a classifier irreducibly reads lifecycle.md (1037). The honest
+measured maxima are ~1922 for the heaviest fixed skill (`review-app`) and ~3118
+for the heaviest classifier (`orchestrate`), each leaving only a few percent of
+headroom against the enforced floor — which is why the budgets were set there.
+Per E3 these floors are documented target changes, not inflation to hide drift.
+The verifier (`src/verify-agent-docs.sh`) holds the operative values and gates on
+them; this prose is the human-owned rationale, not a second copy of the budgets.
 
 ## See also
 

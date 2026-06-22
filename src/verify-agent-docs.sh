@@ -692,7 +692,11 @@ PY
 detect_dual_authority() {
   local profiles_md="$repo_root/src/rules/context-profiles.md"
   local self="$repo_root/src/verify-agent-docs.sh"
+  local python_cmd
   local violations=0
+
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot detect dual authority; install python"
 
   # No profile data row (`id | ... | mutation | budget | status`) in Markdown.
   if grep -qE '^\| `[^`]+` \|.*\| (read-only|mutating|conditional) \|' "$profiles_md"; then
@@ -702,6 +706,66 @@ detect_dual_authority() {
   # No budget/scenario column header table in the profile owner doc.
   if grep -qE '^\| id \| purpose \| core_rule_paths \|' "$profiles_md"; then
     printf 'WARN profile column-header table still in src/rules/context-profiles.md\n' >&2
+    violations=$((violations + 1))
+  fi
+  # Reconcile against the KERNEL's real values: no enforced budget number
+  # (per-profile budget_words or the launch budgets), no classifier-allowlist
+  # name, and no scenario_id may reappear as Markdown TABLE DATA in the profile
+  # owner doc. Restricting to table cells (lines starting with `|`) keeps human
+  # rationale prose allowed: the measured-floor numbers (1542/1148/2016) are not
+  # kernel facts so they never match, and prose that names a classifier as an
+  # example (e.g. the heaviest-skill rationale) is not a data cell. Reads the
+  # kernel live so a re-added budget table or scenario row is caught without
+  # hardcoding the numbers here.
+  if ! "$python_cmd" - \
+       "$repo_root/src/kernel/profiles.json" \
+       "$(scenario_fixture)" \
+       "$profiles_md" <<'PY'
+import json, re, sys
+
+profiles = json.load(open(sys.argv[1], encoding="utf-8"))
+scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
+doc = open(sys.argv[3], encoding="utf-8").read()
+
+budget_numbers = {str(p["budget_words"]) for p in profiles["profiles"]}
+budgets = profiles["budgets"]
+budget_numbers.add(str(budgets["fixed_skill_launch"]))
+budget_numbers.add(str(budgets["classifier_skill_launch"]))
+classifier_names = set(budgets["classifier_skills"])
+scenario_ids = {s["scenario_id"] for s in scenarios}
+
+# Only Markdown table DATA rows count as duplicated data. A table row starts
+# with "|"; skip the header/separator rows (a separator is all -:| chars).
+def data_rows(text):
+    for line in text.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        if re.fullmatch(r"\|[\s:\-|]+\|?", s):
+            continue
+        yield s
+
+bad = []
+for row in data_rows(doc):
+    cells = [c.strip() for c in row.strip().strip("|").split("|")]
+    for cell in cells:
+        # Standalone numeric cell that equals a kernel budget number.
+        if cell in budget_numbers:
+            bad.append(f"kernel budget number {cell} as table data")
+        # Backticked or bare token cell that equals a classifier name / scenario id.
+        token = cell.strip("`")
+        if token in classifier_names:
+            bad.append(f"classifier-allowlist name {token!r} as table data")
+        if token in scenario_ids:
+            bad.append(f"scenario_id {token!r} as table data")
+
+if bad:
+    for b in dict.fromkeys(bad):
+        print(b, file=sys.stderr)
+    raise SystemExit(1)
+PY
+  then
+    printf 'WARN kernel budget/classifier/scenario fact reappears as table data in src/rules/context-profiles.md\n' >&2
     violations=$((violations + 1))
   fi
   # No hardcoded budget constants or classifier allowlist literal in bash. A
@@ -933,8 +997,9 @@ PY
   )
 
   # ---- Check 1: launch budgets -------------------------------------------
-  # For every skill, compute the controlled launch total and warn if a fixed
-  # skill exceeds 1800 or an allowlisted classifier exceeds 3200.
+  # For every skill, compute the controlled launch total and warn if it exceeds
+  # the kernel's enforced launch budget for its kind (fixed_skill_launch for a
+  # fixed skill, classifier_skill_launch for an allowlisted classifier).
   printf -- '-- check 1: controlled launch budgets --\n'
   clean=1
   for skill_dir in "$repo_root"/src/skills/*/; do
