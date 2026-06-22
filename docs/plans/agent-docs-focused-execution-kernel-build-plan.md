@@ -59,8 +59,8 @@ In scope (carried from the old plan, corrected per Review resolution):
 - task-oriented read-only profiles `docs.inspect` and `plans.inspect`;
 - `docs/_meta/execution.yaml` in source/template/dogfood repo, **required
   immediately** (not lazy);
-- conditional app-quality packs with frontend/browser/accessibility first-class,
-  plus the Q9 bootstrap/secrets layers;
+- all eight conditional app-quality packs as first-class leaves (frontend/browser/
+  accessibility among them), plus the Q9 bootstrap/secrets layers;
 - the revised clean-handoff git invariant with a discharge gate;
 - the two approved skill renames (`check-docs`→`check-docs-drift`,
   `review-plans-health`→`check-plans-health`);
@@ -75,7 +75,8 @@ Out of scope:
 - telemetry infrastructure or routine multi-model benchmarks;
 - adapters other than Claude Code and Codex;
 - concurrent mutators on one shared tree as the normal path;
-- a second parser, PyYAML, or any network-installed dependency for the kernel;
+- a second parser, PyYAML, or any network-installed dependency **for the kernel**
+  (PyYAML is allowed as an *optional* parser for `execution.yaml` only);
 - broad redesign of plan lifecycle, docs ownership, or installer safety;
 - migrating consuming repos other than the dogfood repo before the final step.
 
@@ -91,13 +92,21 @@ are settled inputs to this build plan.
   is bounded and visible rather than hidden.
 - **Q2 — REVISE → resolved.** Single authority enforced via a **hard cutover**
   (Wave 1b), not a compatibility layer.
-- **Q3 — APPROVE w/ named choice.** Kernel is **JSON**, parsed by the stdlib
-  `json` the verifier already uses (`import json` appears at multiple points in
-  `src/verify-agent-docs.sh`). **No YAML/PyYAML** (forbidden network dep) and
-  **no second parser**. `execution.yaml` is the only YAML and MUST be parsed by
-  something guaranteed-present on the runtime host; if no guaranteed YAML parser
-  exists, store `execution.yaml`'s machine fields as JSON-compatible content the
-  stdlib can read (flag under open questions).
+- **Q3 — APPROVE w/ named choice.** The **kernel** is **JSON**, parsed by the
+  stdlib `json` the verifier already uses (`import json` appears at multiple
+  points in `src/verify-agent-docs.sh`) — firm, because the kernel is the gate's
+  always-parsed machine authority and must read with zero external deps on every
+  adapter host; YAML buys nothing for machine-authored data whose prose lives in
+  Markdown. **`execution.yaml` stays YAML** (human-authored per-repo binding where
+  readability matters). PyYAML is an **optional, documented dependency, not a
+  ban**: the verifier tries to import a YAML parser and, when present, validates
+  the full `execution.yaml` schema; when absent it degrades gracefully — a shallow
+  presence/text check plus a clear "install pyyaml for full execution.yaml
+  validation" remediation — so the core gate still runs everywhere and an agent
+  can fix a missing parser reactively. (Rationale for the original ban: keep the
+  deterministic gate runnable offline on any host with only bash + stdlib python.
+  That property is preserved absolutely for the kernel and made best-effort, not
+  blocking, for `execution.yaml`.)
 - **Q4 — RESOLVED.** `execution.yaml` is **required immediately** in
   source/template/dogfood repo. The user **accepts breaking other consuming
   repos** because nothing is migrated until the final deliberate step (see the
@@ -232,7 +241,8 @@ paths, scarce resources, path/risk→pack routes) **AND the Q9 layers**
 observability/log access, test-data/fixture seeding, network/external-service
 boundaries). Add task-routed packs (frontend/UI, accessibility, backend/API,
 auth/security, db-migration/data-safety, testing/reliability,
-performance/concurrency, deployment/ops). Implement the single deterministic
+performance/concurrency, deployment/ops) — **all eight as full leaves this
+wave**. Implement the single deterministic
 pack-merge rule `(path-routes ∪ scoper-tags) ∩ execution-allowlist`; the resolver
 is the sole loader. UI resolution must include app startup, browser exercise,
 screenshots, responsive + accessibility + loading/error/empty states when
@@ -247,10 +257,10 @@ checks), `src/skills/{doctor,rebuild-agent-docs}/SKILL.md`,
 `docs/_meta/{manifest.md,ownership.json}`, `docs/repository-layout.md`,
 `src/agent-docs-guide.md`.
 
-**Open question (decide at ship time):** do all eight packs ship now, or ship
-UI/a11y first-class with the remaining six **stubbed** (kernel entry + trigger +
-evidence requirement, leaf to be filled)? Stubs must still gate (a pack present
-without a trigger fails).
+**Decided (ship all eight).** All eight packs ship as **first-class leaves** in
+Wave 4 — full rule content, kernel entry, activation trigger, and evidence
+requirement for each. No stubs. Every pack must gate (a pack present without a
+trigger fails).
 
 ### Wave 5 — Clean-handoff git invariant
 
@@ -327,7 +337,9 @@ Bucketed into three honest groups.
 - budgets at or above measured floors;
 - source/registry/template parity;
 - no resolver-written artifacts and no copied bodies in resolver output;
-- `execution.yaml` schema validity (operational + Q9 fields).
+- `execution.yaml` schema validity (operational + Q9 fields) — full schema check
+  when a YAML parser is available, shallow presence check with a remediation
+  notice otherwise.
 
 **Scenario-contract asserted** (proven against fixtures, not live runs):
 
@@ -366,8 +378,9 @@ Bucketed into three honest groups.
 - Per-wave green gate (`bash src/verify-agent-docs.sh`) before handoff.
 - One mutating worker at a time on the shared tree; stage only owned files by
   filename; preserve the unrelated dirty state (the deleted plan files).
-- No YAML/PyYAML and no second parser for the kernel; the kernel is JSON read by
-  the verifier's existing stdlib `json`.
+- The **kernel** is JSON read by the verifier's existing stdlib `json` — no YAML,
+  no PyYAML, no second parser for the kernel. `execution.yaml` stays YAML with
+  PyYAML as an *optional* dependency and graceful gate degradation when absent.
 - Never let Markdown and the kernel both own the same machine fact.
 - No quality pack without a proven path/risk trigger.
 - Do not weaken gates or inflate budgets to go green; budget changes need a
