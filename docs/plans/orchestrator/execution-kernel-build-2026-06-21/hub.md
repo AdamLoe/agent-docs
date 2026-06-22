@@ -1,7 +1,7 @@
 ---
 status:        active
 owner:         orchestrator
-last_updated:  2026-06-21
+last_updated:  2026-06-22
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -48,15 +48,55 @@ time on the shared tree; each wave ends with a green
 | 1b | Atomic single-authority cutover (one commit) | **done** | f7ff819 | green; VIOLATIONS 0 |
 | 1b-review | Independent review of the cutover | **done** | — | found blocking D1 |
 | 1b-fix | Drop kernel-duplicated budget tables + honest guard | **done** | bb69545 | green; EQUIVALENCE PASS (honest) |
-| 2 | `planning.scope` fixed `/orchestrate` entry | in progress | — | — |
-| 3 | `docs.inspect`/`plans.inspect` + exact-context resolver | pending | — | — |
-| 4 | `execution.yaml` + all 8 quality packs | pending | — | — |
-| 4-review | Independent review of execution binding + packs | pending | — | — |
-| 5 | Clean-handoff git invariant + discharge gate | pending | — | — |
-| 6a | Skill renames (one commit) | pending | — | — |
-| 6b | Per-skill kernel-workflow-ID wiring | pending | — | — |
-| 7 | Static gates + scenario traces + docs migration | pending | — | — |
-| final-verify | Consolidated drift gate on post-mutation state | pending | — | — |
+| 2 | `planning.scope` fixed `/orchestrate` entry | **done** | d7c544c | green; check 9 gates ordering |
+| 3 | `docs.inspect`/`plans.inspect` + exact-context resolver | **done** | e471881 | green; merge mode references-only |
+| 4a | execution.yaml + schema + scaffold/doctor/manifest/ownership | **done** | f6ff752 | green; PyYAML-optional, both branches verified |
+| 4b | 8 quality packs + pack-merge rule + pack gates | **done** | 0d45779 | green; 4 pack gates probed |
+| 4-review | Independent review of execution binding + packs | **done** | — | adversarial; no defects |
+| 5 | Clean-handoff git invariant + discharge gate | **done** | 4035be6 | green; check 10 gates consistency |
+| 6a | Skill renames (one commit) | **done** | 8295ffb | green; substring-safe guards probed |
+| 6b | Per-skill kernel-workflow-ID wiring | **done** | 8ea5a5f | green; referential gate probed |
+| 7a | Exit-gate audit + cost-regression guard + scenario traces | **done** | ced8ff4 | green; all exit-gate items gated |
+| 7b | Durable-fact migration (workflow-kit/decisions/manifest/guide) | **done** | 37d6b9f | green; plan source-complete (not shipped) |
+| final-verify | Consolidated drift gate on post-mutation state | **done** | (37d6b9f) | SOURCE BUILD GREEN |
+
+## Closeout — SOURCE BUILD GREEN (final migration user-gated, pending)
+
+All source waves 0–7b shipped and verified green on the post-mutation state
+(HEAD `37d6b9f`): `bash src/verify-agent-docs.sh` exit 0 ("ALL AGENT-DOCS GATES
+PASS"), `--contract-check` 0 violations, `--equivalence` PASS, all profile
+budgets + classifier launch floors green, both installer `--dry-run`s exit 0,
+git tree clean except the expected unrelated dirt.
+
+**Commits (this run, on `overhaul-agent-docs-install-workflow`):** c2c726b (hub) ·
+742658f (W0) · f606c76 (plan-budget fix) · 7aa6298 (W1a) · f7ff819 (W1b cutover) ·
+bb69545 (W1b D1 fix) · d7c544c (W2) · e471881 (W3) · f6ff752 (W4a) · 0d45779 (W4b) ·
+4035be6 (W5) · 8295ffb (W6a) · 8ea5a5f (W6b) · ced8ff4 (W7a) · 37d6b9f (W7b) · plus
+hub checkpoints. Two independent reviews (W1b caught blocking D1; W4 clean).
+
+**Durable facts migrated** → `docs/architecture/workflow-kit.md` (kernel/resolver/
+execution-binding/packs/clean-handoff shape), `docs/decisions/agent-docs.md` (5
+decisions, recorded incrementally in W0+W5), `docs/_meta/{manifest.md,
+ownership.json}`, `src/agent-docs-guide.md`, `src/template/docs/`. The build plan
+is `status: active`, `okay_to_delete: false` — SOURCE-COMPLETE, not shipped.
+
+**REMAINING — user-gated FINAL migration only (do NOT run without authorization):**
+1. **Bundle the kernel.** Both installers' `bundle_dirs=(skills rules template)`
+   EXCLUDE `kernel/`. The verifier reads `$repo_root/src/kernel/*.json`, so the
+   installed `~/.agentdocs` runtime `--resolve` would break. Add `kernel` to
+   `bundle_dirs` in `install-agentdocs-local.sh` + `src/install-agentdocs.sh` (and
+   the GitHub bundle-shape validation) and confirm runtime path resolution. (The
+   final-verify worker initially called this "no gap" — it IS a gap; corrected
+   here.) Assess whether `verify-fixtures/` baseline is needed at runtime (likely
+   not — only `--equivalence` uses it).
+2. Run the installer; refresh `~/.agentdocs/` + Claude/Codex adapter skill copies;
+   prune the renamed `check-docs`/`review-plans-health` dirs via
+   `remove_stale_managed`.
+3. Roll `execution.yaml` out to other consuming repos (deliberately broken until now).
+4. Run the two live canaries (ordinary feature + UI feature) per adapter (Claude
+   Code, Codex).
+After that succeeds: build plan → `status: shipped`, `okay_to_delete: true`; this
+hub → same; then `/clear-plans`.
 
 ## Decisions & accepted risks
 
@@ -71,6 +111,34 @@ time on the shared tree; each wave ends with a green
 - Q7: blocked-handoff discharge gate; constrained checkpoint commits.
 - Q8: renames `check-docs`→`check-docs-drift`, `review-plans-health`→`check-plans-health`.
 - Q9: bootstrap + secrets layers required in `execution.yaml`/packs.
+
+## Tight-budget hotspots (warn future-wave workers)
+
+- `src/skills/orchestrate/SKILL.md` = 900/900 (AT cap). Wave 6b touches every skill
+  body — orchestrate has zero headroom; the workflow-ID wiring must replace, not add.
+- `src/rules/subagent/planning.md` = 498/500 (AT cap).
+- orchestrate controlled launch = 3288/3300 (12 words). lifecycle.md and dispatch.md
+  are classifier startup loads — any growth in Waves 3/5 risks pushing orchestrate/
+  fresh-chat/start-session launch over 3300. Workers touching those rules MUST
+  re-check `--measure-launch orchestrate` and trim to stay green.
+- **Manifest = classifier launch load (escalating).** After Wave 4a: orchestrate
+  3298/3300, review-app 1997/2000 — ~2 words headroom. The manifest change-to-doc
+  slot is a classifier startup load, so every new route (4b packs, 6a renames, 7
+  migration) grows it. Workers adding manifest routes MUST fold into an existing
+  row or one concise row, re-measure `--measure-launch
+  {orchestrate,review-app,fresh-chat,start-session}`, and trim non-pinned verbosity
+  to stay ≤ floors WITHOUT weakening them. Stop + report only if truly impossible.
+
+## Wave 7 migration constraint
+
+`docs/decisions/agent-docs.md` is at **2600/2600** (zero headroom) after Wave 5.
+Most decision migration is ALREADY done incrementally: kernel-as-consolidation +
+uniform planning.scope + source-only (Wave 0), clean-handoff invariant (Wave 5).
+Wave 7 must VERIFY coverage and only add a decision if something material is
+genuinely missing — and if so, compress to fit (do not exceed 2600). The bulk of
+NEW Wave 7 migration goes to `docs/architecture/workflow-kit.md` (1500 cap), not
+decisions. `implementation.tracked` profile is at 2499/2500 (1 word) — avoid
+growing its core rules.
 
 ## Open questions / blockers
 
