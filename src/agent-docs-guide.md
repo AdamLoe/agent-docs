@@ -373,15 +373,16 @@ facts.
 
 ## Execution-kernel model (orientation only)
 
-Worker context is resolved from `rules/context-profiles.md` — the sole
-authority for what rule files, overlays, mutation capability, and enforced
-budget each worker role carries. Skills name profile IDs; workers resolve them
-via the verifier's `--resolve` mode. Role cards defer to the resolved profile
-and add nothing beyond it. All profiles are enforced; the verifier gates on
-budget and contract violations. For the full contract, see:
-- `~/.agentdocs/rules/context-profiles.md` — profile table and budget floors
-- `~/.agentdocs/verify-agent-docs.sh` — resolver, measure-launch, contract-check modes
-- `docs/architecture/workflow-kit.md` — architecture-level description
+Worker context is resolved from the **kernel** (`src/kernel/*.json`) — the sole
+machine authority for profiles, scenarios, per-skill workflows, and packs;
+`rules/context-profiles.md` is the human contract for those facts. Skills name
+profile IDs; workers resolve them via the verifier's `--resolve` mode (positional
+profile, or `--skill/--phase/--repo/--risk` for the exact-context merge that
+activates routed packs). All profiles are enforced; the verifier gates budget and
+contract violations. For the full contract, see:
+- `~/.agentdocs/kernel/` and `rules/context-profiles.md` — authority / human contract
+- `~/.agentdocs/verify-agent-docs.sh` — resolver, equivalence, contract-check
+- `docs/architecture/workflow-kit.md` — architecture
 
 Dense runtime rule files keep only the normative contract; worked examples and
 rationale live in never-auto-loaded `*-reference.md` companion leaves.

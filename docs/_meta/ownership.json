@@ -83,7 +83,7 @@
     {
       "surface": "verifier-modes",
       "paths": ["src/verify-agent-docs.sh", "docs/architecture/workflow-kit.md", "docs/decisions/agent-docs.md", "docs/_meta/manifest.md"],
-      "owns": ["--resolve profile mode", "--measure-launch honest skill total mode", "--contract-check source-bound gate mode"]
+      "owns": ["--resolve profile and merge modes", "--equivalence single-authority proof mode", "--measure-launch honest skill total mode", "--contract-check source-bound gate mode"]
     },
     {
       "surface": "runtime-usage-reporting",

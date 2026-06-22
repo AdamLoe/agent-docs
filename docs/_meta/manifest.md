@@ -16,7 +16,7 @@ code_root: src/
 | Repository layout inventory | docs/repository-layout.md |
 | ChatGPT context export | docs/repository-layout.md, export-chatgpt-context.sh |
 | Drift gates, budget checks, context reports, and agent-readiness verifier | docs/_meta/manifest.md, src/verify-agent-docs.sh |
-| Verifier modes: --resolve/--measure-launch/--contract-check | src/verify-agent-docs.sh, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
+| Verifier modes: --resolve/--equivalence/--measure-launch/--contract-check | src/verify-agent-docs.sh, docs/architecture/workflow-kit.md, docs/decisions/agent-docs.md |
 | Verifier-only fixtures (scenario, launch baseline) | src/verify-fixtures/, src/verify-agent-docs.sh, docs/architecture/workflow-kit.md |
 | Docs scaffold template and consuming-repo scaffold checks | src/template/docs/, src/verify-agent-docs.sh, src/skills/rebuild-agent-docs/SKILL.md, src/skills/doctor/SKILL.md, src/agent-docs-guide.md, docs/architecture/workflow-kit.md |
 | Execution binding (execution.yaml schema, operational + Q9 fields) | docs/_meta/execution.yaml, src/template/docs/_meta/execution.yaml, src/verify-agent-docs.sh, src/agent-docs-guide.md |

@@ -1,7 +1,7 @@
 ---
-status:        draft
+status:        active
 owner:         implementation
-last_updated:  2026-06-21
+last_updated:  2026-06-22
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -11,11 +11,9 @@ owning_docs:
 
 # Build the focused execution kernel
 
-> **Supersedes** `agent-docs-focused-execution-kernel-shipping-plan.md`. This is
-> the revised, more-detailed build plan with the review verdict and all ten
-> review-question dispositions baked in. The companion
-> `agent-docs-focused-execution-kernel-review-plan.md` (design proposal + review
-> lens) is unchanged.
+> **Supersedes** `agent-docs-focused-execution-kernel-shipping-plan.md`. The
+> revised build plan with the review verdict and all ten review-question
+> dispositions baked in; the companion review-plan is unchanged.
 
 ## Mission
 
@@ -35,13 +33,11 @@ repos, mutating workers leaving no unexplained owned dirt, and deterministic gat
 proving the Claude Code/Codex contract without routine spend.
 
 This **reconciles the prior "Focused handoffs over generated context"
-decision**, which rejected generated workspaces, packet helpers, *YAML metadata*,
-parser work, and launcher behavior — a second workflow surface. The kernel
-introduces none of that: it **validates structured data the verifier already
-parses**, **generates no prompt bodies or per-run context**, and its resolver
-emits exact references (paths + heading hints + sizes) while copying no body and
-writing no artifact. Wave 0 records this reconciliation so the kernel is not
-mistaken for a revival of metadata-v2 / generated-repo-local-context.
+decision** (now migrated to the Kernel-as-consolidation decision in
+`docs/decisions/agent-docs.md`): the kernel adds no generated workspaces, packet
+helpers, YAML metadata, parser, or per-run context — it validates structured data
+the verifier already parses, and its resolver emits exact references while copying
+no body and writing no artifact.
 
 ## Scope
 
@@ -121,15 +117,15 @@ are settled inputs.
   **shadow → atomic-cutover** sequence (Wave 1a/1b), not the old "kernel + CLI,
   then migrate" two-step.
 
-**Accepted risks.** (a) The bounded-`/orchestrate` cost regression from the
-uniform scope phase. (b) Temporary breakage of un-migrated consuming repos until
-final migration (neutralized for the dogfood/source surface by SOURCE-ONLY).
+**Accepted risks.** (a) The bounded-`/orchestrate` cost regression (Q1). (b)
+Temporary breakage of un-migrated consuming repos until final migration
+(neutralized for the dogfood/source surface by SOURCE-ONLY).
 
 ## Approach
 
 Each wave names its owned files and ends with a green gate
-(`bash src/verify-agent-docs.sh`). Sequencing, staging, and SOURCE-ONLY gating
-follow the Discipline rules.
+(`bash src/verify-agent-docs.sh`); staging and SOURCE-ONLY gating follow the
+Discipline rules.
 
 ### Wave 0 — Lock decisions & baseline (no model calls)
 
@@ -296,12 +292,8 @@ buckets below, then run the deterministic gate. Migrate durable facts per the
 Migration notes.
 
 **The FINAL migration is a SEPARATE deliberate step gated on explicit user
-permission.** Only after the overhaul is green end-to-end and authorized: extend
-the installer bundles if the runtime needs `kernel/`, run the installer, refresh
-`~/.agentdocs/`, update the Claude/Codex adapter skill copies (pruning the renamed
-skill dirs via `remove_stale_managed`), roll `execution.yaml` out to other
-consuming repos, and run the two live canaries (ordinary feature + UI feature)
-per adapter.
+permission** — its steps are listed under "Remaining" in the Migration notes
+below. Run it only after the overhaul is green end-to-end and authorized.
 
 ## Exit gate
 
@@ -365,39 +357,46 @@ Three honest buckets.
 - Do not weaken gates or inflate budgets to go green; budget changes need a
   documented correctness floor (Decision E3).
 
-## Likely files
+## Migration notes (done at ship time)
 
-The authoritative touch list is each wave's `Owned:` line. Cross-cutting surfaces:
-`src/kernel/*.json`, `src/verify-agent-docs.sh`, the `src/rules/orchestrator/` and
-`src/rules/subagent/` cards, `src/skills/` (orchestrate, renamed skills, doctor,
-rebuild-agent-docs, registry), `docs/architecture/workflow-kit.md`,
-`docs/decisions/agent-docs.md`, `docs/_meta/{manifest.md,ownership.json}`.
-Installers (`install-agentdocs-local.sh`, `src/install-agentdocs.sh`) are
-FINAL-step only.
+**State: SOURCE-COMPLETE, NOT fully shipped.** Green end-to-end at `src/` (Waves
+0–7b). `status: active`, `okay_to_delete: false` because the user-gated FINAL
+migration has not run. Do not mark `shipped` until it completes.
 
-## Migration notes (filled in at ship time)
+Durable facts are migrated into canonical docs (a fresh chat needs none of this
+plan); targets used:
 
-Before `status: shipped`, route every durable fact into:
+- `workflow-kit.md` — kernel as machine authority vs `context-profiles.md` human
+  contract; clean-handoff three states + discharge gate; `--equivalence` + no-arg
+  consolidated gate; `verify-fixtures/` = baseline only (scenarios →
+  `scenarios.json`); surface rows for `kernel/`, `rules/packs/`, `execution.yaml`;
+  `/orchestrate`'s fixed `planning.scope` phase; brief → `subagent/planning.md`.
+- `decisions/agent-docs.md` — Waves 0+5 already record Kernel-as-consolidation
+  (supersedes "Focused handoffs over generated context"), uniform `planning.scope`
+  + accepted cost regression, single-authority cutover, Clean-handoff invariant
+  (supersedes "Commit-heavy worker shipping"), Source-only. Verified in 7b; no edit.
+- `_meta/{manifest.md,ownership.json}` — `kernel-machine-authority`,
+  `execution-binding`, `quality-packs`, `verifier-modes`, `verifier-fixtures`
+  routed across W1b/W4/W6; renamed skills covered by the `src/skills/` glob.
+- `agent-docs-guide.md` + `template/docs/` — execution.yaml required binding
+  (operational + Q9); kernel is worker-context authority; template ships it.
 
-- `docs/architecture/workflow-kit.md` — kernel shape, resolver, execution
-  binding, packs, clean-handoff git shape;
-- `docs/decisions/agent-docs.md` — kernel-as-consolidation (superseding "Focused
-  handoffs over generated context"), uniform `planning.scope` + accepted cost
-  regression, single-authority cutover, clean-handoff invariant superseding
-  "Commit-heavy worker shipping", rejected alternatives;
-- `docs/_meta/{manifest.md,ownership.json}` — new surfaces (`src/kernel/`,
-  `execution.yaml`, packs, renamed skills) and update triggers;
-- `src/agent-docs-guide.md` + `src/template/docs/` — the consuming-repo contract
-  including `execution.yaml`.
+**Authority moves.** Profiles/scenarios/budgets/packs: Markdown+bash → kernel JSON,
+enforced by the dual-authority detector. `workflow-scenarios.json` →
+`scenarios.json` (deleted); per-skill facts → `workflows.json`. No machine fact
+lives twice.
 
-Record final authority moves and accepted deviations here so a reviewer can
-confirm `okay_to_delete: true`.
+**Remaining ONLY for the user-gated FINAL migration:** extend installer bundles if
+the runtime needs `kernel/`; run an installer; refresh `~/.agentdocs/` + the
+Claude/Codex adapter copies (prune renamed `check-docs`/`review-plans-health` dirs
+via `remove_stale_managed`); roll `execution.yaml` to other consuming repos; run
+the two live canaries per adapter. Then set `status: shipped`,
+`okay_to_delete: true`.
 
 ## See also
 
-- `agent-docs-focused-execution-kernel-review-plan.md` — design proposal + review
-  lens (unchanged).
-- `agent-docs-focused-execution-kernel-shipping-plan.md` — superseded shipping plan.
-- [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md)
-- [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md)
-- [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
+- `agent-docs-focused-execution-kernel-review-plan.md` (design proposal),
+  `agent-docs-focused-execution-kernel-shipping-plan.md` (superseded).
+- [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md),
+  [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md),
+  [`../decisions/agent-docs.md`](../decisions/agent-docs.md)

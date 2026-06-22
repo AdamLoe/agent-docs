@@ -3,12 +3,14 @@
 `src/` is the source kit; `~/.agentdocs/` is the installed runtime that skills,
 rules, and consuming-repo docs self-reference. The workflow lowers context by
 routing work to focused roles, not by generating per-run context workspaces.
-The fixed startup runtime-card is `~/.agentdocs/rules/skill-contracts.md`;
-profile policy lives in `~/.agentdocs/rules/context-profiles.md`, generic
-classification in lifecycle, dispatch shape in dispatch, and command inventory
-in the registry. Mandatory startup is cache-first: read the runtime card,
-needed manifest slots, and `docs/index.md`, then stop. `docs/overview.md` is
-routed by task.
+The fixed startup runtime-card is `~/.agentdocs/rules/skill-contracts.md`. The
+**machine authority** for profiles, scenarios, per-skill workflows, and packs is
+the kernel under `src/kernel/*.json`; `~/.agentdocs/rules/context-profiles.md` is
+the **human contract** that names those facts in prose but no longer owns them.
+Generic classification lives in lifecycle, dispatch shape in dispatch, command
+inventory in the registry. Mandatory startup is cache-first: read the runtime
+card, needed manifest slots, and `docs/index.md`, then stop. `docs/overview.md`
+is routed by task.
 
 ## Context layers
 
@@ -19,10 +21,11 @@ slice: one architecture leaf, one decisions domain, one agent-context
 procedure, selected plan/run docs, and needed source/tests. Ownership JSON and
 repository layout are queried only for ownership or location questions. Never
 auto-load architecture leaves, decisions, plans, run docs,
-`~/.agentdocs/agent-docs-guide.md`, full ownership JSON, source files,
-verifier output, or pitch material. Class word budgets live in
-`~/.agentdocs/rules/authoring-rules.md`. Worker context profiles live in
-`~/.agentdocs/rules/context-profiles.md` and are reported by
+`~/.agentdocs/agent-docs-guide.md`, the kernel JSON, full ownership JSON, source
+files, verifier output, or pitch material. Class word budgets live in
+`~/.agentdocs/rules/authoring-rules.md`. Worker context profiles are owned by the
+kernel (`src/kernel/profiles.json`), described in prose by
+`~/.agentdocs/rules/context-profiles.md`, and reported by
 `~/.agentdocs/verify-agent-docs.sh --context-report`.
 
 ## Orchestrator/worker model
@@ -46,8 +49,11 @@ Rules live at the layer that owns them:
   packet shape, worker report shape, context profiles, commit concurrency, and
   opt-in run docs.
 - **Subagent** (`src/rules/subagent/`) - one role's job card.
-- **Context profiles** (`src/rules/context-profiles.md`) - exact core rule
-  files, conditional overlays, mutation capability, and enforced budgets.
+- **Kernel** (`src/kernel/{profiles,scenarios,workflows,packs}.json`) - the sole
+  machine authority for profiles (paths/overlays/mutation/budgets), scenario rows,
+  per-skill workflow IDs, and pack triggers, read by `src/verify-agent-docs.sh`.
+- **Context profiles** (`src/rules/context-profiles.md`) - the human contract;
+  the kernel owns the facts.
 - **Skill body** (`src/skills/<name>/SKILL.md`) - one command's routing surface,
   profile IDs, worker phases, and closeout shape.
 
@@ -55,43 +61,30 @@ Rules live at the layer that owns them:
 
 The orchestrator is a knowledge intermediary, not the author of every
 implementation detail. It passes each worker a minimal dispatch: role, task,
-exact rule links, starting inputs, path plus heading/search hints for large
-docs, observed facts to preserve, expected checks/evidence, and report shape.
-Dispatch packets stay compact: no copied rules, generated prompt artifacts, or full
-prior transcripts by default.
+exact rule links, starting inputs, path plus heading/search hints for large docs,
+observed facts to preserve, expected checks/evidence, and report shape. Packets
+stay compact: no copied rules, generated artifacts, or full transcripts.
 
-When work is ambiguous or medium-sized, a planning worker spends the context to
-investigate and return an implementation brief. That brief is plain Markdown,
-not a generated packet or helper output. The standard brief shape is:
-
-```text
-Goal:
-Non-goals:
-Authoritative docs:
-Likely source areas:
-Expected behavior:
-Implementation notes:
-Cheapest sufficient checks:
-Stop and report if:
-Open decisions:
-```
+Every `/orchestrate` run opens with a read-only `planning.scope` worker (the
+fixed first phase) that investigates and returns a **workflow-brief**; lighter
+work uses a `planning.brief` worker for an inline implementation brief. Both
+briefs are plain Markdown, not generated packets. The canonical field shape is
+owned by
+[`../../src/rules/subagent/planning.md`](../../src/rules/subagent/planning.md)
+(`## Workflow-brief`) and not duplicated here.
 
 Implementation workers receive either a bounded task or the planner's brief.
 They discover source files and tests inside that slice, run the cheapest
 sufficient gate, update durable docs when required, commit, and report. They do
 not switch into planning, review, or lifecycle closeout work on their own.
 
-Between workers, the orchestrator carries forward a concise observed summary:
-decisions made, facts proven, files or docs touched, gates and outputs, commits,
-blockers, and assumptions. The next worker gets that summary instead of the full
-prior transcript.
-
-Worker reports are compact and self-contained. Routine reports name outcome,
-observed basis, inspected sources, files, concise gate evidence, migrations,
-blockers/risk, and commit or no-change state. Planning and review reports can be
-longer, but still use short excerpts rather than transcripts unless the user
-asks for full output. Runtime usage counts appear only when the runtime exposes
-raw counts or the caller explicitly asks.
+Between workers, the orchestrator carries forward a concise observed summary
+(decisions, proven facts, touched files/docs, gates, commits, blockers,
+assumptions) instead of the full prior transcript. Worker reports are compact and
+self-contained; the report fields are owned by
+[`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md).
+Runtime usage counts appear only when the runtime exposes raw counts or the
+caller explicitly asks.
 
 ## Ship order
 
@@ -110,10 +103,16 @@ Mutating workflows converge on one final-state order:
    from the verified final state.
 
 Ship order is checkpoints, not a one-worker-per-step template. Editing workers
-snapshot dirty state, preserve unrelated user changes and deletions, stage only
-owned paths by filename, and commit their completed slice before reporting.
-Review and verification workers are read-only; misses route back to
-implementation, docs-maintenance, or plan-maintenance.
+snapshot dirty state, preserve unrelated changes and deletions, and stage only
+owned paths by filename. They end under the **clean-handoff invariant** (no
+unexplained owned dirt) in one of three terminal states: **committed**, **clean
+no-op**, or **blocked handoff** (recording the dirty paths, gate state, why no
+safe commit, and the resume profile). A **discharge gate** binds every
+blocked-handoff record to its resolution — committed or reverted — before final
+verification. Long work may take constrained checkpoint commits but never the
+per-slice micro-commit cadence this replaces. Review and verification workers are
+read-only; misses route back to implementation, docs-maintenance, or
+plan-maintenance.
 
 ## Main surfaces
 
@@ -121,92 +120,60 @@ implementation, docs-maintenance, or plan-maintenance.
 |---|---|
 | `src/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
 | `src/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
-| `src/verify-agent-docs.sh` | Kit drift gate; modes: `--context-report`, `--resolve`, `--measure-launch`, `--contract-check` (gating), `--scaffold`. |
+| `src/verify-agent-docs.sh` | Kit drift gate; modes: `--context-report`, `--resolve` (profile, or `--skill/--phase/--repo/--risk` merge), `--equivalence`, `--measure-launch`, `--contract-check`, `--scaffold`. No-arg is the consolidated gate. |
+| `src/kernel/` | Machine authority (JSON): `profiles`, `scenarios`, `workflows`, `packs`. Never auto-loaded; read by the verifier/resolver. |
 | `src/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `context-profiles.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
 | `src/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
 | `src/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
+| `src/rules/packs/` | Eight task-routed quality overlays (frontend, backend-api, auth-security, db-migration, accessibility, testing-reliability, performance-concurrency, deployment-ops); resolver-activated, never auto-loaded. |
 | `src/rules/coding-style-{rust,python,frontend}.md` | Language-idiom overlays (never auto-loaded). |
-| `src/verify-fixtures/` | Verifier-only: `workflow-scenarios.json`, `baseline.md`. |
+| `src/verify-fixtures/` | Verifier-only baseline snapshots (`baseline.md`). The scenario matrix moved to `src/kernel/scenarios.json`. |
+| `docs/_meta/execution.yaml` | Per-repo execution binding (operational + Q9 fields); the resolver and gate read it. |
 | `src/template/docs/` | Scaffold copied by `/rebuild-agent-docs`. |
 | `src/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
 | `src/plan-lifecycle.md`, `src/plan-template.md` | Plan metadata and plan skeleton. |
 
-Editing workers commit their own slice before reporting; later workers repair
-with further commits. Editing is serial per working tree, and the orchestrator
-verifies the final observed state after docs, plan-status, and run-doc
-mutations.
+Editing workers end under the clean-handoff invariant (committed, clean no-op, or
+discharged blocked handoff); later workers repair with further commits. Editing
+is serial per working tree, and the orchestrator verifies the final observed
+state after docs, plan-status, and run-doc mutations.
 
 ## Workflow commands
 
-After adding, renaming, or deleting a skill in `src/`, re-publish and verify:
+After adding, renaming, or deleting a skill in `src/`, re-publish then verify
+(`bash install-agentdocs-local.sh` then `bash src/verify-agent-docs.sh`); before
+shipping any kit change, run `bash src/verify-agent-docs.sh`.
 
-```sh
-bash install-agentdocs-local.sh
-bash src/verify-agent-docs.sh
-```
+With no arguments, the verifier validates the source checkout: docs, manifest,
+ownership, skill registry, template scaffold, the kernel, `execution.yaml`
+schema, pack triggers/non-activation, the source-bound contract checks, the
+single-authority and clean-handoff/cost-regression scenario gates, stale
+references, executable bits, and adapter freshness. `--equivalence` is the
+standalone single-authority proof. Run from outside the source repo, it prints a
+`--scaffold` directive and exits 0.
 
-Before shipping agent-docs kit changes, run:
+For profile inspection use `--context-report [--profile <id>]`. A consuming repo
+runs the target-aware scaffold check `bash ~/.agentdocs/verify-agent-docs.sh
+--scaffold <repo-root>`, which checks that repo's scaffold, manifest slots,
+ownership paths, routes, and unresolved placeholders — not the source checkout.
 
-```sh
-bash src/verify-agent-docs.sh
-```
+The full command inventory with one-line purposes lives in
+[`../../src/skills/registry.md`](../../src/skills/registry.md); the routing table
+below picks the smallest owner. The load-bearing workflow facts not obvious from
+a command name:
 
-With no arguments, the verifier validates the agent-docs source checkout:
-docs, manifest, ownership data, skill registry, template scaffold, context
-profile contract, stale references, executable bits, and local adapter
-freshness. Run from outside the source repo, it prints a `--scaffold`
-directive and exits 0.
-
-For profile inspection:
-
-```sh
-bash src/verify-agent-docs.sh --context-report
-bash src/verify-agent-docs.sh --context-report --profile implementation.code
-```
-
-For a consuming repo, run the target-aware scaffold check:
-
-```sh
-bash ~/.agentdocs/verify-agent-docs.sh --scaffold .
-```
-
-That mode checks the target scaffold, manifest slots, ownership paths, routes,
-and unresolved placeholders. It does not validate the source checkout.
-
-- `/start-session` checks local git state, active plans, shipped cleanup
-  candidates, and orchestration run docs, then routes into the owning skill.
-- `/fresh-chat` starts ordinary work from the docs router.
-- `/doctor` validates scaffold, manifest, ownership, skill registry, and stale
-  reference health; consuming-repo scaffold checks use
-  `~/.agentdocs/verify-agent-docs.sh --scaffold <repo-root>`.
-- `/orchestrate` coordinates the quick-fix or plan/review/implement/review
-  lifecycle through specialist workers. Medium or unclear work goes through a
-  planning-worker brief before implementation.
-- `/review-app` runs a confirmed read-only app audit for cleanup discovery,
-  ranks findings by severity and cleanup ROI, and creates only approved plans.
-- `/plan` shapes rough intent into discussion, implementer briefs, tracked
-  plans, docs, or further questions.
+- `/orchestrate` always begins with a `planning.scope` worker as its fixed first
+  phase (the uniform scope brief resolving bounded/briefed/tracked); the accepted
+  cost regression is bounded by a cost-regression budget guard.
 - `/quick-fix` dispatches implementation only for already bounded fixes; unclear
   small work is first shaped by a planning worker or routed to `/plan`.
-- `/ship-plans` implements named plans through verification, docs migration,
-  plan shipping, and commit.
-- `/review-shipped-work` reviews completed or in-progress work against named
-  plans.
-- `/review-plans` reviews named plans with a high-level or custom lens.
-- `/check-plans-health` reviews the health of `docs/plans/`, including
-  orchestration run folders under `docs/plans/orchestrator/`.
-- `/review-skills` reviews this kit's skill suite for drift and lifecycle gaps.
-- `/ship-current-work` finishes ordinary work and commits if gates pass.
-- `/rebuild-agent-docs` adopts or repairs a repo's docs tree, then runs the
-  scaffold verifier.
-- `/wrap-up-current-chat` captures chat-only durable context.
-- `/clear-plans` cleans shipped or abandoned plans and orchestration run docs
-  after migration.
-- `/feedback-agent-docs` records a kit-level comment or request into the
-  runtime inbox at `~/.agentdocs/feedback.jsonl`, which is preserved across
-  installer runs.
-- `/list-skills` reports the canonical source skill inventory, project-local
-  skill directories, and Claude/Codex adapter freshness.
+- `/start-session` checks local git, plans, cleanup candidates, and run docs,
+  then routes into the owning skill; `/fresh-chat` starts ordinary work from the
+  docs router.
+- `/ship-current-work` finishes ordinary work and commits if gates pass;
+  `/wrap-up-current-chat` captures chat-only durable context.
+- `/feedback-agent-docs` appends to the runtime inbox
+  `~/.agentdocs/feedback.jsonl`, preserved across installer runs.
 
 ## Command routing
 
