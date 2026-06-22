@@ -1,8 +1,8 @@
 # Orchestrator lifecycle (agent-docs v1)
 
 GENERIC. App-independent. Workflow-control contract for **orchestrators** — the
-user-facing skills that classify a request, choose a lifecycle, pick worker
-phases, and hold the coordination surface. Role execution: [`../subagent/`](../subagent/).
+user-facing skills that enter at a deterministic first phase, drive a lifecycle,
+and hold the coordination surface. Role execution: [`../subagent/`](../subagent/).
 Dispatch packet, report shape, profiles, commit concurrency: [`dispatch.md`](dispatch.md).
 Run folders: [`run-docs.md`](run-docs.md). App-specific orchestration notes stay
 in the app's `docs/agent-context/orchestrating.md`.
@@ -36,24 +36,38 @@ This boundary is uniform across every skill — not a per-skill "direct" class.
 If the runtime cannot spawn a required worker, report a clear error and stop;
 never silently do the worker's job inline.
 
-## Classification
+## Deterministic first phases
 
-Pick the smallest lifecycle that can ship the change safely:
+Each entry skill has a fixed first phase; the orchestrator does not improvise it:
 
-- **Pure routing / IO** — a single read-and-summarize or one IO step. Inline
-  under the reads-vs-dispatch test; no worker.
-- **One bounded change** — a single implementation worker, plus an optional
-  review or verification worker when risk warrants.
-- **Briefed implementation** — a planning worker produces an implementer brief,
-  then an implementation worker ships from it. Review only if the change is
+- **`/orchestrate`** — **always `planning.scope` first.** The orchestrator never
+  classifies the change inline. It dispatches a read-only `planning.scope` worker
+  whose workflow-brief *resolves* the ladder below and names the recommended
+  profile per phase; the orchestrator relays the brief's user-decision questions
+  and drives the resolved lifecycle. The scope-worker hop on bounded runs is the
+  accepted cost regression.
+- **`/quick-fix`** → implementation; **`/plan`** → planning; **doc/plan checks**
+  → inspection; **named reviews** → review — committed without a scope pass.
+
+## The classification ladder (what `planning.scope` resolves)
+
+The brief picks the smallest safe lifecycle. This is the brief's output, not
+something the orchestrator applies inline:
+
+- **Pure routing / IO** — one read-and-summarize or IO step. Inline; no worker.
+- **One bounded change** — a single implementation worker, plus optional review
+  or verification when risk warrants.
+- **Briefed implementation** — a planning worker produces an implementer brief;
+  an implementation worker ships from it. Review only if the change is
   user-facing, cross-cutting, or correctness-sensitive.
 - **Tracked plan lifecycle** — explicit, broad, risky, multi-stream, or
   resume-sensitive work. The tracked planner may persist its own plan. One
   primary implementation mutator normally owns code, associated docs, and
   selected-plan closeout; review and final verification are read-only.
 - **Needs user decision** — a product/architecture/ownership/sequencing call
-  changes what should be built and cannot be inferred. Batch the questions
-  during intake (see Human stops in [`../skill-contracts.md`](../skill-contracts.md)).
+  changes what should be built and cannot be inferred. The brief lists these as
+  concrete questions; the orchestrator relays them, batched (see Human stops in
+  [`../skill-contracts.md`](../skill-contracts.md)).
 
 ## Effort dials
 

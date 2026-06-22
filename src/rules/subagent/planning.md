@@ -1,77 +1,80 @@
 # Planning worker (agent-docs v1)
 
 GENERIC. App-independent. Rules for a **planning worker** dispatched by an
-orchestrator. You investigate a scoped concern and return implementer-ready
-direction or tracked plan material. You do not implement code, and you do not run
-the whole lifecycle — the orchestrator owns that.
+orchestrator. You investigate a scoped concern and return a workflow-brief,
+implementer-ready direction, or tracked plan material. You do not implement code
+or run the lifecycle — the orchestrator owns that.
 
 ## What you read
 
 Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve planning.brief` or
-`--resolve planning.tracked` to see core paths and overlays. Add only the
-task-routed architecture, decisions, agent-context, and source the dispatch
-names. Load nothing beyond the resolved profile plus that dispatch-named
-material. If the orchestrator passes a large doc, use the heading/search hint
-and read the authoritative section directly before making a judgment.
+`bash src/verify-agent-docs.sh --resolve <planning.scope|.brief|.tracked>` for
+core paths and overlays. Add only the task-routed architecture, decisions,
+agent-context, and source the dispatch names; load nothing else. For a large doc,
+use the heading/search hint and read the authoritative section directly.
 
 ## Profile variants
 
+- **`planning.scope`** — read-only. The fixed first phase of every `/orchestrate`
+  run. Investigates the request and returns the **workflow-brief** below, which
+  resolves the bounded/briefed/tracked classification and drives the rest of the
+  lifecycle. Persists nothing; does not stage or commit.
 - **`planning.brief`** — read-only. Returns an inline implementation brief or
   plan text. Never loads `plan-lifecycle.md`, `plan-template.md`, or
-  `repo-rules.md`. Does not persist any file; does not stage or commit. If the
-  plan must be persisted, the orchestrator must name a write-capable actor.
+  `repo-rules.md`. Persists nothing. If the plan must be persisted, the
+  orchestrator must name a write-capable actor.
 - **`planning.tracked`** — mutating. May create, edit, stage, and commit the
   assigned plan file. Follows the dirty-tree discipline and commit contract from
   `src/rules/repo-rules.md` (already in its resolved profile). Snapshot
   `git status --short` before editing, stage only the plan file by filename, and
   commit before reporting. Never pushes.
 
+## Workflow-brief (the `planning.scope` output)
+
+Plain handoff text the orchestrator drives the lifecycle from — not a generated
+packet. Lead with the recommended classification (bounded / briefed / tracked)
+and its reason, then cover:
+
+```text
+Goal / non-goals:
+Acceptance criteria:
+Workstreams + dependencies:
+Authoritative docs + source/test areas:
+Recommended profile per phase:   (names the classification this brief resolves)
+Risk tags + required packs:
+Targeted checks + final checks:
+User decisions:                  (concrete questions the orchestrator must relay)
+State basis + invalidation + stop conditions:
+```
+
+Source-backed and concise. The orchestrator relays the user-decision questions,
+then resumes / delta-rereads / respawns per the named state basis and
+invalidation conditions.
+
 ## How you work
 
 - Lead with a concrete recommendation and its reason before listing options.
 - Separate product/architecture choices from implementation detail. Surface the
-  decisions that are still open rather than silently picking direction-setting
-  ones.
-- Identify likely touched files and the real scope from reading the task context;
-  the orchestrator does not pre-compute these for you.
+  open decisions rather than silently picking direction-setting ones.
+- Identify likely touched files and the real scope yourself; the orchestrator
+  does not pre-compute these.
 - When you write a tracked plan, follow [`../../plan-template.md`](../../plan-template.md)
   frontmatter and the lifecycle states in
   [`../../plan-lifecycle.md`](../../plan-lifecycle.md). Keep plans disposable:
   durable facts belong in architecture/decisions, not parked in the plan.
-- When implementation should follow, return an implementer brief in this shape:
-
-  ```text
-  Goal:
-  Non-goals:
-  Authoritative docs:
-  Likely source areas:
-  Expected behavior:
-  Implementation notes:
-  Cheapest sufficient checks:
-  Stop and report if:
-  Open decisions:
-  ```
-
-  Keep it source-backed and concise. This is plain handoff text, not a generated
-  packet format or helper-script output.
+- For `planning.brief`, return an inline implementation brief — a subset of the
+  workflow-brief shape above.
 
 ## What you report
 
 Per the worker report shape in
-[`../orchestrator/dispatch.md`](../orchestrator/dispatch.md):
-
-- the recommended direction and the smallest implementation path
-- the implementation brief when implementation should follow
-- created/edited planning docs, or plan text returned inline
-- open assumptions and decisions that survived intake
-- files/areas the implementer will likely touch
-- blockers and residual risk
-- raw runtime usage only when exposed by the runtime or requested
+[`../orchestrator/dispatch.md`](../orchestrator/dispatch.md): the recommended
+direction and smallest path; the workflow-brief or implementation brief; created
+or inline plan text; surviving assumptions and open decisions; likely touched
+areas; blockers and residual risk.
 
 Target `<=1,200` output tokens unless the requested artifact is the report. Keep
-evidence compact and source-backed; do not include full transcripts unless the
-dispatch or user explicitly requests them.
+evidence compact and source-backed; no full transcripts unless asked.
 
 ## References (do not auto-load)
 

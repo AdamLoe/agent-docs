@@ -659,17 +659,19 @@ equivalence_check() {
   fi
   printf 'ok   superseded Markdown profile table and JSON scenario fixture are gone\n'
 
-  # 2. The kernel still parses and resolves all 11 profiles + 11 scenarios.
+  # 2. The kernel still parses and resolves all 12 profiles + 12 scenarios.
+  #    (Wave 2 added the read-only planning.scope profile and the
+  #    orchestrate-planning-scope-first scenario row.)
   if ! "$python_cmd" - \
        "$repo_root/src/kernel/profiles.json" \
        "$(scenario_fixture)" <<'PY'
 import json, sys
 profiles = json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
 scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
-if len(profiles) != 11:
-    raise SystemExit(f"kernel profiles count {len(profiles)} != 11")
-if len(scenarios) != 11:
-    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 11")
+if len(profiles) != 12:
+    raise SystemExit(f"kernel profiles count {len(profiles)} != 12")
+if len(scenarios) != 12:
+    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 12")
 print(f"ok   kernel resolves {len(profiles)} profiles and {len(scenarios)} scenarios")
 PY
   then
@@ -1317,6 +1319,93 @@ PY
   fi
   [ "$clean" -eq 1 ] && printf 'CLEAN: report fields and final-ordering rule present\n'
 
+  # ---- Check 9: planning.scope is the fixed first /orchestrate phase ------
+  # Wave 2 made planning.scope the deterministic entry phase of every
+  # /orchestrate run (no inline bounded/briefed/tracked classification; the
+  # cost regression is accepted). This GATES three coupled facts together:
+  #   (a) the orchestrate-mapped scenario row names planning.scope FIRST in
+  #       expected_profiles;
+  #   (b) the kernel orchestrate workflow's first_phase is planning.scope;
+  #   (c) the orchestrate skill body still commits to dispatching planning.scope
+  #       first (so the controller can't silently drop the entry phase).
+  # Any drift in one of the three fails the gate.
+  printf -- '-- check 9: planning.scope is the fixed first /orchestrate phase --\n'
+  local scope_out scope_violations
+  scope_out=$(
+    "$python_cmd" - \
+      "$(scenario_fixture)" \
+      "$repo_root/src/kernel/workflows.json" \
+      "$repo_root/src/skills/orchestrate/SKILL.md" <<'PY'
+import json, re, sys, pathlib
+
+scenarios = json.load(open(sys.argv[1], encoding="utf-8"))["scenarios"]
+workflows = json.load(open(sys.argv[2], encoding="utf-8"))["workflows"]
+skill_body = pathlib.Path(sys.argv[3]).read_text(encoding="utf-8")
+
+violations = 0
+profile_re = re.compile(
+    r"\b(?:planning|implementation|review|maintenance|verification)\."
+    r"[a-z][a-z-]*\b"
+)
+
+# (a) the orchestrate-mapped scenario row names planning.scope FIRST.
+row = next(
+    (s for s in scenarios if s["scenario_id"] == "orchestrate-planning-scope-first"),
+    None,
+)
+if row is None:
+    print("WARN missing scenario row: orchestrate-planning-scope-first")
+    violations += 1
+else:
+    found = profile_re.findall(row.get("expected_profiles", ""))
+    if not found or found[0] != "planning.scope":
+        print(
+            "WARN orchestrate-planning-scope-first: expected_profiles must name "
+            f"planning.scope first, got {found!r}"
+        )
+        violations += 1
+    else:
+        print("ok   scenario row names planning.scope as the first entry phase")
+
+# (b) the kernel orchestrate workflow first_phase is planning.scope.
+wf = next((w for w in workflows if w["id"] == "orchestrate"), None)
+if wf is None or wf.get("first_phase") != "planning.scope":
+    print(
+        "WARN kernel orchestrate workflow first_phase must be planning.scope, "
+        f"got {wf.get('first_phase') if wf else None!r}"
+    )
+    violations += 1
+elif "planning.scope" not in wf.get("allowed_profiles", []):
+    print("WARN kernel orchestrate workflow allowed_profiles missing planning.scope")
+    violations += 1
+else:
+    print("ok   kernel orchestrate workflow enters at planning.scope")
+
+# (c) the orchestrate skill body commits to dispatching planning.scope first.
+commits_first = (
+    "planning.scope" in skill_body
+    and re.search(
+        r"planning\.scope[^\n]{0,80}\bfirst\b|\bfirst\b[^\n]{0,80}planning\.scope|"
+        r"always dispatch(?:es)?[^\n]{0,40}planning\.scope|"
+        r"planning\.scope[^\n]{0,40}always",
+        skill_body,
+        re.I,
+    )
+)
+if not commits_first:
+    print("WARN orchestrate skill body no longer commits to dispatching planning.scope first")
+    violations += 1
+else:
+    print("ok   orchestrate skill body dispatches planning.scope first")
+
+print(f"__VIOLATIONS__ {violations}")
+PY
+  )
+  scope_violations=$(printf '%s\n' "$scope_out" | awk '/^__VIOLATIONS__/{print $2}')
+  printf '%s\n' "$scope_out" | grep -v '^__VIOLATIONS__'
+  violations=$((violations + ${scope_violations:-0}))
+  [ "${scope_violations:-0}" -eq 0 ] && printf 'CLEAN: planning.scope is the fixed first /orchestrate phase\n'
+
   # ---- Total -------------------------------------------------------------
   # Wave 5b: these checks GATE. Report the count, then return it so callers fail
   # (and refuse to print PASS) on any nonzero violation. WARN lines above remain
@@ -1408,6 +1497,7 @@ for row in profile_rows:
         raise SystemExit(f"{profile_id}: word budget exceeded {total}>{budget_value}")
 
 required_scenarios = {
+    "orchestrate-planning-scope-first",
     "bounded-quick-fix", "unclear-small-work", "medium-brief-plan",
     "tracked-change-plan", "dirty-tree-shipping", "named-plan-shipping",
     "docs-repair", "report-only-review", "configured-app-review",
@@ -1419,6 +1509,7 @@ if missing:
     raise SystemExit(f"missing scenario rows: {sorted(missing)}")
 
 checks = {
+    "orchestrate-planning-scope-first": ["planning.scope first", "no inline classification before it"],
     "bounded-quick-fix": ["no classifier", "implementation.code", "one implementation", "gate observes post-mutation"],
     "unclear-small-work": ["one material task question", "no dial picker"],
     "medium-brief-plan": ["planning.brief", "read-only"],

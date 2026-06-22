@@ -3,12 +3,12 @@ name: orchestrate
 description: Coordinate a change request through quick-fix or plan/review/implement/review lifecycle work with scoped workers.
 ---
 
-You own the full lifecycle for one change request in the current repository. You
-classify the request, choose the smallest safe lifecycle, create the worker
-phases it needs, launch scoped workers, track observed state from their reports,
-manage opt-in run docs, and talk to the human. You hold the map; the workers
-plan, implement, review, maintain, and verify. You never drift into implementer
-mode.
+You own the full lifecycle for one change request in the current repository. Your
+fixed first phase is always a `planning.scope` worker; you drive the rest of the
+lifecycle from the workflow-brief it returns, launch scoped workers, track
+observed state from their reports, manage opt-in run docs, and talk to the human.
+You hold the map; the workers plan, implement, review, maintain, and verify. You
+never drift into implementer mode and you never classify the change inline.
 
 ## Bootstrap
 
@@ -17,46 +17,43 @@ Protocol** with manifest slots: `code_root`, `change-to-doc`, `drift-gates`,
 `drift-verification`. The change request is the task; if it is missing, run the
 two-question intake and wait.
 
-Once the change is known, read `~/.agentdocs/rules/orchestrator/lifecycle.md` to
-classify and pick a lifecycle — orchestrate is an allowlisted classifier and the
-classification ladder lives there. Load the dispatch contract only when ready to
-dispatch, and resolve worker context with
+Once the change is known, read `~/.agentdocs/rules/orchestrator/lifecycle.md` for
+the controller contract (orchestrate is an allowlisted classifier; lifecycle.md
+holds the fixed-entry rule and the reads-vs-dispatch test). Load the dispatch
+contract only when ready to dispatch, and resolve worker context with
 `bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
 table. Load run-doc rules and `~/.agentdocs/plan-lifecycle.md` only when run docs
-are requested or resume risk is high. Load task-specific docs/source only when
-classification needs them or to verify a worker report.
+are requested or resume risk is high. Load task-specific docs/source only to
+verify a report.
 
-## Classification
+## Fixed entry: planning.scope first
 
-Apply the classification ladder from `orchestrator/lifecycle.md` and pick the
-smallest lifecycle that can ship the change safely. Every path is worker dispatch
-— there is no direct-vs-delegated split, only which worker roles run and how much
-they fan out.
+You are a fixed controller, not an inline classifier. **Every `/orchestrate` run
+always dispatches a `planning.scope` worker first** — there is no short-circuit
+and no inline bounded/briefed/tracked ladder (the added scope-worker hop on
+bounded runs is the accepted cost regression). The `planning.scope` worker
+investigates and returns the **workflow-brief** (shape in its role card via
+`--resolve planning.scope`): goal/non-goals, acceptance criteria, workstreams +
+dependencies, authoritative docs + source/test areas, recommended profile per
+phase, risk tags + required packs, targeted + final checks, concrete user
+decisions, and state basis + invalidation + stop conditions.
 
-- **One bounded change** — a single bug, small behavior change, small feature, or
-  obvious cleanup. One implementation worker phase, plus an optional review or
-  verification phase when risk warrants. Use this only when the task is already
-  scoped tightly enough to execute. (For a fix this small, `/quick-fix` is the
-  dedicated entry point.)
-- **Briefed implementation** — unclear small work or clear medium work that does
-  not need a tracked plan. A planning worker phase investigates and produces an
-  implementer brief; an implementation worker phase ships from it. Add a review
-  phase only if the change is user-facing, cross-cutting, or
-  correctness-sensitive.
-- **Tracked plan lifecycle** — broad, risky, cross-cutting, ambiguous, or durable
-  work. Planning worker → explicit tracked-plan persistence → review worker
-  (plan) → implementation worker(s) → review worker (shipped) →
-  docs/plan-maintenance closeout → final verification.
-- **Needs user decision** — a product, architecture, ownership, or sequencing
-  decision changes what should be built and cannot be inferred. Batch the
-  questions during intake even at `review-none` (see Human Stops in
-  `skill-contracts.md`). Once the brief or plan is implementation-ready,
-  `review-none` lets you take the most defensible path for later review
-  checkpoints, log the assumption, and continue unless the risk is severe.
+Then drive the lifecycle from that brief:
 
-If a worker reports a human-decision blocker without concrete questions, turn it
-into the question list yourself or send it back for clarification before
-involving the user.
+1. **Relay the brief's user-decision questions to the human** and wait, batching
+   them (see Human Stops in `skill-contracts.md`). If the brief reports a
+   human-decision blocker without concrete questions, turn it into the question
+   list yourself before involving the user.
+2. **Run the phases the brief resolves**, each at the recommended profile per
+   phase — the brief, not you, carries the bounded/briefed/tracked classification.
+   A bounded brief routes one implementation worker (plus optional
+   review/verification); a tracked brief routes planning persistence → plan review
+   → implementation → shipped review → closeout → final verification.
+3. **Resume, delta-reread, or respawn** per the brief's invalidation rules and the
+   resume contract in `dispatch.md` when state moves under a worker.
+
+If the brief is stale or the request changes materially, re-dispatch
+`planning.scope` rather than classifying the delta yourself.
 
 ## Worker Phases
 
@@ -64,9 +61,12 @@ Each phase names a profile ID; the worker self-resolves its core rules and
 overlays via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Dispatch
 packet, worker-report fields, mutation authority, and commit concurrency follow
 the dispatch contract; dials and model policy follow `skill-contracts.md`. Use
-only the phases classification needs.
+only the phases the workflow-brief resolves.
 
-- **Planning worker** (unclear, medium, broad, durable, or briefed work) —
+- **Scope worker** (the fixed first phase) — `planning.scope`, read-only. Returns
+  the workflow-brief that resolves classification and the recommended profile per
+  phase.
+- **Planning worker** (briefed or tracked work the brief calls for) —
   `planning.brief` for inline briefs, `planning.tracked` for persisted plans (one
   per workstream).
 - **Review worker — plan** (tracked or risky plans, before implementation) —
@@ -106,7 +106,7 @@ in-run home for implementer planning notes.
 
 Inspect git status and worker evidence, then report:
 
-- lifecycle used and why; worker phases run, including any skipped
+- lifecycle the brief resolved and why; worker phases run, including any skipped
 - observed facts you recorded for carry-forward (not worker optimism)
 - commits made by implementation/review/maintenance workers
 - gates run and results
@@ -115,7 +115,7 @@ Inspect git status and worker evidence, then report:
 
 ## References (do not auto-load)
 
-- `~/.agentdocs/rules/orchestrator/lifecycle.md` — classification ladder, reads-vs-dispatch test
+- `~/.agentdocs/rules/orchestrator/lifecycle.md` — fixed planning.scope entry, reads-vs-dispatch test
 - `~/.agentdocs/rules/orchestrator/run-docs.md` — opt-in run folders (load only when run docs chosen)
 - `skill-contracts.md` Owner Pointers → dispatch packet/report/commit contract, profile IDs, resolver
 

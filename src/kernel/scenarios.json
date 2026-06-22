@@ -1,6 +1,17 @@
 {
-  "_comment": "Kernel machine authority for the workflow scenario matrix. Reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same 11 rows, same fields). NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. After Wave 1b this is the SOLE authority for scenario rows.",
+  "_comment": "Kernel machine authority for the workflow scenario matrix. The first 11 rows are reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same fields); Wave 2 added orchestrate-planning-scope-first, asserting planning.scope is the fixed entry phase of every /orchestrate run. NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. This is the SOLE authority for scenario rows.",
   "scenarios": [
+    {
+      "scenario_id": "orchestrate-planning-scope-first",
+      "task_shape": "any /orchestrate request, bounded or broad",
+      "expected_questions": "relayed from the planning.scope brief's user decisions",
+      "expected_profiles": "planning.scope first as the fixed entry phase, then the profile per phase the brief resolves",
+      "expected_phases": "planning.scope brief then the bounded/briefed/tracked lifecycle it resolves",
+      "expected_mutator_count": "0 in the scope phase",
+      "state_basis_fields": "HEAD plus exact dirty paths",
+      "final_ordering": "planning.scope dispatched first; no inline classification before it",
+      "budget_expectation": "report-only; scope-worker hop is the accepted cost regression"
+    },
     {
       "scenario_id": "bounded-quick-fix",
       "task_shape": "supplied bounded fix",

@@ -11,6 +11,15 @@
   },
   "profiles": [
     {
+      "id": "planning.scope",
+      "purpose": "fixed first /orchestrate phase: investigate and return the workflow-brief that resolves classification",
+      "core_rule_paths": "src/rules/subagent/planning.md",
+      "overlays": "task-routed owner docs/source by concern",
+      "mutation_capability": "read-only",
+      "budget_words": 510,
+      "enforcement_status": "enforced"
+    },
+    {
       "id": "planning.brief",
       "purpose": "inline implementation brief",
       "core_rule_paths": "src/rules/subagent/planning.md",

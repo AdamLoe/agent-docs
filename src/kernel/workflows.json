@@ -16,8 +16,9 @@
     {
       "id": "orchestrate",
       "skill": "orchestrate",
-      "first_phase": "classification",
+      "first_phase": "planning.scope",
       "allowed_profiles": [
+        "planning.scope",
         "planning.brief",
         "planning.tracked",
         "implementation.code",
