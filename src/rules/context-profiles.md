@@ -1,8 +1,12 @@
 # Context profiles (agent-docs v1)
 
-GENERIC. App-independent. This file is the canonical owner for worker context
-profiles. Skills and dispatch rules name profile IDs from this table; they do
-not copy profile tables, rule bundles, or mutation policy.
+GENERIC. App-independent. This file is the human-owned contract for worker
+context profiles: the column meanings, the read-only-vs-mutating invariant, and
+the budget-exception rule. The **machine authority for the profile rows
+themselves is the kernel** — `src/kernel/profiles.json` (read by
+`src/verify-agent-docs.sh`). Skills and dispatch rules name profile IDs and
+resolve them with `bash src/verify-agent-docs.sh --resolve <id>`; they do not
+copy profile rows, rule bundles, or mutation policy from anywhere.
 
 Expanded rationale (do not auto-load):
 [`context-profiles-reference.md`](context-profiles-reference.md).
@@ -26,21 +30,17 @@ Budget exceptions must name the exact files and the correctness reason in the
 context report. Enforcement is enabled only after the profile, converted skills,
 scenario rows, and verifier checks agree.
 
-## Profiles
+## Where the rows live
 
-| id | purpose | core_rule_paths | overlays | mutation_capability | budget_words | enforcement_status |
-|---|---|---|---|---|---:|---|
-| `planning.brief` | inline implementation brief | `src/rules/subagent/planning.md` | task owner docs/source by concern | read-only | 700 | enforced |
-| `planning.tracked` | persisted plan material | `src/rules/subagent/planning.md`, `src/plan-lifecycle.md`, `src/plan-template.md`, `src/rules/repo-rules.md` | authoring rules when plan edits touch durable docs | mutating | 1600 | enforced |
-| `implementation.code` | bounded code change | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md` | source/tests selected by task; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 1700 | enforced |
-| `implementation.code-docs` | code plus owning docs | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md` | manifest and ownership rows for touched surfaces; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | enforced |
-| `implementation.tracked` | selected tracked-plan implementation and closeout; may close the selected plan when dispatch grants `plan_closeout` | `src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md`, `src/plan-lifecycle.md` | selected plans and owning architecture/decisions; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS | mutating | 2500 | enforced |
-| `review.generic` | generic independent review | `src/rules/subagent/review.md` | named lens sources only | read-only | 700 | enforced |
-| `review.docs` | docs/rules review | `src/rules/subagent/review.md`, `src/rules/authoring-rules.md` | named docs and ownership rows | read-only | 1200 | enforced |
-| `review.plan` | plan review | `src/rules/subagent/review.md`, `src/plan-lifecycle.md` | selected plans and optional template | read-only | 1000 | enforced |
-| `maintenance.docs` | docs repair or migration | `src/rules/subagent/docs-maintenance.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | manifest and ownership rows for touched docs | mutating | 1700 | enforced |
-| `maintenance.plan` | plan/run lifecycle maintenance | `src/rules/subagent/plan-maintenance.md`, `src/plan-lifecycle.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md` | selected plans/run docs and owning docs | mutating | 2100 | enforced |
-| `verification.readonly` | final or targeted gate execution | `src/rules/subagent/verification.md` | manifest drift-gates and named command output | read-only | 500 | enforced |
+The profile rows (the eleven `id`/`purpose`/`core_rule_paths`/`overlays`/
+`mutation_capability`/`budget_words`/`enforcement_status` records) are kernel
+data in `src/kernel/profiles.json`, **the sole machine authority**. The global
+launch budgets (`fixed_skill_launch`, `classifier_skill_launch`, and the
+`classifier_skills` allowlist) live in the same file's `budgets` object. Nothing
+duplicates those rows or budgets in this doc — the verifier reads only the kernel
+and fails if any profile/budget fact reappears here as data. To see a resolved
+profile run `bash src/verify-agent-docs.sh --resolve <id>`; for the whole
+inventory run `bash src/verify-agent-docs.sh --context-report`.
 
 ## Scenario Contract
 
@@ -48,12 +48,11 @@ Workflow scenarios are a source-bound contract gate (expected profiles, phases,
 mutator count, state-basis fields, final ordering, and budget expectation per
 task shape). The verifier checks that each scenario's `expected_profiles` are
 named in the matching skill body — this GATES (exit nonzero on any violation).
-Scenarios include `bounded-quick-fix`, `medium-brief-plan`, `dirty-tree-shipping`,
-`configured-app-review`, and others. The fixture is verifier-only data and lives
-in the never-auto-loaded `src/verify-fixtures/workflow-scenarios.json`; no skill
-or runtime context loads it. Run `bash src/verify-agent-docs.sh --contract-check`
-to execute the gate, or `bash src/verify-agent-docs.sh --context-report` to see
-the scenario rows.
+The scenario rows are kernel data in the never-auto-loaded
+`src/kernel/scenarios.json`, **the sole machine authority**; no skill or runtime
+context loads them and this doc carries no scenario data. Run
+`bash src/verify-agent-docs.sh --contract-check` to execute the gate, or
+`bash src/verify-agent-docs.sh --context-report` to see the scenario rows.
 
 ## Budget floors
 

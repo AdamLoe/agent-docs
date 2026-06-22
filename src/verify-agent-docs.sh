@@ -22,8 +22,8 @@ The --context-report mode prints the read-only context profile and scenario
 contract, including exact files, conditions, word totals, and budget exceptions.
 It may print measurements even when red, but it exits nonzero and does not print
 PASS while an enforced profile is over budget or a contract check fails.
-Scenario rows are read from the never-auto-loaded fixture
-src/verify-fixtures/workflow-scenarios.json.
+Scenario rows are read from the never-auto-loaded kernel authority
+src/kernel/scenarios.json.
 The --contract-check mode runs the source-bound contract checks
 (launch budgets, lifecycle startup loads, subagent-bundle spell-outs, read-only
 role authority, plan_closeout consistency, review-app pre-audit/eager loads,
@@ -33,10 +33,11 @@ does not print PASS when any violation exists.
 The --resolve mode prints one profile's core rule paths, conditional overlays,
 mutation capability, and budget so a skill can resolve a single profile without
 loading the whole table.
-The --equivalence mode proves the kernel (src/kernel/*.json) resolves
-byte-identical profile, scenario, and budget facts versus the current authority,
-the rollback boundary for the single-authority cutover. It exits nonzero on any
-mismatch.
+The --equivalence mode is the single-authority proof for the kernel
+(src/kernel/*.json): it asserts the superseded Markdown profile table and JSON
+scenario fixture are gone, the kernel still resolves all profiles/scenarios, and
+no profile/scenario/budget fact lives in both the kernel and Markdown/bash. It
+exits nonzero on any violation.
 The --measure-launch mode prints the controlled launch word total for one skill
 (skill body, shared startup contract, startup orchestrator/role rules, docs
 index, and requested manifest slots), excluding task-routed source/tests. An
@@ -464,20 +465,33 @@ validate_word_budgets() {
   require_word_limit "docs/repository-layout.md" 350 "repository layout budget"
 }
 
+# Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
+# authority for worker context profiles since the Wave 1b cutover. Emits one
+# tab-separated row per profile in the legacy column order so every downstream
+# consumer (profile_word_total, context_report, resolve_profile) is unchanged.
 context_profile_rows() {
-  awk -F'|' '
-    /^\| `[^`]+` \|/ && NF == 9 {
-      for (i = 2; i <= 8; i++) {
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i)
-        gsub(/^`|`$/, "", $i)
-      }
-      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7, $8
-    }
-  ' "$repo_root/src/rules/context-profiles.md"
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot read kernel profiles; install python"
+
+  "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+
+fields = [
+    "id", "purpose", "core_rule_paths", "overlays",
+    "mutation_capability", "budget_words", "enforcement_status",
+]
+for row in data.get("profiles", []):
+    print("\t".join(str(row.get(field, "")) for field in fields))
+PY
 }
 
 scenario_fixture() {
-  printf '%s' "$repo_root/src/verify-fixtures/workflow-scenarios.json"
+  printf '%s' "$repo_root/src/kernel/scenarios.json"
 }
 
 scenario_rows() {
@@ -622,78 +636,93 @@ resolve_profile() {
   printf 'RESOLVE PASS\n'
 }
 
-# --equivalence: Wave 1a shadow proof. The kernel (src/kernel/*.json) is unproven
-# shadow data this wave; Markdown + the JSON fixture remain the only enforced
-# authority. This mode proves the kernel resolves BYTE-IDENTICAL facts versus the
-# live authority so the Wave 1b cutover is provably lossless:
-#   - kernel profile rows == context_profile_rows() (the Markdown table parse);
-#   - kernel scenario rows == the workflow-scenarios.json fixture;
-#   - kernel budgets == the contract_check() launch constants.
-# It FAILs loudly with the first mismatch on any divergence and writes nothing.
+# --equivalence: single-authority proof. Before the Wave 1b cutover this proved
+# the shadow kernel byte-identical to the Markdown table + JSON fixture; those
+# live comparison targets are gone now, so the byte-identity check has been
+# retired and this mode asserts the kernel is the SOLE authority instead. It
+# fails loudly if any superseded source returns, if the kernel cannot be
+# resolved, or if any profile/scenario/budget machine fact still lives in
+# Markdown/bash (the dual-authority detector). Writes nothing.
 equivalence_check() {
   local python_cmd
   python_cmd=$(find_python_cmd)
   [ -n "$python_cmd" ] || fail "cannot run equivalence check; install python"
 
-  section "kernel equivalence (shadow proof)"
+  section "kernel single-authority proof"
 
-  local legacy_profile_rows kernel_profile_rows
-  legacy_profile_rows=$(context_profile_rows)
-  kernel_profile_rows=$(
-    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
-import json, sys
-data = json.load(open(sys.argv[1], encoding="utf-8"))
-fields = ["id", "purpose", "core_rule_paths", "overlays",
-          "mutation_capability", "budget_words", "enforcement_status"]
-for row in data["profiles"]:
-    print("\t".join(str(row[f]) for f in fields))
-PY
-  )
-  if [ "$legacy_profile_rows" != "$kernel_profile_rows" ]; then
-    printf '%s\n' "$legacy_profile_rows" > /tmp/.equiv-md-profiles.$$
-    printf '%s\n' "$kernel_profile_rows" > /tmp/.equiv-kernel-profiles.$$
-    diff /tmp/.equiv-md-profiles.$$ /tmp/.equiv-kernel-profiles.$$ >&2 || true
-    rm -f /tmp/.equiv-md-profiles.$$ /tmp/.equiv-kernel-profiles.$$
-    fail "kernel profiles.json diverges from the context-profiles.md table"
+  # 1. The superseded authorities must be gone (no resurrection of dual source).
+  [ ! -f "$repo_root/src/verify-fixtures/workflow-scenarios.json" ] ||
+    fail "superseded scenario fixture resurrected: src/verify-fixtures/workflow-scenarios.json"
+  if grep -qE '^\| `[^`]+` \|.*\|.*\| (read-only|mutating|conditional) \|' \
+     "$repo_root/src/rules/context-profiles.md"; then
+    fail "superseded profile table resurrected in src/rules/context-profiles.md"
   fi
-  printf 'ok   kernel profiles byte-identical to context-profiles.md (%s rows)\n' \
-    "$(printf '%s\n' "$kernel_profile_rows" | grep -c .)"
+  printf 'ok   superseded Markdown profile table and JSON scenario fixture are gone\n'
 
-  if ! "$python_cmd" - "$repo_root/src/kernel/scenarios.json" "$(scenario_fixture)" <<'PY'
+  # 2. The kernel still parses and resolves all 11 profiles + 11 scenarios.
+  if ! "$python_cmd" - \
+       "$repo_root/src/kernel/profiles.json" \
+       "$(scenario_fixture)" <<'PY'
 import json, sys
-kernel = json.load(open(sys.argv[1], encoding="utf-8")).get("scenarios", [])
-fixture = json.load(open(sys.argv[2], encoding="utf-8")).get("scenarios", [])
-if kernel != fixture:
-    print(f"kernel scenarios.json diverges from the JSON fixture "
-          f"({len(kernel)} vs {len(fixture)} rows or field mismatch)",
-          file=sys.stderr)
-    raise SystemExit(1)
-print(f"ok   kernel scenarios byte-identical to workflow-scenarios.json "
-      f"({len(kernel)} rows)")
+profiles = json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
+scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
+if len(profiles) != 11:
+    raise SystemExit(f"kernel profiles count {len(profiles)} != 11")
+if len(scenarios) != 11:
+    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 11")
+print(f"ok   kernel resolves {len(profiles)} profiles and {len(scenarios)} scenarios")
 PY
   then
-    fail "kernel scenarios.json diverges from src/verify-fixtures/workflow-scenarios.json"
+    fail "kernel did not resolve the expected profile/scenario inventory"
   fi
 
-  if ! "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
-import json, sys
-budgets = json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]
-expected = {
-    "fixed_skill_launch": 2000,
-    "classifier_skill_launch": 3300,
-    "classifier_skills": ["orchestrate", "fresh-chat", "start-session"],
-}
-if budgets != expected:
-    print(f"kernel budgets diverge from contract_check constants: "
-          f"{budgets!r} != {expected!r}", file=sys.stderr)
-    raise SystemExit(1)
-print("ok   kernel budgets match contract_check launch constants")
-PY
-  then
-    fail "kernel budgets diverge from the contract_check launch constants"
-  fi
+  # 3. Dual-authority detector: no profile/scenario/budget machine fact may live
+  #    in BOTH the kernel and Markdown/bash. Reuses the kernel-wide check.
+  detect_dual_authority
 
   printf 'EQUIVALENCE PASS\n'
+}
+
+# detect_dual_authority: fail if any machine fact owned by the kernel (a profile
+# row field, a budget constant, the classifier allowlist, or a scenario row)
+# still also lives in Markdown (context-profiles.md) or in a bash literal in this
+# script. This is the single hardest Wave 1b acceptance criterion: after the
+# cutover the kernel is the sole authority, so these facts must appear nowhere
+# else as data.
+detect_dual_authority() {
+  local profiles_md="$repo_root/src/rules/context-profiles.md"
+  local self="$repo_root/src/verify-agent-docs.sh"
+  local violations=0
+
+  # No profile data row (`id | ... | mutation | budget | status`) in Markdown.
+  if grep -qE '^\| `[^`]+` \|.*\| (read-only|mutating|conditional) \|' "$profiles_md"; then
+    printf 'WARN profile data row still in src/rules/context-profiles.md\n' >&2
+    violations=$((violations + 1))
+  fi
+  # No budget/scenario column header table in the profile owner doc.
+  if grep -qE '^\| id \| purpose \| core_rule_paths \|' "$profiles_md"; then
+    printf 'WARN profile column-header table still in src/rules/context-profiles.md\n' >&2
+    violations=$((violations + 1))
+  fi
+  # No hardcoded budget constants or classifier allowlist literal in bash. A
+  # resurrection is a real bash ASSIGNMENT of the value (optionally `local`),
+  # e.g. `  local fixed_budget=2000`. Lines that merely mention the literal as a
+  # grep argument (this detector's own machinery) or in a comment are excluded
+  # by requiring assignment syntax at the statement start and rejecting `grep`.
+  if grep -vE 'grep' "$self" |
+     grep -qE '^[[:space:]]*(local[[:space:]]+)?(fixed_budget=2000|classifier_budget=3300)\b'; then
+    printf 'WARN hardcoded budget constant assigned in src/verify-agent-docs.sh\n' >&2
+    violations=$((violations + 1))
+  fi
+  if grep -vE 'grep' "$self" |
+     grep -qE '^[[:space:]]*(local[[:space:]]+)?classifier_allowlist=" orchestrate fresh-chat start-session "'; then
+    printf 'WARN hardcoded classifier_allowlist literal assigned in src/verify-agent-docs.sh\n' >&2
+    violations=$((violations + 1))
+  fi
+  if [ "$violations" -ne 0 ]; then
+    fail "dual authority detected: $violations machine fact(s) live in both the kernel and Markdown/bash"
+  fi
+  printf 'ok   no profile/scenario/budget fact lives in both the kernel and Markdown/bash\n'
 }
 
 # skill_startup_loads_rule <skill-file> <rule-relpath>: exit 0 iff the skill body
@@ -869,17 +898,39 @@ launch_total() {
 # glosses, and References pointers no longer count as startup loads), zero skills
 # exceed these floors.
 contract_check() {
-  local fixed_budget=2000
-  local classifier_budget=3300
-  local classifier_allowlist=" orchestrate fresh-chat start-session "
   local violations=0
   local skill_dir skill_name skill_file total budget kind clean
   local match python_cmd
+  local fixed_budget classifier_budget classifier_allowlist
 
   section "source-bound contract checks (enforced; gating)"
 
   python_cmd=$(find_python_cmd)
   [ -n "$python_cmd" ] || fail "cannot run contract checks; install python"
+
+  # Launch budgets come from the kernel (src/kernel/profiles.json budgets), the
+  # sole authority since the Wave 1b cutover. classifier_allowlist is rebuilt
+  # from the kernel's classifier_skills as " name name name " for the
+  # whitespace-bounded substring match the checks below rely on.
+  fixed_budget=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["fixed_skill_launch"])
+PY
+  )
+  classifier_budget=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["classifier_skill_launch"])
+PY
+  )
+  classifier_allowlist=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+skills = json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["classifier_skills"]
+print(" " + " ".join(skills) + " ")
+PY
+  )
 
   # ---- Check 1: launch budgets -------------------------------------------
   # For every skill, compute the controlled launch total and warn if a fixed
@@ -979,14 +1030,16 @@ contract_check() {
   [ "$clean" -eq 1 ] && printf 'CLEAN: review and verification role cards are read-only\n'
 
   # ---- Check 5: closeout authority consistency ---------------------------
-  # plan_closeout must appear consistently across implementation.md, the
-  # context-profiles owner (implementation.tracked row), and dispatch.md.
+  # plan_closeout must appear consistently across implementation.md, the kernel
+  # profile owner (implementation.tracked record), and dispatch.md. The profile
+  # authority moved from the context-profiles Markdown table to the kernel in the
+  # Wave 1b cutover, so the grant is now asserted against src/kernel/profiles.json.
   printf -- '-- check 5: plan_closeout authority consistency --\n'
   clean=1
   declare -A closeout_present=()
   for pair in \
     "src/rules/subagent/implementation.md" \
-    "src/rules/context-profiles.md" \
+    "src/kernel/profiles.json" \
     "src/rules/orchestrator/dispatch.md"; do
     if grep -Fq 'plan_closeout' "$repo_root/$pair"; then
       closeout_present[$pair]=1
@@ -1001,11 +1054,18 @@ contract_check() {
       printf 'WARN plan_closeout absent where required: %s\n' "$pair"
     fi
   done
-  # Extra cross-check: context-profiles must carry it on the implementation.tracked row.
-  if ! grep -E '`implementation.tracked`' "$repo_root/src/rules/context-profiles.md" | grep -Fq 'plan_closeout'; then
+  # Extra cross-check: the kernel must carry it on the implementation.tracked
+  # profile record (its purpose field grants the closeout).
+  if ! "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+row = next((p for p in data["profiles"] if p["id"] == "implementation.tracked"), None)
+raise SystemExit(0 if row and "plan_closeout" in json.dumps(row) else 1)
+PY
+  then
     violations=$((violations + 1))
     clean=0
-    printf 'WARN context-profiles implementation.tracked row missing plan_closeout grant\n'
+    printf 'WARN kernel implementation.tracked profile missing plan_closeout grant\n'
   fi
   [ "$clean" -eq 1 ] && printf 'CLEAN: plan_closeout authority is consistent across role/profile/dispatch\n'
 
@@ -1207,7 +1267,7 @@ validate_context_profiles() {
   [ -n "$python_cmd" ] ||
     fail "cannot validate context profiles; install python"
 
-  if ! "$python_cmd" - "$repo_root/src/rules/context-profiles.md" "$repo_root" "$(scenario_fixture)" <<'PY'
+  if ! "$python_cmd" - "$repo_root/src/kernel/profiles.json" "$repo_root" "$(scenario_fixture)" <<'PY'
 import json
 import pathlib
 import sys
@@ -1215,17 +1275,24 @@ import sys
 profile_path = pathlib.Path(sys.argv[1])
 repo_root = pathlib.Path(sys.argv[2])
 scenario_fixture = pathlib.Path(sys.argv[3])
-text = profile_path.read_text(encoding="utf-8")
 
-profile_rows = []
-for line in text.splitlines():
-    if not line.startswith("| `"):
-        continue
-    cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
-    if len(cells) == 7:
-        profile_rows.append(cells)
+# Profiles come from the kernel (sole authority since the Wave 1b cutover). The
+# row order matches the legacy table columns so the validation below is
+# unchanged: id, purpose, core_rule_paths, overlays, mutation, budget, status.
+profile_fields = [
+    "id", "purpose", "core_rule_paths", "overlays",
+    "mutation_capability", "budget_words", "enforcement_status",
+]
+try:
+    profile_data = json.loads(profile_path.read_text(encoding="utf-8"))
+except (OSError, ValueError) as exc:
+    raise SystemExit(f"cannot read kernel profiles {profile_path}: {exc}")
+profile_rows = [
+    [str(row.get(field, "")) for field in profile_fields]
+    for row in profile_data.get("profiles", [])
+]
 
-# Scenarios are verifier-only data; they live in a never-auto-loaded fixture so
+# Scenarios are verifier-only data; they live in the never-auto-loaded kernel so
 # they leave the runtime context-profiles load surface. Field order matches the
 # old in-doc table columns so downstream needle checks are unchanged.
 scenario_fields = [
@@ -1444,7 +1511,10 @@ require_file "CLAUDE.md"
 require_file "docs/_meta/manifest.md"
 require_file "docs/_meta/ownership.json"
 require_file "src/rules/context-profiles.md"
-require_file "src/verify-fixtures/workflow-scenarios.json"
+require_file "src/kernel/profiles.json"
+require_file "src/kernel/scenarios.json"
+require_file "src/kernel/workflows.json"
+require_file "src/kernel/packs.json"
 require_dir "docs/architecture"
 require_dir "docs/decisions"
 require_dir "docs/agent-context"
@@ -1578,13 +1648,20 @@ require_text "src/rules/authoring-rules.md" "Documentation class budgets" \
   "authoring rules missing documentation class budgets"
 require_text "docs/architecture/workflow-kit.md" "Context layers" \
   "workflow architecture missing context layer contract"
-require_text "src/rules/context-profiles.md" "implementation.code" \
-  "context profile owner missing implementation.code"
-require_text "src/rules/context-profiles.md" "bounded-quick-fix" \
-  "context scenario contract missing bounded-quick-fix"
+require_text "src/kernel/profiles.json" "implementation.code" \
+  "kernel profiles missing implementation.code"
+require_text "src/kernel/scenarios.json" "bounded-quick-fix" \
+  "kernel scenarios missing bounded-quick-fix"
+require_text "src/rules/context-profiles.md" "src/kernel/profiles.json" \
+  "context-profiles.md must point at the kernel as the machine authority"
 
 section "context profile checks"
 validate_context_profiles
+
+# Single-authority guard: after the Wave 1b cutover the kernel is the sole owner
+# of profile/scenario/budget facts; this fails if any such fact reappears in
+# Markdown or as a bash literal.
+detect_dual_authority
 
 # Wave 5b: the source-bound contract checks (launch budgets, lifecycle startup
 # loads, subagent-bundle spell-outs, read-only role authority, plan_closeout
