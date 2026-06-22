@@ -56,8 +56,9 @@ Use only the phases the fix needs.
   source. For UI-facing fixes, ask the worker to do visual verification when
   practical.
 
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `quick-fix`; `src/kernel/workflows.json` is the
+machine authority for its phase sequence and allowed profiles. Workers resolve
+their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 A pure one-line change still goes through the implementation worker — that is the
 mutation/gate boundary, not an inline exception.

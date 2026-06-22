@@ -20,11 +20,9 @@ two-question intake and wait.
 Once the change is known, read `~/.agentdocs/rules/orchestrator/lifecycle.md` for
 the controller contract (orchestrate is an allowlisted classifier; lifecycle.md
 holds the fixed-entry rule and the reads-vs-dispatch test). Load the dispatch
-contract only when ready to dispatch, and resolve worker context with
-`bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
-table. Load run-doc rules and `~/.agentdocs/plan-lifecycle.md` only when run docs
-are requested or resume risk is high. Load task-specific docs/source only to
-verify a report.
+contract only when ready to dispatch. Load run-doc rules and
+`~/.agentdocs/plan-lifecycle.md` only when run docs are requested or resume risk
+is high. Load task-specific docs/source only to verify a report.
 
 ## Fixed entry: planning.scope first
 
@@ -57,11 +55,13 @@ If the brief is stale or the request changes materially, re-dispatch
 
 ## Worker Phases
 
-Each phase names a profile ID; the worker self-resolves its core rules and
-overlays via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Dispatch
-packet, worker-report fields, mutation authority, and commit concurrency follow
-the dispatch contract; dials and model policy follow `skill-contracts.md`. Use
-only the phases the workflow-brief resolves.
+The kernel workflow `orchestrate` (`src/kernel/workflows.json`) is the machine
+authority for this skill's phase sequence and allowed profiles; each worker
+self-resolves its rules and overlays via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`. Dispatch packet,
+worker-report fields, mutation authority, and commit concurrency follow the
+dispatch contract; dials and model policy follow `skill-contracts.md`. Use only
+the phases the workflow-brief resolves.
 
 - **Scope worker** (the fixed first phase) — `planning.scope`, read-only. Returns
   the workflow-brief that resolves classification and the recommended profile per

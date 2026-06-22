@@ -50,7 +50,9 @@ git), and the smallest next workflow.
 ## Worker phases
 
 start-session usually dispatches **no task worker** — it routes into the owning
-skill instead. Workers resolve context via
+skill instead. This skill's kernel workflow is `start-session`;
+`src/kernel/workflows.json` is the machine authority for its phase sequence and
+allowed profiles. Workers resolve context via
 `bash src/verify-agent-docs.sh --resolve <profile-id>`. Spawn a worker only
 when triage crosses the reads-vs-dispatch boundary:
 

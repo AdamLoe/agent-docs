@@ -41,8 +41,9 @@ See References for pointers.
 Editing is **serial per tree** — run one docs-maintenance worker at a time on
 the shared tree, each committing its slice before the next starts; aim for ~5–8
 clusters in the `cost-high` band, sequenced rather than spawned per doc.
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `fix-docs-drift`; `src/kernel/workflows.json` is
+the machine authority for its phase sequence and allowed profiles. Workers
+resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Docs-maintenance workers**, one per architecture/decision subtree or
   ownership area, at the tier you assigned. Profile: `maintenance.docs`. Pass

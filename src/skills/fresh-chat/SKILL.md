@@ -58,8 +58,10 @@ implementer, planner, or reviewer yourself.
 
 Dispatch one **context-reading worker** only when the request is a broad,
 read-only context question that crosses more than a couple of files (per the
-reads-vs-dispatch test in `orchestrator/lifecycle.md`). Workers resolve context
-via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Pick the role by
+reads-vs-dispatch test in `orchestrator/lifecycle.md`). This skill's kernel
+workflow is `fresh-chat`; `src/kernel/workflows.json` is the machine authority for
+its phase sequence and allowed profiles. Workers resolve context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`. Pick the role by
 what the question wants:
 
 - **Explanatory** ("how does X work / why is it this way") → profile

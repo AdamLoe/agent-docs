@@ -50,7 +50,9 @@ passes goes down.
 
 ## Worker Phases
 
-Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `wrap-up-current-chat`; `src/kernel/workflows.json`
+is the machine authority for its phase sequence and allowed profiles. Workers
+resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 Use only the phases the chat needs.
 
 - **Docs-maintenance worker** (the durable-context migration). Profile:

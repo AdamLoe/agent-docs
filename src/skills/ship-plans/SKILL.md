@@ -49,8 +49,9 @@ Use only the phases the plans need.
   docs migration, plan-status, and run-doc mutations. Profile:
   `verification.readonly`.
 
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `ship-plans`; `src/kernel/workflows.json` is the
+machine authority for its phase sequence and allowed profiles. Workers resolve
+their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 Parallelize by plan/workstream disjointness; editing is serial on the shared
 tree. When parallel implementation workers are worth the cost, give each its own

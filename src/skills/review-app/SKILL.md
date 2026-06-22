@@ -51,10 +51,12 @@ Configuration dimensions (parse from prompt or ask if missing and material):
 
 ## Audit Workers
 
-Dispatch read-only review workers in parallel where scopes do not overlap. Use
-profile `review.generic` for most lenses, `review.docs` for docs/scaffold
-review, and `review.plan` for plan health. Workers resolve their own context
-via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Do not spell out
+Kernel workflow `review-app` (`src/kernel/workflows.json`) is the machine
+authority for this skill's phase sequence and allowed profiles. Dispatch
+read-only review workers in parallel where scopes do not overlap: profile
+`review.generic` for most lenses, `review.docs` for docs/scaffold review,
+`review.plan` for plan health. Workers resolve their own context via
+`bash src/verify-agent-docs.sh --resolve <profile-id>`. Do not spell out
 rule-file lists in dispatches.
 
 Available lenses (use only those configured):
@@ -74,12 +76,12 @@ long-running infrastructure.
 
 ## Synthesis
 
-After audit workers finish, dispatch one final singular review worker (profile
-`review.generic`) for the findings report: ranking, de-duplication,
-existing-plan overlap, and recommended grouping. Each finding includes: stable
-ID, area and lens, severity, cleanup ROI, evidence, confidence, impact, likely
-owning source/docs, existing-plan overlap, suggested exit gate, and recommended
-plan grouping or a reason not to plan it.
+After audit workers finish, dispatch one final review worker (profile
+`review.generic`) for the findings report: ranking, de-duplication, and
+grouping. Each finding includes: stable ID, area and lens, severity, cleanup
+ROI, evidence, confidence, impact, likely owning source/docs, existing-plan
+overlap, suggested exit gate, and recommended plan grouping or a reason not to
+plan it.
 
 Findings without evidence stay observations, not plan candidates. Existing
 active plans suppress duplicates unless the audit adds materially new evidence
@@ -97,11 +99,10 @@ If the user asks for implementation, route them to `orchestrate` or
 
 After approval, load `~/.agentdocs/plan-lifecycle.md`. Route plan creation to a
 `planning.tracked` worker. Create one tracked plan per coherent workstream, not
-one plan per small finding. Each plan follows `~/.agentdocs/plan-template.md`
-and names mission, done definition, in-scope and out-of-scope finding IDs,
-approach, likely source/docs, parallelism and serialization points, exit gate,
-owning docs, and open decisions. Approved plans default to status `draft` unless
-the user specifies otherwise. Serialize plan writes on the shared tree.
+one plan per small finding. Each plan follows `~/.agentdocs/plan-template.md`,
+naming in-scope and out-of-scope finding IDs alongside the template's standard
+fields. Approved plans default to status `draft` unless the user specifies
+otherwise. Serialize plan writes on the shared tree.
 
 ## Closeout
 

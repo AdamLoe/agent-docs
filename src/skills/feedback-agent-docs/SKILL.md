@@ -46,7 +46,9 @@ step. Spawn a worker only when judgment genuinely needs isolation:
 - **Append path or schema needs a separate check** → profile
   `verification.readonly`.
 
-Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `feedback-agent-docs`; `src/kernel/workflows.json`
+is the machine authority for its phase sequence and allowed profiles. Workers
+resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Gather the entry
 

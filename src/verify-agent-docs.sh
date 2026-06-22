@@ -620,6 +620,87 @@ print(f"  kernel packs valid: {len(packs)} packs, each with a trigger, an "
 PY
 }
 
+# Referential integrity between the kernel workflows and the skills/profiles they
+# bind. Since Wave 6b every SKILL.md references exactly one kernel workflow id as
+# its sole machine authority for the phase ladder + allowed profiles, so the
+# kernel and the skill tree must agree both ways:
+#   - every skill dir has EXACTLY ONE workflow entry (no skill without a workflow,
+#     no skill with two);
+#   - every workflow id is unique, equals its own `skill`, and that skill dir
+#     exists with a real SKILL.md;
+#   - every allowed_profiles id is a real kernel profile id (src/kernel/profiles.json);
+#   - first_phase is present (a profile id like planning.scope, or a phase-bucket
+#     label such as planning/implementation/review/inspection/maintenance/
+#     verification/routing/inline).
+# A wrong profile id or a dropped/duplicated skill workflow fails here, so a gate
+# can never go green by omission of a skill's workflow row.
+validate_workflow_skill_refs() {
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot validate kernel workflow refs; install python"
+
+  "$python_cmd" - \
+    "$repo_root/src/kernel/workflows.json" \
+    "$repo_root/src/kernel/profiles.json" \
+    "$repo_root" <<'PY' || fail "kernel workflow referential-integrity check failed"
+import json, pathlib, sys
+
+workflows_path = pathlib.Path(sys.argv[1])
+profiles_path = pathlib.Path(sys.argv[2])
+repo_root = pathlib.Path(sys.argv[3])
+
+workflows = json.loads(workflows_path.read_text(encoding="utf-8"))["workflows"]
+profile_ids = {p["id"] for p in json.loads(profiles_path.read_text(encoding="utf-8"))["profiles"]}
+
+skill_dirs = {
+    p.name
+    for p in (repo_root / "src" / "skills").iterdir()
+    if p.is_dir() and (p / "SKILL.md").is_file()
+}
+
+errors = []
+seen_ids = set()
+covered = set()
+for i, w in enumerate(workflows):
+    wid = w.get("id")
+    skill = w.get("skill")
+    if not wid:
+        errors.append(f"workflow #{i} missing id")
+        continue
+    if wid in seen_ids:
+        errors.append(f"duplicate workflow id: {wid}")
+    seen_ids.add(wid)
+    if skill != wid:
+        errors.append(f"workflow {wid}: id must equal skill (skill={skill!r})")
+    if skill not in skill_dirs:
+        errors.append(f"workflow {wid}: skill dir missing src/skills/{skill}/SKILL.md")
+    elif skill in covered:
+        errors.append(f"skill {skill} has more than one workflow entry")
+    else:
+        covered.add(skill)
+    if not w.get("first_phase"):
+        errors.append(f"workflow {wid}: missing first_phase")
+    allowed = w.get("allowed_profiles")
+    if allowed is None:
+        errors.append(f"workflow {wid}: missing allowed_profiles")
+    else:
+        for pid in allowed:
+            if pid not in profile_ids:
+                errors.append(f"workflow {wid}: allowed_profiles names unknown profile {pid!r}")
+
+missing = sorted(skill_dirs - covered)
+for skill in missing:
+    errors.append(f"skill {skill} has NO kernel workflow entry")
+
+if errors:
+    for e in errors:
+        print(f"KERNEL-WORKFLOW FAIL: {e}", file=sys.stderr)
+    raise SystemExit(1)
+print(f"  kernel workflows valid: {len(workflows)} workflows cover all "
+      f"{len(skill_dirs)} skills 1:1; every allowed profile is a real kernel profile")
+PY
+}
+
 # Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
 # authority for worker context profiles since the Wave 1b cutover. Emits one
 # tab-separated row per profile in the legacy column order so every downstream
@@ -2424,6 +2505,11 @@ validate_execution_yaml "src/template/docs/_meta/execution.yaml" "template"
 section "kernel pack checks"
 # Gate (a) + (b): every pack carries a trigger and an existing rule_leaf.
 validate_kernel_packs
+
+section "kernel workflow referential-integrity checks"
+# Every skill binds exactly one kernel workflow and every workflow points at a
+# real skill + valid profiles (Wave 6b per-skill workflow-ID wiring).
+validate_workflow_skill_refs
 
 # Gates (c) + (d): the deterministic pack-merge rule, proven against the dogfood
 # repo. The resolver is the SOLE pack loader; agent-docs (bash + markdown) routes

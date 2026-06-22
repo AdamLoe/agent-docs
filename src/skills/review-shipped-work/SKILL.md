@@ -25,8 +25,9 @@ References for pointers.
 
 ## Worker Phases
 
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `review-shipped-work`; `src/kernel/workflows.json`
+is the machine authority for its phase sequence and allowed profiles. Workers
+resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Review worker** (the lead phase). Profile: `review.generic` plus each named
   plan and the smallest relevant diff, docs, and source. It judges whether the

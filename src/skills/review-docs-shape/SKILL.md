@@ -39,7 +39,9 @@ do not stop to ask. See References for pointers.
 ## Worker Phases
 
 Editorial judgment is strong-model work. Both phases are read-only, so they
-parallelize freely. Workers resolve their context via
+parallelize freely. This skill's kernel workflow is `review-docs-shape`;
+`src/kernel/workflows.json` is the machine authority for its phase sequence and
+allowed profiles. Workers resolve their context via
 `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Docs-maintenance worker** — architecture/decision **shape** and ownership

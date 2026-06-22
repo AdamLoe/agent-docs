@@ -45,8 +45,9 @@ implementation, docs, plan-status, and run-doc mutations.
 - **Verification worker** to run the targeted gate plus the manifest
   `drift-gates`. Profile: `verification.readonly`.
 
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `ship-current-work`; `src/kernel/workflows.json`
+is the machine authority for its phase sequence and allowed profiles. Workers
+resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Closeout
 

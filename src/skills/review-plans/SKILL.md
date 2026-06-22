@@ -43,8 +43,10 @@ for pointers.
 ## Worker Phases
 
 Broad reviews default to `cost-high`. Review workers are read-only, so fan them
-out in parallel — one per named plan or one per coherent plan cluster. Workers
-resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+out in parallel — one per named plan or one per coherent plan cluster. This
+skill's kernel workflow is `review-plans`; `src/kernel/workflows.json` is the
+machine authority for its phase sequence and allowed profiles. Workers resolve
+their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Review worker** (the critique), one per named plan or coherent cluster.
   Profile: `review.plan` plus the plan(s) under review, with the plan-review

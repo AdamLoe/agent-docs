@@ -1,17 +1,28 @@
 {
-  "_comment": "Kernel machine authority for per-skill workflow facts: the deterministic first phase and the profiles a workflow is allowed to dispatch. Wave 1a scope is minimal-but-valid - it records the deterministic first-phase + allowed-profile facts the verifier already relies on, without duplicating any fact a gate enforces elsewhere (the scenario->skill mapping stays verifier code; profile budgets/fields stay in profiles.json). Fuller per-skill kernel-workflow-ID wiring lands in Waves 2 and 6b.",
+  "_comment": "Kernel machine authority for per-skill workflow facts: the deterministic first phase and the profiles a workflow is allowed to dispatch. Every skill under src/skills/ has exactly one entry here (id == skill name == directory), and every allowed_profiles id is a real kernel profile (src/kernel/profiles.json). The verifier's referential-integrity gate (validate_workflow_skill_refs) enforces both directions: no skill without a workflow, no workflow pointing at a missing skill or an invalid profile. Each SKILL.md references its workflow id here as the sole machine authority for its phase sequence + allowed profiles, so the deterministic phase ladder and the allowed-profile enumeration are NOT duplicated in skill prose. allowed_profiles is ordered by the skill body's primary-to-secondary phase order; the resolver picks the body-named profile that this list allows. Profile fields/budgets stay in profiles.json; scenario rows stay in scenarios.json - no fact lives in two authorities.",
   "workflows": [
     {
       "id": "quick-fix",
       "skill": "quick-fix",
       "first_phase": "implementation",
-      "allowed_profiles": ["implementation.code", "verification.readonly"]
+      "allowed_profiles": [
+        "implementation.code",
+        "implementation.code-docs",
+        "verification.readonly",
+        "review.generic",
+        "planning.brief"
+      ]
     },
     {
       "id": "plan",
       "skill": "plan",
       "first_phase": "planning",
-      "allowed_profiles": ["planning.brief", "planning.tracked"]
+      "allowed_profiles": [
+        "planning.brief",
+        "planning.tracked",
+        "review.plan",
+        "maintenance.docs"
+      ]
     },
     {
       "id": "orchestrate",
@@ -33,22 +44,186 @@
       ]
     },
     {
-      "id": "check-docs-drift",
-      "skill": "check-docs-drift",
-      "first_phase": "inspection",
-      "allowed_profiles": ["review.docs"]
+      "id": "ship-plans",
+      "skill": "ship-plans",
+      "first_phase": "implementation",
+      "allowed_profiles": [
+        "implementation.tracked",
+        "planning.tracked",
+        "review.plan",
+        "review.generic",
+        "maintenance.plan",
+        "verification.readonly"
+      ]
     },
     {
-      "id": "check-plans-health",
-      "skill": "check-plans-health",
-      "first_phase": "inspection",
-      "allowed_profiles": ["review.plan"]
+      "id": "ship-current-work",
+      "skill": "ship-current-work",
+      "first_phase": "review",
+      "allowed_profiles": [
+        "review.generic",
+        "maintenance.docs",
+        "maintenance.plan",
+        "implementation.code-docs",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "clear-plans",
+      "skill": "clear-plans",
+      "first_phase": "maintenance",
+      "allowed_profiles": [
+        "maintenance.plan",
+        "maintenance.docs",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "rebuild-agent-docs",
+      "skill": "rebuild-agent-docs",
+      "first_phase": "maintenance",
+      "allowed_profiles": [
+        "maintenance.docs",
+        "implementation.code-docs",
+        "verification.readonly",
+        "maintenance.plan"
+      ]
+    },
+    {
+      "id": "wrap-up-current-chat",
+      "skill": "wrap-up-current-chat",
+      "first_phase": "maintenance",
+      "allowed_profiles": [
+        "maintenance.docs",
+        "maintenance.plan",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "fix-docs-drift",
+      "skill": "fix-docs-drift",
+      "first_phase": "maintenance",
+      "allowed_profiles": [
+        "maintenance.docs",
+        "review.generic",
+        "verification.readonly",
+        "implementation.code-docs"
+      ]
+    },
+    {
+      "id": "fresh-chat",
+      "skill": "fresh-chat",
+      "first_phase": "routing",
+      "allowed_profiles": [
+        "review.generic",
+        "review.docs"
+      ]
+    },
+    {
+      "id": "start-session",
+      "skill": "start-session",
+      "first_phase": "routing",
+      "allowed_profiles": [
+        "maintenance.plan",
+        "review.generic",
+        "verification.readonly"
+      ]
     },
     {
       "id": "review-app",
       "skill": "review-app",
       "first_phase": "review",
-      "allowed_profiles": ["review.generic", "planning.tracked"]
+      "allowed_profiles": [
+        "review.generic",
+        "review.docs",
+        "review.plan",
+        "planning.tracked"
+      ]
+    },
+    {
+      "id": "review-shipped-work",
+      "skill": "review-shipped-work",
+      "first_phase": "review",
+      "allowed_profiles": [
+        "review.generic",
+        "implementation.code-docs",
+        "maintenance.docs",
+        "maintenance.plan",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "review-plans",
+      "skill": "review-plans",
+      "first_phase": "review",
+      "allowed_profiles": [
+        "review.plan",
+        "planning.tracked"
+      ]
+    },
+    {
+      "id": "review-docs-shape",
+      "skill": "review-docs-shape",
+      "first_phase": "review",
+      "allowed_profiles": [
+        "review.docs",
+        "review.generic"
+      ]
+    },
+    {
+      "id": "review-skills",
+      "skill": "review-skills",
+      "first_phase": "review",
+      "allowed_profiles": [
+        "review.generic",
+        "review.docs",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "check-docs-drift",
+      "skill": "check-docs-drift",
+      "first_phase": "inspection",
+      "allowed_profiles": [
+        "docs.inspect",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "check-plans-health",
+      "skill": "check-plans-health",
+      "first_phase": "inspection",
+      "allowed_profiles": [
+        "plans.inspect",
+        "review.generic"
+      ]
+    },
+    {
+      "id": "doctor",
+      "skill": "doctor",
+      "first_phase": "verification",
+      "allowed_profiles": [
+        "verification.readonly",
+        "maintenance.docs",
+        "implementation.code-docs"
+      ]
+    },
+    {
+      "id": "list-skills",
+      "skill": "list-skills",
+      "first_phase": "inline",
+      "allowed_profiles": [
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "feedback-agent-docs",
+      "skill": "feedback-agent-docs",
+      "first_phase": "inline",
+      "allowed_profiles": [
+        "maintenance.docs",
+        "verification.readonly"
+      ]
     }
   ]
 }

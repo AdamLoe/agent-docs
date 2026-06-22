@@ -31,8 +31,10 @@ ownership. See References for pointers.
 
 ## Worker Phases
 
-Dispatch workers in parallel — one inspection worker per doc, or one per doc
-cluster when several docs share a subtree. Workers resolve their context via
+This skill's kernel workflow is `check-docs-drift`; `src/kernel/workflows.json` is
+the machine authority for its phase sequence and allowed profiles. Dispatch
+workers in parallel — one inspection worker per doc, or one per doc cluster when
+several docs share a subtree. Workers resolve their context via
 `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 - **Inspection worker** per doc/cluster, with a **drift lens**. Profile:

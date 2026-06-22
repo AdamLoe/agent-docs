@@ -15,8 +15,14 @@ launched without context; `no-prompt` skills operate on existing disk/git state
 and run directly (honoring any dials passed in). **Launch tier** is the
 recommended model to launch the skill on: `cheap`, `mid`, `strong`, or
 `strongest`. All are defined in `~/.agentdocs/rules/skill-contracts.md`.
+Each skill binds exactly one **kernel workflow** of the same name in
+`~/.agentdocs/kernel/workflows.json` — the machine authority for that skill's
+deterministic first phase and allowed worker profiles (e.g. `check-docs-drift`
+dispatches `docs.inspect`, `check-plans-health` dispatches `plans.inspect`). The
+skill body references its workflow id and never re-enumerates that phase ladder.
 Context profile IDs and mutation capability are defined only in
-`~/.agentdocs/rules/context-profiles.md`; registry rows remain inventory metadata.
+`~/.agentdocs/rules/context-profiles.md` (kernel: `kernel/profiles.json`);
+registry rows remain inventory metadata.
 
 ## Start and plan
 

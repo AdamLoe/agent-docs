@@ -52,6 +52,9 @@ Dispatch a worker only when the request crosses the boundary:
   or `~/.claude/skills/`) → profile `verification.readonly`, scoped to that
   comparison.
 
+This skill's kernel workflow is `list-skills`; `src/kernel/workflows.json` is the
+machine authority for its phase sequence and allowed profiles (it is inline by
+default — a worker runs only for the optional consistency/freshness check above).
 Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Closeout

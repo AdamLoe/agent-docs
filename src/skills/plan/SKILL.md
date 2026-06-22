@@ -71,8 +71,9 @@ Use only the phases the planning task needs.
 Read-only planning workers parallelize freely across disjoint concerns; any
 worker that writes tracked docs runs serially and commits its slice.
 
-Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+This skill's kernel workflow is `plan`; `src/kernel/workflows.json` is the machine
+authority for its phase sequence and allowed profiles. Workers resolve their
+context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
 
 ## Closeout
 
