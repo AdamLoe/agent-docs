@@ -701,6 +701,103 @@ print(f"  kernel workflows valid: {len(workflows)} workflows cover all "
 PY
 }
 
+# validate_readonly_skill_profiles: read-only-vs-mutating consistency at the SKILL
+# layer. validate_context_profiles already proves no read-only PROFILE (review.*,
+# verification.readonly, *.inspect) carries a mutating capability, and the merge
+# resolver's no-self-upgrade clause stops a read-only profile being upgraded mid
+# resolution. Neither guards the SKILL->profile binding: a skill the registry
+# declares produces NO commits (`commits` = `no`) must never bind a kernel
+# workflow whose allowed_profiles include a mutating profile, or the registry's
+# read-only promise would be a lie the dispatch could silently break. This reads
+# the registry `commits` column live and the kernel workflow allowed_profiles +
+# profile mutation_capability live, so it bites the moment a no-commit skill gains
+# a mutating profile. Writes nothing.
+validate_readonly_skill_profiles() {
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot validate read-only skill profiles; install python"
+
+  "$python_cmd" - \
+    "$repo_root/src/skills/registry.md" \
+    "$repo_root/src/kernel/workflows.json" \
+    "$repo_root/src/kernel/profiles.json" <<'PY' || fail "read-only skill/profile consistency check failed"
+import json, pathlib, re, sys
+
+registry = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+workflows = {w["id"]: w for w in json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))["workflows"]}
+profile_mut = {p["id"]: p["mutation_capability"]
+               for p in json.loads(pathlib.Path(sys.argv[3]).read_text(encoding="utf-8"))["profiles"]}
+
+# Registry rows: `| `name` | mode | action | worker roles | commits | intake |
+# launch | normal input |` (8 cells between the outer pipes). A no-commit skill
+# is one whose `commits` cell is exactly "no".
+no_commit = []
+for line in registry.splitlines():
+    s = line.strip()
+    if not s.startswith("| `"):
+        continue
+    cells = [c.strip() for c in s.strip("|").split("|")]
+    if len(cells) != 8:
+        continue
+    name = cells[0].strip("`")
+    commits = cells[4]
+    if commits == "no":
+        no_commit.append(name)
+
+errors = []
+for name in no_commit:
+    wf = workflows.get(name)
+    if wf is None:
+        errors.append(f"no-commit skill {name} has no kernel workflow")
+        continue
+    for pid in wf.get("allowed_profiles", []):
+        if profile_mut.get(pid) == "mutating":
+            errors.append(
+                f"read-only skill {name} (registry commits=no) binds mutating "
+                f"profile {pid}"
+            )
+
+if errors:
+    for e in errors:
+        print(f"READONLY-SKILL FAIL: {e}", file=sys.stderr)
+    raise SystemExit(1)
+print(f"  read-only skill/profile consistency: {len(no_commit)} no-commit skills "
+      f"select only read-only profiles")
+PY
+}
+
+# validate_scope_hop_budget: the cost-regression budget guard (Q1 accepted
+# regression). Making planning.scope the fixed first /orchestrate phase adds a
+# read-only scope-worker hop to EVERY /orchestrate run. This guard MEASURES that
+# hop's resolved cost (planning.scope's resolved core words) and BOUNDS it by the
+# kernel's documented planning.scope budget_words, so the accepted regression
+# stays visible and bounded rather than drifting silently. Correctness basis: the
+# bound is the kernel's own E3-style measured floor for planning.scope (its
+# core rule planning.md, ~498 words today) plus the small headroom already baked
+# into budget_words (510) - read live from the kernel, NOT a second literal, so
+# single authority holds and the bound is never inflated past the measured floor.
+# FAILs if the measured scope-hop cost exceeds the documented bound.
+validate_scope_hop_budget() {
+  local python_cmd measured bound
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot validate scope-hop budget; install python"
+
+  bound=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+p = next(p for p in json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
+         if p["id"] == "planning.scope")
+print(p["budget_words"])
+PY
+  )
+  measured=$(profile_word_total "src/rules/subagent/planning.md")
+  if [ "$measured" -gt "$bound" ]; then
+    fail "cost-regression guard: planning.scope scope-worker hop costs $measured words > documented bound $bound (the uniform /orchestrate scope phase regression is unbounded)"
+  fi
+  printf '  scope-worker hop (planning.scope) cost %s words <= documented bound %s (Q1 regression bounded)\n' \
+    "$measured" "$bound"
+}
+
 # Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
 # authority for worker context profiles since the Wave 1b cutover. Emits one
 # tab-separated row per profile in the legacy column order so every downstream
@@ -822,6 +919,24 @@ context_report() {
     done < <(scenario_rows)
   else
     printf 'SCENARIO CONTRACT AVAILABLE: rerun without --profile for all rows\n'
+  fi
+
+  # Cost-regression measurement: surface the added scope-worker hop (planning.scope)
+  # cost and its documented bound so a reader sees the bounded Q1 regression. The
+  # uniform planning.scope first phase costs this on EVERY /orchestrate run.
+  if [ -z "$profile_filter" ] || [ "$profile_filter" = "planning.scope" ]; then
+    local scope_hop_cost scope_hop_bound python_cmd
+    python_cmd=$(find_python_cmd)
+    scope_hop_bound=$(
+      "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+print(next(p for p in json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
+           if p["id"] == "planning.scope")["budget_words"])
+PY
+    )
+    scope_hop_cost=$(profile_word_total "src/rules/subagent/planning.md")
+    printf 'SCOPE-WORKER HOP (Q1 accepted regression): added to every /orchestrate run; cost=%s words bound=%s words (within bound)\n' \
+      "$scope_hop_cost" "$scope_hop_bound"
   fi
 
   if [ -z "$profile_filter" ]; then
@@ -2510,6 +2625,18 @@ section "kernel workflow referential-integrity checks"
 # Every skill binds exactly one kernel workflow and every workflow points at a
 # real skill + valid profiles (Wave 6b per-skill workflow-ID wiring).
 validate_workflow_skill_refs
+
+section "read-only skill/profile consistency checks"
+# No skill the registry marks as producing no commits may bind a mutating profile
+# (the SKILL-layer half of read-only-vs-mutating consistency; the profile-layer
+# half is in validate_context_profiles).
+validate_readonly_skill_profiles
+
+section "cost-regression budget guard (scope-worker hop)"
+# Bounds the Q1-accepted regression: the uniform planning.scope first phase adds a
+# read-only scope-worker hop to every /orchestrate run; this measures that hop and
+# FAILs if it grows past the kernel's documented planning.scope bound.
+validate_scope_hop_budget
 
 # Gates (c) + (d): the deterministic pack-merge rule, proven against the dogfood
 # repo. The resolver is the SOLE pack loader; agent-docs (bash + markdown) routes
