@@ -42,7 +42,8 @@ time on the shared tree; each wave ends with a green
 
 | Wave | Outcome | Status | Commit | Gate |
 |---|---|---|---|---|
-| 0 | Lock decisions + freeze baseline fixtures | pending | — | — |
+| 0 | Lock decisions + freeze baseline fixtures | **done** | 742658f | green (after f606c76) |
+| 0-fix | Trim build plan under 2600 plan-budget cap | **done** | f606c76 | green (exit 0) |
 | 1a | Kernel JSON shadow + `--equivalence` | pending | — | — |
 | 1b | Atomic single-authority cutover (one commit) | pending | — | — |
 | 1b-review | Independent review of the cutover | pending | — | — |
@@ -72,7 +73,17 @@ time on the shared tree; each wave ends with a green
 
 ## Open questions / blockers
 
-(none yet)
+- **Decisions doc at cap (watch).** `docs/decisions/agent-docs.md` is pinned at
+  2598/2600 after Wave 0. Later waves that add decisions (Wave 1b single-authority
+  cutover; Wave 5 clean-handoff superseding "Commit-heavy worker shipping") MUST
+  supersede-and-compress, not append, to stay ≤2600.
+- **Review note.** Wave 0 worker made meaning-preserving compressions across
+  *stable* decisions doc-wide to fit the four new ones — sanity-check those in the
+  post-cutover review.
+- Pre-existing defect resolved: the committed build plan was 228 words over the
+  plan-budget cap (blocked every gate); trimmed to 2553 in f606c76 with no
+  normative loss. Same commit reworded Wave 6a plan prose that had tripped the
+  retired-name guard.
 
 ## Migration targets (filled at Wave 7 / closeout)
 
