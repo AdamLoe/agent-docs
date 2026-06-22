@@ -1,0 +1,5 @@
+{
+  "_comment": "Kernel machine authority for conditional app-quality packs (frontend/UI, accessibility, backend/API, auth/security, db-migration/data-safety, testing/reliability, performance/concurrency, deployment/ops). Wave 1a scope is a minimal valid scaffold only - the pack leaves, activation triggers, and the deterministic merge rule (path-routes union scoper-tags) intersect execution-allowlist are populated in Wave 4. The empty list keeps this schema-valid and non-authoritative until then.",
+  "merge_rule": "(path-routes ∪ scoper-tags) ∩ execution-allowlist",
+  "packs": []
+}

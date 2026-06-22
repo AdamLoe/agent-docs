@@ -13,6 +13,7 @@ Usage:
   bash src/verify-agent-docs.sh --context-report [--profile <id>]
   bash src/verify-agent-docs.sh --contract-check
   bash src/verify-agent-docs.sh --resolve <profile-id>
+  bash src/verify-agent-docs.sh --equivalence
   bash src/verify-agent-docs.sh --measure-launch <skill-name>
   bash src/verify-agent-docs.sh --scaffold <repo-root>
 
@@ -32,6 +33,10 @@ does not print PASS when any violation exists.
 The --resolve mode prints one profile's core rule paths, conditional overlays,
 mutation capability, and budget so a skill can resolve a single profile without
 loading the whole table.
+The --equivalence mode proves the kernel (src/kernel/*.json) resolves
+byte-identical profile, scenario, and budget facts versus the current authority,
+the rollback boundary for the single-authority cutover. It exits nonzero on any
+mismatch.
 The --measure-launch mode prints the controlled launch word total for one skill
 (skill body, shared startup contract, startup orchestrator/role rules, docs
 index, and requested manifest slots), excluding task-routed source/tests. An
@@ -615,6 +620,80 @@ resolve_profile() {
 
   [ "$found" -eq 1 ] || fail "unknown context profile: $target"
   printf 'RESOLVE PASS\n'
+}
+
+# --equivalence: Wave 1a shadow proof. The kernel (src/kernel/*.json) is unproven
+# shadow data this wave; Markdown + the JSON fixture remain the only enforced
+# authority. This mode proves the kernel resolves BYTE-IDENTICAL facts versus the
+# live authority so the Wave 1b cutover is provably lossless:
+#   - kernel profile rows == context_profile_rows() (the Markdown table parse);
+#   - kernel scenario rows == the workflow-scenarios.json fixture;
+#   - kernel budgets == the contract_check() launch constants.
+# It FAILs loudly with the first mismatch on any divergence and writes nothing.
+equivalence_check() {
+  local python_cmd
+  python_cmd=$(find_python_cmd)
+  [ -n "$python_cmd" ] || fail "cannot run equivalence check; install python"
+
+  section "kernel equivalence (shadow proof)"
+
+  local legacy_profile_rows kernel_profile_rows
+  legacy_profile_rows=$(context_profile_rows)
+  kernel_profile_rows=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+fields = ["id", "purpose", "core_rule_paths", "overlays",
+          "mutation_capability", "budget_words", "enforcement_status"]
+for row in data["profiles"]:
+    print("\t".join(str(row[f]) for f in fields))
+PY
+  )
+  if [ "$legacy_profile_rows" != "$kernel_profile_rows" ]; then
+    printf '%s\n' "$legacy_profile_rows" > /tmp/.equiv-md-profiles.$$
+    printf '%s\n' "$kernel_profile_rows" > /tmp/.equiv-kernel-profiles.$$
+    diff /tmp/.equiv-md-profiles.$$ /tmp/.equiv-kernel-profiles.$$ >&2 || true
+    rm -f /tmp/.equiv-md-profiles.$$ /tmp/.equiv-kernel-profiles.$$
+    fail "kernel profiles.json diverges from the context-profiles.md table"
+  fi
+  printf 'ok   kernel profiles byte-identical to context-profiles.md (%s rows)\n' \
+    "$(printf '%s\n' "$kernel_profile_rows" | grep -c .)"
+
+  if ! "$python_cmd" - "$repo_root/src/kernel/scenarios.json" "$(scenario_fixture)" <<'PY'
+import json, sys
+kernel = json.load(open(sys.argv[1], encoding="utf-8")).get("scenarios", [])
+fixture = json.load(open(sys.argv[2], encoding="utf-8")).get("scenarios", [])
+if kernel != fixture:
+    print(f"kernel scenarios.json diverges from the JSON fixture "
+          f"({len(kernel)} vs {len(fixture)} rows or field mismatch)",
+          file=sys.stderr)
+    raise SystemExit(1)
+print(f"ok   kernel scenarios byte-identical to workflow-scenarios.json "
+      f"({len(kernel)} rows)")
+PY
+  then
+    fail "kernel scenarios.json diverges from src/verify-fixtures/workflow-scenarios.json"
+  fi
+
+  if ! "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+budgets = json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]
+expected = {
+    "fixed_skill_launch": 2000,
+    "classifier_skill_launch": 3300,
+    "classifier_skills": ["orchestrate", "fresh-chat", "start-session"],
+}
+if budgets != expected:
+    print(f"kernel budgets diverge from contract_check constants: "
+          f"{budgets!r} != {expected!r}", file=sys.stderr)
+    raise SystemExit(1)
+print("ok   kernel budgets match contract_check launch constants")
+PY
+  then
+    fail "kernel budgets diverge from the contract_check launch constants"
+  fi
+
+  printf 'EQUIVALENCE PASS\n'
 }
 
 # skill_startup_loads_rule <skill-file> <rule-relpath>: exit 0 iff the skill body
@@ -1307,6 +1386,11 @@ case "${1:-}" in
   --resolve)
     [ "$#" -eq 2 ] || { usage >&2; exit 2; }
     resolve_profile "$2"
+    exit 0
+    ;;
+  --equivalence)
+    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+    equivalence_check
     exit 0
     ;;
   --measure-launch)

@@ -1,0 +1,53 @@
+{
+  "_comment": "Kernel machine authority for per-skill workflow facts: the deterministic first phase and the profiles a workflow is allowed to dispatch. Wave 1a scope is minimal-but-valid - it records the deterministic first-phase + allowed-profile facts the verifier already relies on, without duplicating any fact a gate enforces elsewhere (the scenario->skill mapping stays verifier code; profile budgets/fields stay in profiles.json). Fuller per-skill kernel-workflow-ID wiring lands in Waves 2 and 6b.",
+  "workflows": [
+    {
+      "id": "quick-fix",
+      "skill": "quick-fix",
+      "first_phase": "implementation",
+      "allowed_profiles": ["implementation.code", "verification.readonly"]
+    },
+    {
+      "id": "plan",
+      "skill": "plan",
+      "first_phase": "planning",
+      "allowed_profiles": ["planning.brief", "planning.tracked"]
+    },
+    {
+      "id": "orchestrate",
+      "skill": "orchestrate",
+      "first_phase": "classification",
+      "allowed_profiles": [
+        "planning.brief",
+        "planning.tracked",
+        "implementation.code",
+        "implementation.code-docs",
+        "implementation.tracked",
+        "review.generic",
+        "review.docs",
+        "review.plan",
+        "maintenance.docs",
+        "maintenance.plan",
+        "verification.readonly"
+      ]
+    },
+    {
+      "id": "check-docs",
+      "skill": "check-docs",
+      "first_phase": "inspection",
+      "allowed_profiles": ["review.docs"]
+    },
+    {
+      "id": "review-plans-health",
+      "skill": "review-plans-health",
+      "first_phase": "inspection",
+      "allowed_profiles": ["review.plan"]
+    },
+    {
+      "id": "review-app",
+      "skill": "review-app",
+      "first_phase": "review",
+      "allowed_profiles": ["review.generic", "planning.tracked"]
+    }
+  ]
+}

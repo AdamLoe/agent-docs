@@ -1,0 +1,113 @@
+{
+  "_comment": "Kernel machine authority for worker context profiles and global launch budgets. Read by the verifier's stdlib json (src/verify-agent-docs.sh). Field values are byte-faithful to the legacy context-profiles.md '## Profiles' table the kernel supersedes; core_rule_paths/overlays keep their inline backtick markup so the resolved rows are identical to the prior awk-parsed output. This is the SOLE authority for these facts after the Wave 1b cutover - no profile field or budget number lives in both here and Markdown/bash.",
+  "budgets": {
+    "fixed_skill_launch": 2000,
+    "classifier_skill_launch": 3300,
+    "classifier_skills": [
+      "orchestrate",
+      "fresh-chat",
+      "start-session"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "planning.brief",
+      "purpose": "inline implementation brief",
+      "core_rule_paths": "src/rules/subagent/planning.md",
+      "overlays": "task owner docs/source by concern",
+      "mutation_capability": "read-only",
+      "budget_words": 700,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "planning.tracked",
+      "purpose": "persisted plan material",
+      "core_rule_paths": "src/rules/subagent/planning.md`, `src/plan-lifecycle.md`, `src/plan-template.md`, `src/rules/repo-rules.md",
+      "overlays": "authoring rules when plan edits touch durable docs",
+      "mutation_capability": "mutating",
+      "budget_words": 1600,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "implementation.code",
+      "purpose": "bounded code change",
+      "core_rule_paths": "src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md",
+      "overlays": "source/tests selected by task; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS",
+      "mutation_capability": "mutating",
+      "budget_words": 1700,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "implementation.code-docs",
+      "purpose": "code plus owning docs",
+      "core_rule_paths": "src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md",
+      "overlays": "manifest and ownership rows for touched surfaces; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS",
+      "mutation_capability": "mutating",
+      "budget_words": 2500,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "implementation.tracked",
+      "purpose": "selected tracked-plan implementation and closeout; may close the selected plan when dispatch grants `plan_closeout",
+      "core_rule_paths": "src/rules/subagent/implementation.md`, `src/rules/repo-rules.md`, `src/rules/coding-style.md`, `src/rules/authoring-rules.md`, `src/plan-lifecycle.md",
+      "overlays": "selected plans and owning architecture/decisions; `src/rules/coding-style-rust.md` when task is Rust; `src/rules/coding-style-python.md` when task is Python; `src/rules/coding-style-frontend.md` when task is frontend/TS",
+      "mutation_capability": "mutating",
+      "budget_words": 2500,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "review.generic",
+      "purpose": "generic independent review",
+      "core_rule_paths": "src/rules/subagent/review.md",
+      "overlays": "named lens sources only",
+      "mutation_capability": "read-only",
+      "budget_words": 700,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "review.docs",
+      "purpose": "docs/rules review",
+      "core_rule_paths": "src/rules/subagent/review.md`, `src/rules/authoring-rules.md",
+      "overlays": "named docs and ownership rows",
+      "mutation_capability": "read-only",
+      "budget_words": 1200,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "review.plan",
+      "purpose": "plan review",
+      "core_rule_paths": "src/rules/subagent/review.md`, `src/plan-lifecycle.md",
+      "overlays": "selected plans and optional template",
+      "mutation_capability": "read-only",
+      "budget_words": 1000,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "maintenance.docs",
+      "purpose": "docs repair or migration",
+      "core_rule_paths": "src/rules/subagent/docs-maintenance.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md",
+      "overlays": "manifest and ownership rows for touched docs",
+      "mutation_capability": "mutating",
+      "budget_words": 1700,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "maintenance.plan",
+      "purpose": "plan/run lifecycle maintenance",
+      "core_rule_paths": "src/rules/subagent/plan-maintenance.md`, `src/plan-lifecycle.md`, `src/rules/authoring-rules.md`, `src/rules/repo-rules.md",
+      "overlays": "selected plans/run docs and owning docs",
+      "mutation_capability": "mutating",
+      "budget_words": 2100,
+      "enforcement_status": "enforced"
+    },
+    {
+      "id": "verification.readonly",
+      "purpose": "final or targeted gate execution",
+      "core_rule_paths": "src/rules/subagent/verification.md",
+      "overlays": "manifest drift-gates and named command output",
+      "mutation_capability": "read-only",
+      "budget_words": 500,
+      "enforcement_status": "enforced"
+    }
+  ]
+}
