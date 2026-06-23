@@ -1,8 +1,9 @@
 # execution.yaml — agent-docs (dogfood) repo execution binding.
 #
 # Per-repo operational binding for execution workers. Human-authored YAML;
-# the verifier validates the full schema when a YAML parser (PyYAML) is
-# present and degrades to a presence/text check when it is absent.
+# the verifier validates the full schema with a YAML parser (PyYAML), which is a
+# hard prerequisite — it FAILS loudly when the binding cannot be parsed rather
+# than green-lighting an unvalidated binding.
 #
 # Schema reference (every top-level key is required; leave a section empty
 # with {} or [] when the repo genuinely has none — do NOT delete the key):
@@ -97,10 +98,11 @@ pack_routes:
 # --- Q9 layers a feature worker hits first -----------------------------------
 
 bootstrap:
-  # Toolchain needed to run the gate. python3 is stdlib-only here.
-  toolchain: bash, python3 (stdlib; PyYAML optional for full execution.yaml validation)
-  install: null         # no dependency manager; nothing to install
-  notes: PyYAML absent only downgrades execution.yaml validation, not the core gate.
+  # Toolchain needed to run the gate. python3 is stdlib-only; PyYAML is required
+  # for the execution.yaml binding check, which fails loudly without a parser.
+  toolchain: bash, python3 (stdlib), PyYAML (required for the execution.yaml binding check)
+  install: pip install pyyaml   # only dependency the gate needs beyond stdlib
+  notes: PyYAML absent fails the execution.yaml binding check; the rest of the gate is offline stdlib.
 
 secrets:
   required: []          # offline gate; no credentials
