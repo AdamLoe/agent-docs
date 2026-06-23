@@ -5,7 +5,7 @@
       "scenario_id": "orchestrate-bounded-fast-path",
       "task_shape": "a bounded /orchestrate request already stating a bounded outcome, acceptance, and a likely check",
       "expected_questions": "none; the bounded outcome is already stated, no scope brief and no dial picker",
-      "expected_profiles": "implementation.code or implementation.code-docs directly, plus verification.readonly; no planning.scope hop",
+      "expected_profiles": "implementation.code or implementation.code-docs directly, plus verification.readonly; no scope worker",
       "expected_phases": "orchestrator classifies inline as bounded, then dispatches one implementation worker then final verification",
       "expected_mutator_count": 1,
       "state_basis_fields": "HEAD plus exact dirty paths",

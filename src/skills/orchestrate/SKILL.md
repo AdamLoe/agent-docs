@@ -34,9 +34,8 @@ Classify the request inline (cheap routing, not implementation). Two routes:
   verification when risk warrants. This is the common already-scoped case.
 - **Scope route.** Dispatch a read-only `planning.scope` worker **only** when
   classification, decomposition, or a genuine user decision is unresolved. Its
-  **workflow-brief** (shape in `src/rules/subagent/planning.md → ## Workflow-brief`)
-  resolves the bounded/briefed/tracked lifecycle and the recommended profile per
-  phase.
+  **workflow-brief** (shape owned by the planning role card) resolves the
+  bounded/briefed/tracked lifecycle and the recommended profile per phase.
 
 Subagent-first holds on both routes: you only route work; the one inline step is
 the classification itself, under the reads-vs-dispatch test in `lifecycle.md`.

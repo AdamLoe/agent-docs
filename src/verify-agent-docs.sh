@@ -2318,7 +2318,7 @@ if missing:
     raise SystemExit(f"missing scenario rows: {sorted(missing)}")
 
 checks = {
-    "orchestrate-bounded-fast-path": ["implementation.code", "no planning.scope hop", "no scope hop"],
+    "orchestrate-bounded-fast-path": ["implementation.code", "no scope worker", "no scope hop"],
     "orchestrate-scope-when-unresolved": ["planning.scope first", "only when"],
     "bounded-quick-fix": ["no classifier", "implementation.code", "one implementation", "gate observes post-mutation"],
     "unclear-small-work": ["one material task question", "no dial picker"],
