@@ -6,12 +6,11 @@ verify, migrate durable docs, hand off with no unexplained owned dirt.
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve implementation.code` (or `.code-docs`
-or `.tracked`) to see core paths and overlays. Add only the architecture,
-decisions, agent-context, and source the dispatch names. For a large doc, use its
-heading/search hint and read the authoritative section directly. Decide your own
-touched files from local investigation.
+Read the rule files your dispatch names for your profile (`implementation.code`,
+`.code-docs`, or `.tracked`) directly; no resolver runs at runtime (`--resolve`
+is source-only). Add only the architecture, decisions, agent-context, and source
+the dispatch names. For a large doc, use its heading/search hint and read the
+authoritative section. Decide your touched files from local investigation.
 
 ## How you work
 

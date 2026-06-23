@@ -7,10 +7,11 @@ and shape, and house-rule compliance. Depending on dispatch you are report-only
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve maintenance.docs` to see core paths
-and overlays. Add only the manifest slots and named docs or subtree the dispatch
-names. Do not add rule files beyond the resolved profile.
+Read the rule files your dispatch names for the `maintenance.docs` profile
+directly — no kernel or resolver runs at runtime (`--resolve` is a source-only
+aid; see [`../context-profiles.md`](../context-profiles.md)). Add only the
+manifest slots and named docs or subtree the dispatch names. Do not add rule
+files beyond the named profile.
 
 ## How you work
 

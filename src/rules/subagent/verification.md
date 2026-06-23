@@ -7,11 +7,11 @@ gate or noisy output does not burn the orchestrator's context. You are read-only
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve verification.readonly` to see core
-paths and overlays. Add only the manifest `drift-gates` and `drift-verification`
-slots and the specific command(s) the dispatch names. Do not add rule files
-beyond the resolved profile.
+Read the rule files your dispatch names for the `verification.readonly` profile
+directly — no kernel or resolver runs at runtime (`--resolve` is a source-only
+aid; see [`../context-profiles.md`](../context-profiles.md)). Add only the
+manifest `drift-gates` and `drift-verification` slots and the specific
+command(s) the dispatch names. Do not add rule files beyond the named profile.
 
 ## How you work
 

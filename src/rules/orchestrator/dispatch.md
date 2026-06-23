@@ -81,17 +81,19 @@ worker close the selected plan — setting frontmatter to `status: shipped` and
 plan-status changes are prohibited even for tracked implementation workers.
 
 **No self-upgrade of write authority.** A worker's role and mutation capability
-are fixed by the profile its dispatch names; resolution and discovery never
-raise them. After discovery a worker may *request* an allowed pack
-(`bash ~/.agentdocs/verify-agent-docs.sh --resolve --skill <name> [--risk <tag>]`
-lists the packs the repo's execution allowlist permits), but it may not change
+are fixed by the profile its dispatch names; discovery never raises them. After
+discovery a worker may *request* an allowed pack from the orchestrator (the
+repo's `execution.yaml` pack routes are the allowlist), but it may not change
 role, gain mutation capability, or grant itself a mutator pack. A read-only
 profile (`review.*`, `verification.readonly`, `docs.inspect`, `plans.inspect`)
 stays read-only: it returns findings and names the mutator profile the
-orchestrator must route. The resolver enforces this — it reports the kernel
-profile's `mutation_capability` verbatim, so a read-only profile is never
-resolved into a mutating capability or a mutator pack. A worker that needs write
-authority it was not dispatched with stops and reports; it does not self-elevate.
+orchestrator must route. The dispatch enforces this — it names the profile's
+fixed `mutation_capability`, so a read-only profile is never turned into a
+mutating capability or a mutator pack. A worker that needs write authority it was
+not dispatched with stops and reports; it does not self-elevate. (The kit author
+can confirm the same merge with the source-only aid
+`bash src/verify-agent-docs.sh --resolve --skill <name> [--risk <tag>]`, which
+needs the kernel and so runs only in the source checkout, never at runtime.)
 
 ## Resuming
 

@@ -8,10 +8,11 @@ is the canonical lifecycle owner; this rule is how a worker executes against it.
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve maintenance.plan` to see core paths
-and overlays. Add only the plan files, run folders, and docs the dispatch names.
-Do not add rule files beyond the resolved profile.
+Read the rule files your dispatch names for the `maintenance.plan` profile
+directly — no kernel or resolver runs at runtime (`--resolve` is a source-only
+aid; see [`../context-profiles.md`](../context-profiles.md)). Add only the plan
+files, run folders, and docs the dispatch names. Do not add rule files beyond the
+named profile.
 
 ## How you work
 

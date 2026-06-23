@@ -7,10 +7,8 @@ The fixed startup runtime-card is `~/.agentdocs/rules/skill-contracts.md`. The
 **machine authority** for profiles, scenarios, per-skill workflows, and packs is
 the kernel under `src/kernel/*.json`; `~/.agentdocs/rules/context-profiles.md` is
 the **human contract** that names those facts in prose but no longer owns them.
-Generic classification lives in lifecycle, dispatch shape in dispatch, command
-inventory in the registry. Mandatory startup is cache-first: read the runtime
-card, needed manifest slots, and `docs/index.md`, then stop. `docs/overview.md`
-is routed by task.
+Mandatory startup is cache-first: read the runtime card, needed manifest slots,
+and `docs/index.md`, then stop. `docs/overview.md` is routed by task.
 
 ## Context layers
 
@@ -23,10 +21,7 @@ repository layout are queried only for ownership or location questions. Never
 auto-load architecture leaves, decisions, plans, run docs,
 `~/.agentdocs/agent-docs-guide.md`, the kernel JSON, full ownership JSON, source
 files, verifier output, or pitch material. Class word budgets live in
-`~/.agentdocs/rules/authoring-rules.md`. Worker context profiles are owned by the
-kernel (`src/kernel/profiles.json`), described in prose by
-`~/.agentdocs/rules/context-profiles.md`, and reported by
-`~/.agentdocs/verify-agent-docs.sh --context-report`.
+`~/.agentdocs/rules/authoring-rules.md`.
 
 ## Orchestrator/worker model
 
@@ -41,6 +36,17 @@ dispatch is expected of the runtime; adapters report an error when unavailable.
 Workers read authoritative docs and source directly when exact details,
 judgment, or evidence matter. The orchestrator carries observed facts between
 workers; it does not rewrite authoritative docs into generated summaries.
+
+**Runtime profile resolution.** A consuming-repo dispatch resolves a profile by
+**naming its core rule files directly**: the orchestrator hands the worker the
+bundled `~/.agentdocs/rules/...` paths and the worker reads them. The kernel is
+**not** bundled (the installer ships `skills`, `rules`, `template`, and
+`verify-agent-docs.sh`, never `src/kernel/`), so `--resolve` and the
+kernel-backed gate run only in the source checkout — a runtime worker never runs
+them. `--resolve` is a source-only authoring/verification aid for confirming what
+a dispatch names. A disposable temp-HOME sim proved this: with the runtime bundle
+but no kernel, direct naming reads every core rule file, while `--resolve` fails
+on the missing `src/kernel/profiles.json`.
 
 Rules live at the layer that owns them:
 
@@ -120,12 +126,12 @@ plan-maintenance.
 |---|---|
 | `src/skills/*/` | Runnable workflow commands; `SKILL.md` is the prompt entry point and skill-local helper scripts may live beside it. |
 | `src/skills/registry.md` | Skill inventory, mode/action metadata, intake style, and launch tier. |
-| `src/verify-agent-docs.sh` | Kit drift gate; modes: `--context-report`, `--resolve` (profile, or `--skill/--phase/--repo/--risk` merge), `--equivalence`, `--measure-launch`, `--contract-check`, `--scaffold`. No-arg is the consolidated gate. |
+| `src/verify-agent-docs.sh` | Kit drift gate (no-arg consolidated). Source-only modes need the kernel: `--context-report`, `--resolve`, `--equivalence`, `--measure-launch`, `--contract-check`; `--scaffold <repo>` targets a consuming repo. |
 | `src/kernel/` | Machine authority (JSON): `profiles`, `scenarios`, `workflows`, `packs`. Never auto-loaded; read by the verifier/resolver. |
 | `src/rules/*.md` | Universal rules shared by every consuming repo: `skill-contracts.md`, `context-profiles.md`, `repo-rules.md`, `authoring-rules.md`, `coding-style.md`. |
 | `src/rules/orchestrator/` | Orchestrator-facing workflow control: `lifecycle.md`, `dispatch.md`, and `run-docs.md`. |
-| `src/rules/subagent/` | Worker-facing role rules: `planning.md`, `implementation.md`, `review.md`, `docs-maintenance.md`, `plan-maintenance.md`, `verification.md`. |
-| `src/rules/packs/` | Eight task-routed quality overlays (frontend, backend-api, auth-security, db-migration, accessibility, testing-reliability, performance-concurrency, deployment-ops); resolver-activated, never auto-loaded. |
+| `src/rules/subagent/` | Worker-facing role cards (planning, implementation, review, docs-/plan-maintenance, verification). |
+| `src/rules/packs/` | Task-routed quality overlays (see `src/kernel/packs.json`); resolver-activated, never auto-loaded. |
 | `src/rules/coding-style-{rust,python,frontend}.md` | Language-idiom overlays (never auto-loaded). |
 | `src/verify-fixtures/` | Verifier-only baseline snapshots (`baseline.md`). The scenario matrix moved to `src/kernel/scenarios.json`. |
 | `docs/_meta/execution.yaml` | Per-repo execution binding (operational + Q9 fields); the resolver and gate read it. |
@@ -133,9 +139,7 @@ plan-maintenance.
 | `src/agent-docs-guide.md` | Narrative guide for adopting the doc system. |
 | `src/plan-lifecycle.md`, `src/plan-template.md` | Plan metadata and plan skeleton. |
 
-Editing workers end under the clean-handoff invariant (committed, clean no-op, or
-discharged blocked handoff); later workers repair with further commits. Editing
-is serial per working tree, and the orchestrator verifies the final observed
+Editing is serial per working tree; the orchestrator verifies the final observed
 state after docs, plan-status, and run-doc mutations.
 
 ## Workflow commands
@@ -149,29 +153,24 @@ ownership, skill registry, template scaffold, the kernel, `execution.yaml`
 schema, pack triggers/non-activation, the source-bound contract checks, the
 single-authority and clean-handoff/cost-regression scenario gates, stale
 references, executable bits, and adapter freshness. `--equivalence` is the
-standalone single-authority proof. Run from outside the source repo, it prints a
+standalone single-authority proof. Outside the source repo it prints a
 `--scaffold` directive and exits 0.
 
 For profile inspection use `--context-report [--profile <id>]`. A consuming repo
 runs the target-aware scaffold check `bash ~/.agentdocs/verify-agent-docs.sh
 --scaffold <repo-root>`, which checks that repo's scaffold, manifest slots,
-ownership paths, routes, and unresolved placeholders — not the source checkout.
+ownership paths, routes, and placeholders — not the source checkout.
 
-The full command inventory with one-line purposes lives in
+The full command inventory lives in
 [`../../src/skills/registry.md`](../../src/skills/registry.md); the routing table
-below picks the smallest owner. The load-bearing workflow facts not obvious from
-a command name:
+below picks the smallest owner. Load-bearing workflow facts not obvious from a
+command name:
 
 - `/orchestrate` always begins with a `planning.scope` worker as its fixed first
   phase (the uniform scope brief resolving bounded/briefed/tracked); the accepted
   cost regression is bounded by a cost-regression budget guard.
 - `/quick-fix` dispatches implementation only for already bounded fixes; unclear
   small work is first shaped by a planning worker or routed to `/plan`.
-- `/start-session` checks local git, plans, cleanup candidates, and run docs,
-  then routes into the owning skill; `/fresh-chat` starts ordinary work from the
-  docs router.
-- `/ship-current-work` finishes ordinary work and commits if gates pass;
-  `/wrap-up-current-chat` captures chat-only durable context.
 - `/feedback-agent-docs` appends to the runtime inbox
   `~/.agentdocs/feedback.jsonl`, preserved across installer runs.
 

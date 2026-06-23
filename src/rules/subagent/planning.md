@@ -7,11 +7,11 @@ or run the lifecycle — the orchestrator owns that.
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve <planning.scope|.brief|.tracked>` for
-core paths and overlays. Add only the task-routed architecture, decisions,
-agent-context, and source the dispatch names; load nothing else. For a large doc,
-use the heading/search hint and read the authoritative section directly.
+Read the rule files your dispatch names for your profile (`planning.scope`,
+`.brief`, or `.tracked`) directly; no resolver runs at runtime (`--resolve` is
+source-only). Add only the task-routed architecture, decisions, agent-context,
+and source the dispatch names, then read the authoritative section of any large
+doc by its heading hint.
 
 ## Profile variants
 
@@ -25,9 +25,8 @@ use the heading/search hint and read the authoritative section directly.
   orchestrator must name a write-capable actor.
 - **`planning.tracked`** — mutating. May create, edit, stage, and commit the
   assigned plan file. Follows the dirty-tree discipline and commit contract from
-  `src/rules/repo-rules.md` (already in its resolved profile). Snapshot
-  `git status --short` before editing, stage only the plan file by filename, and
-  commit before reporting. Never pushes.
+  `src/rules/repo-rules.md`. Snapshot `git status --short` before editing, stage
+  only the plan file by filename, and commit before reporting. Never pushes.
 
 ## Workflow-brief (the `planning.scope` output)
 

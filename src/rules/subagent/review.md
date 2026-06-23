@@ -6,11 +6,12 @@ or the skill suite against the lens your dispatch names. You are read-only.
 
 ## What you read
 
-Read exactly the resolved profile: use
-`bash src/verify-agent-docs.sh --resolve review.generic` (or `.docs` or
-`.plan`) to see core paths and overlays. Add only the role-specific source the
-dispatch names — the named plans, the changed diff, the target docs, or the
-registry and skill bodies. Do not add rule files beyond the resolved profile.
+Read the rule files your dispatch names for your profile (`review.generic`,
+`.docs`, or `.plan`) directly — no kernel or resolver runs at runtime
+(`--resolve` is a source-only aid; see
+[`../context-profiles.md`](../context-profiles.md)). Add only the role-specific
+source the dispatch names — the named plans, the changed diff, the target docs,
+or the registry and skill bodies. Do not add rule files beyond the named profile.
 For large docs, use path plus heading/search hints and read the authoritative
 source directly before asserting a finding.
 

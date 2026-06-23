@@ -4,9 +4,14 @@ GENERIC. App-independent. This file is the human-owned contract for worker
 context profiles: the column meanings, the read-only-vs-mutating invariant, and
 the budget-exception rule. The **machine authority for the profile rows
 themselves is the kernel** — `src/kernel/profiles.json` (read by
-`src/verify-agent-docs.sh`). Skills and dispatch rules name profile IDs and
-resolve them with `bash src/verify-agent-docs.sh --resolve <id>`; they do not
-copy profile rows, rule bundles, or mutation policy from anywhere.
+`src/verify-agent-docs.sh`). At runtime a dispatch names a profile ID and hands
+the worker that profile's core rule files **by name** (the bundled
+`~/.agentdocs/rules/...` paths); the worker reads them directly. There is no
+kernel and no resolver at runtime, so a runtime worker never runs `--resolve`.
+`bash src/verify-agent-docs.sh --resolve <id>` is a **source-checkout-only**
+authoring/verification aid the kit author uses to inspect or confirm a profile's
+resolved paths; it needs the kernel. Nobody copies profile rows, rule bundles, or
+mutation policy from anywhere.
 
 Expanded rationale (do not auto-load):
 [`context-profiles-reference.md`](context-profiles-reference.md).
@@ -32,24 +37,27 @@ scenario rows, and verifier checks agree.
 
 Two read-only inspection profiles — `docs.inspect` (doc drift/shape inspection)
 and `plans.inspect` (plan-health inspection) — let the read-only inspection
-skills resolve a genuinely read-only profile instead of selecting a mutating
+skills name a genuinely read-only profile instead of selecting a mutating
 maintenance profile and then subtracting authority in prose. Their rows live in
-the kernel like every other profile; read them with
-`bash src/verify-agent-docs.sh --resolve <id>`.
+the kernel like every other profile; the kit author can inspect them with the
+source-only aid `bash src/verify-agent-docs.sh --resolve <id>`.
 
-## Resolver merge mode
+## Resolver merge mode (source-only authoring aid)
 
+`--resolve` is a **source-checkout-only** authoring/verification aid — it reads
+the kernel, which is never bundled to a runtime, so it does not run at runtime.
 `--resolve <profile-id>` resolves one profile. `--resolve` with
 `--skill`/`--phase`/`--repo`/`--risk` flags runs the exact-context **merge**: it
 joins the kernel profile (core rules + overlays + budget + exact resolved size)
-with the repo's manifest fields, `execution.yaml` fields (a notice when absent,
-since the repo binding lands later), task-routed doc and source/test hints,
-allowed packs from `src/kernel/packs.json` (an empty scaffold until packs ship),
-and the named checks. The merge is references-only and read-only: it emits paths,
-heading hints, and sizes — never a rule/doc/source body — and writes no artifact.
-A read-only profile is never resolved into a mutation capability or a mutator
-pack; the no-self-upgrade rule lives in
-[`orchestrator/dispatch.md`](orchestrator/dispatch.md).
+with the repo's manifest fields, `execution.yaml` fields (a notice when absent),
+task-routed doc and source/test hints, allowed packs from
+`src/kernel/packs.json`, and the named checks. The merge is references-only and
+read-only: it emits paths, heading hints, and sizes — never a rule/doc/source
+body — and writes no artifact. A read-only profile is never resolved into a
+mutation capability or a mutator pack; the no-self-upgrade rule lives in
+[`orchestrator/dispatch.md`](orchestrator/dispatch.md). The kit author uses this
+to confirm what a dispatch will name; a runtime worker reads the named rule files
+directly instead.
 
 ## Where the rows live
 
@@ -59,9 +67,11 @@ data in `src/kernel/profiles.json`, **the sole machine authority**. The global
 launch budgets (`fixed_skill_launch`, `classifier_skill_launch`, and the
 `classifier_skills` allowlist) live in the same file's `budgets` object. Nothing
 duplicates those rows or budgets in this doc — the verifier reads only the kernel
-and fails if any profile/budget fact reappears here as data. To see a resolved
-profile run `bash src/verify-agent-docs.sh --resolve <id>`; for the whole
-inventory run `bash src/verify-agent-docs.sh --context-report`.
+and fails if any profile/budget fact reappears here as data. In the source
+checkout the kit author can see a resolved profile with
+`bash src/verify-agent-docs.sh --resolve <id>`, or the whole inventory with
+`bash src/verify-agent-docs.sh --context-report` (both source-only; they need the
+kernel).
 
 ## Scenario Contract
 
@@ -87,8 +97,9 @@ to hide drift.
 The *measured floor* below is the resolved word total of each profile's core
 rule files — a human-owned observation, NOT a kernel fact (the kernel holds the
 enforced `budget_words`, never the measured floor). The enforced budget for each
-profile lives only in `src/kernel/profiles.json`; read it with
-`bash src/verify-agent-docs.sh --resolve <id>` or `--context-report`.
+profile lives only in `src/kernel/profiles.json`; in the source checkout the kit
+author can read it with `bash src/verify-agent-docs.sh --resolve <id>` or
+`--context-report` (source-only; they need the kernel).
 
 | Profile | Measured floor |
 |---|---:|
