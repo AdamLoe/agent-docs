@@ -53,8 +53,9 @@ The verification worker confirms:
 ## Worker Phases
 
 This skill's kernel workflow is `doctor`; `src/kernel/workflows.json` is the
-machine authority for its phase sequence and allowed profiles. Workers resolve
-context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+machine authority for its phase sequence and allowed profiles. Each dispatch
+names that profile's exact rule files directly; `--resolve` is a source-only
+authoring aid, not a runtime worker step.
 Run the verification worker first, every invocation; fix workers run only when
 the user asks to repair failures.
 

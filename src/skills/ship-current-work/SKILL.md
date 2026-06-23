@@ -46,8 +46,9 @@ implementation, docs, plan-status, and run-doc mutations.
   `drift-gates`. Profile: `verification.readonly`.
 
 This skill's kernel workflow is `ship-current-work`; `src/kernel/workflows.json`
-is the machine authority for its phase sequence and allowed profiles. Workers
-resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+is the machine authority for its phase sequence and allowed profiles. Each
+dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 
 ## Closeout
 

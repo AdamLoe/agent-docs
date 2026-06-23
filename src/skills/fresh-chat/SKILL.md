@@ -19,9 +19,9 @@ tasks.
 Once the request is known, read
 `~/.agentdocs/rules/orchestrator/lifecycle.md` to classify and apply the
 reads-vs-dispatch test. Load the dispatch contract only when ready to dispatch,
-and resolve worker context with
-`bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
-table. Load the smallest matching route for the user's actual request:
+and name the worker's exact rule files directly in the dispatch (`--resolve` is
+a source-only authoring aid, not a runtime step). Load the smallest matching
+route for the user's actual request:
 
 - System shape or first-screen orientation → `docs/overview.md`.
 - Current subsystem facts, or code work touching system behaviour →
@@ -60,9 +60,9 @@ Dispatch one **context-reading worker** only when the request is a broad,
 read-only context question that crosses more than a couple of files (per the
 reads-vs-dispatch test in `orchestrator/lifecycle.md`). This skill's kernel
 workflow is `fresh-chat`; `src/kernel/workflows.json` is the machine authority for
-its phase sequence and allowed profiles. Workers resolve context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`. Pick the role by
-what the question wants:
+its phase sequence and allowed profiles. Each dispatch names that profile's exact
+rule files directly; `--resolve` is a source-only authoring aid, not a runtime
+worker step. Pick the role by what the question wants:
 
 - **Explanatory** ("how does X work / why is it this way") → profile
   `review.generic` plus the relevant docs/source to read.

@@ -34,8 +34,9 @@ ownership. See References for pointers.
 This skill's kernel workflow is `check-docs-drift`; `src/kernel/workflows.json` is
 the machine authority for its phase sequence and allowed profiles. Dispatch
 workers in parallel — one inspection worker per doc, or one per doc cluster when
-several docs share a subtree. Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+several docs share a subtree. Each dispatch names that profile's exact rule
+files directly; `--resolve` is a source-only authoring aid, not a runtime
+worker step.
 
 - **Inspection worker** per doc/cluster, with a **drift lens**. Profile:
   `docs.inspect` (read-only). Tell it to check accuracy vs code (resolve

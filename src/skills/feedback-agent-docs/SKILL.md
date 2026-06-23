@@ -47,8 +47,9 @@ step. Spawn a worker only when judgment genuinely needs isolation:
   `verification.readonly`.
 
 This skill's kernel workflow is `feedback-agent-docs`; `src/kernel/workflows.json`
-is the machine authority for its phase sequence and allowed profiles. Workers
-resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+is the machine authority for its phase sequence and allowed profiles. Each
+dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 
 ## Gather the entry
 

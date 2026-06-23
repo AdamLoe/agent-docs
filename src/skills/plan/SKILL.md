@@ -72,8 +72,9 @@ Read-only planning workers parallelize freely across disjoint concerns; any
 worker that writes tracked docs runs serially and commits its slice.
 
 This skill's kernel workflow is `plan`; `src/kernel/workflows.json` is the machine
-authority for its phase sequence and allowed profiles. Workers resolve their
-context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+authority for its phase sequence and allowed profiles. Each dispatch names that
+profile's exact rule files directly; `--resolve` is a source-only authoring aid,
+not a runtime worker step.
 
 ## Closeout
 

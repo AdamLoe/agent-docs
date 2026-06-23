@@ -41,8 +41,8 @@ do not stop to ask. See References for pointers.
 Editorial judgment is strong-model work. Both phases are read-only, so they
 parallelize freely. This skill's kernel workflow is `review-docs-shape`;
 `src/kernel/workflows.json` is the machine authority for its phase sequence and
-allowed profiles. Workers resolve their context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`.
+allowed profiles. Each dispatch names that profile's exact rule files directly;
+`--resolve` is a source-only authoring aid, not a runtime worker step.
 
 - **Docs-maintenance worker** — architecture/decision **shape** and ownership
   review: is the material in the right layer (architecture = what IS, decisions =

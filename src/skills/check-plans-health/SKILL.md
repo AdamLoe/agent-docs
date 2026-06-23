@@ -33,8 +33,9 @@ lifecycle health, or fans out by status. See References for pointers.
 ## Worker Phases
 
 This skill's kernel workflow is `check-plans-health`; `src/kernel/workflows.json`
-is the machine authority for its phase sequence and allowed profiles. Workers
-resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+is the machine authority for its phase sequence and allowed profiles. Each
+dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 
 - **Inspection worker** (the hygiene pass). Profile: `plans.inspect` (read-only)
   plus `docs/plans/index.md`, the plans and run folders in scope, and the

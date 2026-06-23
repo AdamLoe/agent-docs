@@ -35,9 +35,9 @@ work.
 ## Worker Phases
 
 This skill's kernel workflow is `clear-plans`; `src/kernel/workflows.json` is the
-machine authority for its phase sequence and allowed profiles. Workers resolve
-context via `bash src/verify-agent-docs.sh --resolve <profile-id>`. Use only the
-phases the state needs.
+machine authority for its phase sequence and allowed profiles. Each dispatch
+names that profile's exact rule files directly; `--resolve` is a source-only
+authoring aid, not a runtime worker step. Use only the phases the state needs.
 
 - **Plan-maintenance worker** (the sweep and migration — the main job). Profile:
   `maintenance.plan`. It sweeps top-level plan files (skipping `index.md` and

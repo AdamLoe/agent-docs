@@ -57,8 +57,9 @@ Use only the phases the fix needs.
   practical.
 
 This skill's kernel workflow is `quick-fix`; `src/kernel/workflows.json` is the
-machine authority for its phase sequence and allowed profiles. Workers resolve
-their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+machine authority for its phase sequence and allowed profiles. Each dispatch
+names that profile's exact rule files directly; `--resolve` is a source-only
+authoring aid, not a runtime worker step.
 
 A pure one-line change still goes through the implementation worker — that is the
 mutation/gate boundary, not an inline exception.

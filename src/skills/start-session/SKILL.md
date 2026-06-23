@@ -21,9 +21,8 @@ skill it routes into).
 
 Then read `~/.agentdocs/rules/orchestrator/lifecycle.md` for the
 reads-vs-dispatch test. Load the dispatch contract only when ready to dispatch,
-and resolve worker context with
-`bash src/verify-agent-docs.sh --resolve <profile-id>` rather than the profile
-table.
+and name the worker's exact rule files directly in the dispatch (`--resolve` is
+a source-only authoring aid, not a runtime step).
 
 ## Orchestrator reads
 
@@ -52,9 +51,9 @@ git), and the smallest next workflow.
 start-session usually dispatches **no task worker** — it routes into the owning
 skill instead. This skill's kernel workflow is `start-session`;
 `src/kernel/workflows.json` is the machine authority for its phase sequence and
-allowed profiles. Workers resolve context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`. Spawn a worker only
-when triage crosses the reads-vs-dispatch boundary:
+allowed profiles. Each dispatch names that profile's exact rule files directly;
+`--resolve` is a source-only authoring aid, not a runtime worker step. Spawn a
+worker only when triage crosses the reads-vs-dispatch boundary:
 
 - **Plan-maintenance worker** when cleanup candidates need eligibility or
   migration review before deletion. Profile: `maintenance.plan`.

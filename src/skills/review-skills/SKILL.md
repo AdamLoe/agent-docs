@@ -33,8 +33,9 @@ call, or (when authorized) mutates the tree. See References for pointers.
 ## Worker Phases
 
 This skill's kernel workflow is `review-skills`; `src/kernel/workflows.json` is
-the machine authority for its phase sequence and allowed profiles. Workers
-resolve their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+the machine authority for its phase sequence and allowed profiles. Each
+dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 
 - **Review worker** for registry/skill consistency: directory name vs.
   frontmatter `name:` vs. registry row, mode/action/commit metadata, missing or

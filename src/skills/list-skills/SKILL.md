@@ -55,7 +55,8 @@ Dispatch a worker only when the request crosses the boundary:
 This skill's kernel workflow is `list-skills`; `src/kernel/workflows.json` is the
 machine authority for its phase sequence and allowed profiles (it is inline by
 default — a worker runs only for the optional consistency/freshness check above).
-Workers resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+Each dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 
 ## Closeout
 

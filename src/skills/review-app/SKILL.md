@@ -55,9 +55,9 @@ Kernel workflow `review-app` (`src/kernel/workflows.json`) is the machine
 authority for this skill's phase sequence and allowed profiles. Dispatch
 read-only review workers in parallel where scopes do not overlap: profile
 `review.generic` for most lenses, `review.docs` for docs/scaffold review,
-`review.plan` for plan health. Workers resolve their own context via
-`bash src/verify-agent-docs.sh --resolve <profile-id>`. Do not spell out
-rule-file lists in dispatches.
+`review.plan` for plan health. Each dispatch names that profile's exact rule
+files directly; `--resolve` is a source-only authoring aid, not a runtime
+worker step.
 
 Available lenses (use only those configured):
 

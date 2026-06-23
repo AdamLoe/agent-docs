@@ -48,8 +48,9 @@ Read the orchestration state inline (this is routing, not worker dispatch):
 ## Worker Phases
 
 This skill's kernel workflow is `rebuild-agent-docs`; `src/kernel/workflows.json`
-is the machine authority for its phase sequence and allowed profiles. Workers
-resolve context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+is the machine authority for its phase sequence and allowed profiles. Each
+dispatch names that profile's exact rule files directly; `--resolve` is a
+source-only authoring aid, not a runtime worker step.
 Use only the phases the repo's state needs.
 
 - **Docs-maintenance worker** (scaffold inventory + migration — the core

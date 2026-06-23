@@ -50,8 +50,9 @@ Use only the phases the plans need.
   `verification.readonly`.
 
 This skill's kernel workflow is `ship-plans`; `src/kernel/workflows.json` is the
-machine authority for its phase sequence and allowed profiles. Workers resolve
-their context via `bash src/verify-agent-docs.sh --resolve <profile-id>`.
+machine authority for its phase sequence and allowed profiles. Each dispatch
+names that profile's exact rule files directly; `--resolve` is a source-only
+authoring aid, not a runtime worker step.
 
 Parallelize by plan/workstream disjointness; editing is serial on the shared
 tree. When parallel implementation workers are worth the cost, give each its own
