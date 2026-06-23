@@ -11,9 +11,9 @@ owning_docs:
 
 # Build the focused execution kernel
 
-> **Supersedes** `agent-docs-focused-execution-kernel-shipping-plan.md`. The
-> revised build plan with the review verdict and all ten review-question
-> dispositions baked in; the companion review-plan is unchanged.
+> **Supersedes** the shipping-plan and review-plan (both deleted). The
+> revised build plan has the review verdict and all ten review-question
+> dispositions baked in.
 
 ## Mission
 
@@ -395,8 +395,6 @@ the two live canaries per adapter. Then set `status: shipped`,
 
 ## See also
 
-- `agent-docs-focused-execution-kernel-review-plan.md` (design proposal),
-  `agent-docs-focused-execution-kernel-shipping-plan.md` (superseded).
 - [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md),
   [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md),
   [`../decisions/agent-docs.md`](../decisions/agent-docs.md)
