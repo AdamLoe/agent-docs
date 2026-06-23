@@ -30,8 +30,8 @@ for workflow surfaces, use
 | `src/kernel/` | Machine-authored JSON kernel: profiles, scenarios, workflows, packs. |
 | `src/template/docs/` | Docs scaffold copied by `/rebuild-agent-docs`. |
 | `export-chatgpt-context.sh` | Top-level source-repo tool: exports this repo as grouped Markdown chunks for ChatGPT planning. Not bundled into the runtime. |
-| `src/install.sh` | Installer for the neutral checkout and copied skill adapters. |
-| `src/copy-skills.sh` | Refresh/check script for Claude and Codex copied skills. |
+| `src/install-agentdocs.sh` | Bundled GitHub installer: publishes the kit to `~/.agentdocs/` and refreshes the Claude/Codex skill adapters inline (managed-skill copy embedded; no separate refresh script). |
+| `install-agentdocs-local.sh` | Top-level dev/dogfood installer for the local checkout. |
 | `src/verify-agent-docs.sh` | Non-mutating kit drift gate, plus targetable docs scaffold checks with `--scaffold`. |
 
 ## See also
