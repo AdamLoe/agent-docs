@@ -402,6 +402,31 @@ require_layout_path() {
     fail "repository layout missing stable path: $layout_path"
 }
 
+# Every repo path the layout table inventories (the backtick-quoted first column)
+# must exist on disk. require_layout_path only proves a path is LISTED, not that
+# it RESOLVES, so a retired file left in the table (e.g. the src/install.sh /
+# src/copy-skills.sh rows) survived a green build. This closes that gap: each
+# inventoried path is checked as a real file or directory.
+validate_layout_paths_exist() {
+  local layout_path
+  local normalized
+
+  while IFS= read -r layout_path; do
+    [ -n "$layout_path" ] || continue
+    normalized=${layout_path%/}
+    [ -e "$repo_root/$normalized" ] ||
+      fail "repository layout references missing repo path: $layout_path"
+  done < <(
+    awk -F'|' '
+      /^\| `[^`]+` \|/ {
+        cell = $2
+        gsub(/^[[:space:]]*`|`[[:space:]]*$/, "", cell)
+        print cell
+      }
+    ' "$repo_root/docs/repository-layout.md"
+  )
+}
+
 validate_word_budgets() {
   local file
 
@@ -474,12 +499,14 @@ validate_word_budgets() {
 }
 
 # execution.yaml is the per-repo execution binding (human-authored YAML). The
-# kernel stays JSON read by stdlib json; execution.yaml needs a YAML parser. Per
-# the PyYAML-optional policy, this validator TRIES to import a YAML parser:
-# present, it validates the FULL schema (every required top-level key, scalar
-# types, and the {} / [] container shapes); absent, it degrades to a shallow
-# presence/text check plus an "install pyyaml" remediation. Both branches leave
-# the gate GREEN so the core gate runs offline on any bash + stdlib-python host.
+# kernel stays JSON read by stdlib json; execution.yaml needs a YAML parser. A
+# YAML parser is a HARD prerequisite for this gate: if it cannot parse the
+# binding (no PyYAML, or malformed YAML) it FAILS loudly. The previous
+# "graceful degradation to a shallow text scan, still GREEN" branch was a
+# false-green — it passed an unparseable binding as if validated and let the
+# resolver route empty packs from a binding nobody had actually parsed. A
+# dogfood kit installs PyYAML rather than ship a gate that green-lights what it
+# never read.
 EXECUTION_YAML_REQUIRED_KEYS="schema_version language roots commands path_to_check services browser database protected_paths forbidden_paths generated_paths scarce_resources pack_routes bootstrap secrets observability network test_data"
 
 validate_execution_yaml() {
@@ -509,19 +536,13 @@ text = path.read_text(encoding="utf-8")
 try:
     import yaml
 except ImportError:
-    # Graceful degradation: no parser, so we cannot validate the schema. Run a
-    # shallow presence/text check (each required key visibly present as a
-    # top-level `key:` line) and emit a clear remediation. Still GREEN.
-    missing = [k for k in required if not any(
-        line.split("#", 1)[0].rstrip().startswith(k + ":")
-        for line in text.splitlines())]
-    if missing:
-        print(f"EXECUTION-YAML FAIL ({label}): missing top-level keys "
-              f"{', '.join(missing)} in {path}", file=sys.stderr)
-        raise SystemExit(1)
-    print(f"  {label}: execution.yaml present, {len(required)} required keys "
-          f"text-checked (install pyyaml for full execution.yaml validation)")
-    raise SystemExit(0)
+    # No parser means the binding cannot be parsed, so the gate cannot validate
+    # the schema. Fail loudly rather than green-light an unvalidated binding.
+    print(f"EXECUTION-YAML FAIL ({label}): no YAML parser available; cannot "
+          f"parse the execution binding {path}. Install pyyaml "
+          f"(pip install pyyaml) — the gate refuses to pass an unparsed binding.",
+          file=sys.stderr)
+    raise SystemExit(1)
 
 # Parser present: validate the full schema.
 try:
@@ -1710,8 +1731,9 @@ PY
   [ "$clean" -eq 1 ] && printf 'CLEAN: no fixed skill startup-loads lifecycle.md\n'
 
   # ---- Check 3: no spelled-out subagent bundles in skills ----------------
-  # Skills must name profile IDs + use --resolve, not list rules/subagent/ role
-  # cards. Warn on any literal rules/subagent/ path in a skill body.
+  # Skills must name profile IDs and let the dispatch carry the profile's rule
+  # files by name, not list rules/subagent/ role cards themselves. Warn on any
+  # literal rules/subagent/ path in a skill body.
   printf -- '-- check 3: no spelled-out subagent bundle paths in skills --\n'
   clean=1
   while IFS= read -r skill_file; do
@@ -2573,6 +2595,10 @@ for layout_path in \
   "src/plan-template.md"; do
   require_layout_path "$layout_path"
 done
+
+# Existence coverage: every path the layout table inventories must resolve on
+# disk, so a retired-but-listed row cannot survive a green build.
+validate_layout_paths_exist
 
 require_text "src/rules/authoring-rules.md" "Cache-stable layer" \
   "authoring rules missing cache-stable layer policy"
