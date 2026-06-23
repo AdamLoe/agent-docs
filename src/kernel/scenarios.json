@@ -1,16 +1,27 @@
 {
-  "_comment": "Kernel machine authority for the workflow scenario matrix. The first 11 rows are reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same fields); Wave 2 added orchestrate-planning-scope-first, asserting planning.scope is the fixed entry phase of every /orchestrate run; Wave 5 added blocked-handoff-discharge, asserting a mutating worker that ends blocked records the handoff and discharges it (commits or reverts) before final verification. NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. This is the SOLE authority for scenario rows.",
+  "_comment": "Kernel machine authority for the workflow scenario matrix. The first 11 rows are reused verbatim from the retired src/verify-fixtures/workflow-scenarios.json fixture (same fields); Wave 2 (now reversed) replaced its mandatory-scope-first orchestrate rows with a conditional bounded fast path: orchestrate-bounded-fast-path asserts a bounded /orchestrate request (stated outcome + acceptance + likely check) dispatches implementation.* directly with NO scope hop, and orchestrate-scope-when-unresolved asserts planning.scope runs ONLY when classification, decomposition, or a genuine user decision is unresolved; Wave 5 added blocked-handoff-discharge, asserting a mutating worker that ends blocked records the handoff and discharges it (commits or reverts) before final verification. NEVER auto-loaded by any skill or runtime context. The verifier reads this for the --context-report SCENARIO output and the scenario-contract gate. This is the SOLE authority for scenario rows.",
   "scenarios": [
     {
-      "scenario_id": "orchestrate-planning-scope-first",
-      "task_shape": "any /orchestrate request, bounded or broad",
+      "scenario_id": "orchestrate-bounded-fast-path",
+      "task_shape": "a bounded /orchestrate request already stating a bounded outcome, acceptance, and a likely check",
+      "expected_questions": "none; the bounded outcome is already stated, no scope brief and no dial picker",
+      "expected_profiles": "implementation.code or implementation.code-docs directly, plus verification.readonly; no planning.scope hop",
+      "expected_phases": "orchestrator classifies inline as bounded, then dispatches one implementation worker then final verification",
+      "expected_mutator_count": 1,
+      "state_basis_fields": "HEAD plus exact dirty paths",
+      "final_ordering": "implementation dispatched directly with no scope hop; gate observes post-mutation state",
+      "budget_expectation": "report-only; the bounded fast path avoids the scope-worker hop"
+    },
+    {
+      "scenario_id": "orchestrate-scope-when-unresolved",
+      "task_shape": "an /orchestrate request whose classification, decomposition, or a genuine user decision is unresolved",
       "expected_questions": "relayed from the planning.scope brief's user decisions",
-      "expected_profiles": "planning.scope first as the fixed entry phase, then the profile per phase the brief resolves",
+      "expected_profiles": "planning.scope first, then the profile per phase the brief resolves",
       "expected_phases": "planning.scope brief then the bounded/briefed/tracked lifecycle it resolves",
       "expected_mutator_count": "0 in the scope phase",
       "state_basis_fields": "HEAD plus exact dirty paths",
-      "final_ordering": "planning.scope dispatched first; no inline classification before it",
-      "budget_expectation": "report-only; scope-worker hop is the accepted cost regression"
+      "final_ordering": "planning.scope runs only when the request is unresolved, never for an already-bounded request",
+      "budget_expectation": "report-only; the scope hop is paid only when classification is genuinely unresolved"
     },
     {
       "scenario_id": "bounded-quick-fix",

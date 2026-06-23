@@ -40,19 +40,20 @@ never silently do the worker's job inline.
 
 Each entry skill has a fixed first phase; the orchestrator does not improvise it:
 
-- **`/orchestrate`** — **always `planning.scope` first.** The orchestrator never
-  classifies the change inline. It dispatches a read-only `planning.scope` worker
-  whose workflow-brief *resolves* the ladder below and names the recommended
-  profile per phase; the orchestrator relays the brief's user-decision questions
-  and drives the resolved lifecycle. The scope-worker hop on bounded runs is the
-  accepted cost regression.
+- **`/orchestrate`** — **conditional bounded fast path.** The orchestrator
+  classifies inline (cheap routing, never implementation). A bounded request
+  (stated outcome + acceptance + likely check) dispatches an `implementation.*`
+  worker **directly** — no scope hop. A read-only `planning.scope` worker runs
+  **only** when classification, decomposition, or a genuine user decision is
+  unresolved; its workflow-brief then *resolves* the ladder below and the
+  recommended profile per phase. Subagent-first holds on both routes.
 - **`/quick-fix`** → implementation; **`/plan`** → planning; **doc/plan checks**
   → inspection; **named reviews** → review — committed without a scope pass.
 
-## The classification ladder (what `planning.scope` resolves)
+## The classification ladder
 
-The brief picks the smallest safe lifecycle. This is the brief's output, not
-something the orchestrator applies inline:
+The orchestrator picks the smallest safe lifecycle. A bounded request resolves it
+inline and dispatches directly; an unresolved one gets the `planning.scope` brief:
 
 - **Pure routing / IO** — one read-and-summarize or IO step. Inline; no worker.
 - **One bounded change** — a single implementation worker, plus optional review

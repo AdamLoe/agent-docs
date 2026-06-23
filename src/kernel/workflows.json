@@ -27,14 +27,14 @@
     {
       "id": "orchestrate",
       "skill": "orchestrate",
-      "first_phase": "planning.scope",
+      "first_phase": "implementation",
       "allowed_profiles": [
-        "planning.scope",
-        "planning.brief",
-        "planning.tracked",
         "implementation.code",
         "implementation.code-docs",
         "implementation.tracked",
+        "planning.scope",
+        "planning.brief",
+        "planning.tracked",
         "review.generic",
         "review.docs",
         "review.plan",

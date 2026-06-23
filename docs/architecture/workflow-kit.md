@@ -71,11 +71,13 @@ exact rule links, starting inputs, path plus heading/search hints for large docs
 observed facts to preserve, expected checks/evidence, and report shape. Packets
 stay compact: no copied rules, generated artifacts, or full transcripts.
 
-Every `/orchestrate` run opens with a read-only `planning.scope` worker (the
-fixed first phase) that investigates and returns a **workflow-brief**; lighter
-work uses a `planning.brief` worker for an inline implementation brief. Both
-briefs are plain Markdown, not generated packets. The canonical field shape is
-owned by
+`/orchestrate` takes a **conditional bounded fast path**: it classifies the
+request inline and dispatches an `implementation.*` worker directly when the
+request already states a bounded outcome, acceptance, and a likely check;
+otherwise it opens with a read-only `planning.scope` worker that investigates and
+returns a **workflow-brief**. Lighter work uses a `planning.brief` worker for an
+inline implementation brief. Both briefs are plain Markdown, not generated
+packets. The canonical field shape is owned by
 [`../../src/rules/subagent/planning.md`](../../src/rules/subagent/planning.md)
 (`## Workflow-brief`) and not duplicated here.
 
@@ -151,8 +153,8 @@ shipping any kit change, run `bash src/verify-agent-docs.sh`.
 With no arguments, the verifier validates the source checkout: docs, manifest,
 ownership, skill registry, template scaffold, the kernel, `execution.yaml`
 schema, pack triggers/non-activation, the source-bound contract checks, the
-single-authority and clean-handoff/cost-regression scenario gates, stale
-references, executable bits, and adapter freshness. `--equivalence` is the
+single-authority and clean-handoff scenario gates, stale references, executable
+bits, and adapter freshness. `--equivalence` is the
 standalone single-authority proof. Outside the source repo it prints a
 `--scaffold` directive and exits 0.
 
@@ -166,9 +168,10 @@ The full command inventory lives in
 below picks the smallest owner. Load-bearing workflow facts not obvious from a
 command name:
 
-- `/orchestrate` always begins with a `planning.scope` worker as its fixed first
-  phase (the uniform scope brief resolving bounded/briefed/tracked); the accepted
-  cost regression is bounded by a cost-regression budget guard.
+- `/orchestrate` takes a conditional bounded fast path: a bounded request
+  (stated outcome + acceptance + likely check) dispatches `implementation.*`
+  directly with no scope hop, and a read-only `planning.scope` worker runs only
+  when classification, decomposition, or a user decision is unresolved.
 - `/quick-fix` dispatches implementation only for already bounded fixes; unclear
   small work is first shaped by a planning worker or routed to `/plan`.
 - `/feedback-agent-docs` appends to the runtime inbox

@@ -787,38 +787,6 @@ print(f"  read-only skill/profile consistency: {len(no_commit)} no-commit skills
 PY
 }
 
-# validate_scope_hop_budget: the cost-regression budget guard (Q1 accepted
-# regression). Making planning.scope the fixed first /orchestrate phase adds a
-# read-only scope-worker hop to EVERY /orchestrate run. This guard MEASURES that
-# hop's resolved cost (planning.scope's resolved core words) and BOUNDS it by the
-# kernel's documented planning.scope budget_words, so the accepted regression
-# stays visible and bounded rather than drifting silently. Correctness basis: the
-# bound is the kernel's own E3-style measured floor for planning.scope (its
-# core rule planning.md, ~498 words today) plus the small headroom already baked
-# into budget_words (510) - read live from the kernel, NOT a second literal, so
-# single authority holds and the bound is never inflated past the measured floor.
-# FAILs if the measured scope-hop cost exceeds the documented bound.
-validate_scope_hop_budget() {
-  local python_cmd measured bound
-  python_cmd=$(find_python_cmd)
-  [ -n "$python_cmd" ] || fail "cannot validate scope-hop budget; install python"
-
-  bound=$(
-    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
-import json, sys
-p = next(p for p in json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
-         if p["id"] == "planning.scope")
-print(p["budget_words"])
-PY
-  )
-  measured=$(profile_word_total "src/rules/subagent/planning.md")
-  if [ "$measured" -gt "$bound" ]; then
-    fail "cost-regression guard: planning.scope scope-worker hop costs $measured words > documented bound $bound (the uniform /orchestrate scope phase regression is unbounded)"
-  fi
-  printf '  scope-worker hop (planning.scope) cost %s words <= documented bound %s (Q1 regression bounded)\n' \
-    "$measured" "$bound"
-}
-
 # Profile rows come from the kernel (src/kernel/profiles.json), the sole machine
 # authority for worker context profiles since the Wave 1b cutover. Emits one
 # tab-separated row per profile in the legacy column order so every downstream
@@ -942,22 +910,17 @@ context_report() {
     printf 'SCENARIO CONTRACT AVAILABLE: rerun without --profile for all rows\n'
   fi
 
-  # Cost-regression measurement: surface the added scope-worker hop (planning.scope)
-  # cost and its documented bound so a reader sees the bounded Q1 regression. The
-  # uniform planning.scope first phase costs this on EVERY /orchestrate run.
+  # Scope-worker hop measurement: surface the planning.scope cost a reader pays
+  # ONLY when /orchestrate cannot classify a bounded request inline. The Q1
+  # reversal made the scope hop conditional (a bounded request takes the
+  # implementation.* fast path with no scope hop), so this is informational, not
+  # an accepted per-run regression.
   if [ -z "$profile_filter" ] || [ "$profile_filter" = "planning.scope" ]; then
-    local scope_hop_cost scope_hop_bound python_cmd
+    local scope_hop_cost python_cmd
     python_cmd=$(find_python_cmd)
-    scope_hop_bound=$(
-      "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
-import json, sys
-print(next(p for p in json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
-           if p["id"] == "planning.scope")["budget_words"])
-PY
-    )
     scope_hop_cost=$(profile_word_total "src/rules/subagent/planning.md")
-    printf 'SCOPE-WORKER HOP (Q1 accepted regression): added to every /orchestrate run; cost=%s words bound=%s words (within bound)\n' \
-      "$scope_hop_cost" "$scope_hop_bound"
+    printf 'SCOPE-WORKER HOP (conditional): planning.scope costs %s words, paid only when /orchestrate classification is unresolved; the bounded fast path skips it\n' \
+      "$scope_hop_cost"
   fi
 
   if [ -z "$profile_filter" ]; then
@@ -1330,10 +1293,12 @@ equivalence_check() {
   fi
   printf 'ok   superseded Markdown profile table and JSON scenario fixture are gone\n'
 
-  # 2. The kernel still parses and resolves all 14 profiles + 13 scenarios.
-  #    (Wave 2 added the read-only planning.scope profile and the
-  #    orchestrate-planning-scope-first scenario row; Wave 3 added the read-only
-  #    docs.inspect and plans.inspect inspection profiles; Wave 5 added the
+  # 2. The kernel still parses and resolves all 14 profiles + 14 scenarios.
+  #    (Wave 2 added the read-only planning.scope profile; the Q1 reversal
+  #    replaced its single mandatory orchestrate-planning-scope-first row with
+  #    the conditional pair orchestrate-bounded-fast-path +
+  #    orchestrate-scope-when-unresolved; Wave 3 added the read-only docs.inspect
+  #    and plans.inspect inspection profiles; Wave 5 added the
   #    blocked-handoff-discharge scenario row.)
   if ! "$python_cmd" - \
        "$repo_root/src/kernel/profiles.json" \
@@ -1343,8 +1308,8 @@ profiles = json.load(open(sys.argv[1], encoding="utf-8"))["profiles"]
 scenarios = json.load(open(sys.argv[2], encoding="utf-8"))["scenarios"]
 if len(profiles) != 14:
     raise SystemExit(f"kernel profiles count {len(profiles)} != 14")
-if len(scenarios) != 13:
-    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 13")
+if len(scenarios) != 14:
+    raise SystemExit(f"kernel scenarios count {len(scenarios)} != 14")
 print(f"ok   kernel resolves {len(profiles)} profiles and {len(scenarios)} scenarios")
 PY
   then
@@ -1993,17 +1958,24 @@ PY
   fi
   [ "$clean" -eq 1 ] && printf 'CLEAN: report fields and final-ordering rule present\n'
 
-  # ---- Check 9: planning.scope is the fixed first /orchestrate phase ------
-  # Wave 2 made planning.scope the deterministic entry phase of every
-  # /orchestrate run (no inline bounded/briefed/tracked classification; the
-  # cost regression is accepted). This GATES three coupled facts together:
-  #   (a) the orchestrate-mapped scenario row names planning.scope FIRST in
-  #       expected_profiles;
-  #   (b) the kernel orchestrate workflow's first_phase is planning.scope;
-  #   (c) the orchestrate skill body still commits to dispatching planning.scope
-  #       first (so the controller can't silently drop the entry phase).
-  # Any drift in one of the three fails the gate.
-  printf -- '-- check 9: planning.scope is the fixed first /orchestrate phase --\n'
+  # ---- Check 9: conditional bounded fast path for /orchestrate -----------
+  # The Q1 reversal replaced "always planning.scope first" with a conditional
+  # bounded fast path: a bounded request (stated outcome + acceptance + likely
+  # check) dispatches implementation.* DIRECTLY; planning.scope runs ONLY when
+  # classification, decomposition, or a genuine user decision is unresolved.
+  # This GATES four coupled facts together:
+  #   (a) the orchestrate-bounded-fast-path scenario names an implementation.*
+  #       profile FIRST and NOT planning.scope (the fast path skips the hop);
+  #   (b) the orchestrate-scope-when-unresolved scenario names planning.scope
+  #       first AND scopes it to the unresolved case ("only when");
+  #   (c) the kernel orchestrate workflow's first_phase is NOT planning.scope,
+  #       allows the implementation profiles (fast path dispatchable), and still
+  #       allows planning.scope (the unresolved case);
+  #   (d) the orchestrate skill body dispatches implementation.* directly for a
+  #       bounded request AND runs planning.scope only when unresolved, and does
+  #       NOT commit to dispatching planning.scope first/always.
+  # Any drift in one of the four fails the gate.
+  printf -- '-- check 9: conditional bounded fast path for /orchestrate --\n'
   local scope_out scope_violations
   scope_out=$(
     "$python_cmd" - \
@@ -2022,55 +1994,106 @@ profile_re = re.compile(
     r"[a-z][a-z-]*\b"
 )
 
-# (a) the orchestrate-mapped scenario row names planning.scope FIRST.
+# (a) the bounded fast-path scenario names implementation.* FIRST, not scope.
 row = next(
-    (s for s in scenarios if s["scenario_id"] == "orchestrate-planning-scope-first"),
+    (s for s in scenarios if s["scenario_id"] == "orchestrate-bounded-fast-path"),
     None,
 )
 if row is None:
-    print("WARN missing scenario row: orchestrate-planning-scope-first")
+    print("WARN missing scenario row: orchestrate-bounded-fast-path")
     violations += 1
 else:
     found = profile_re.findall(row.get("expected_profiles", ""))
-    if not found or found[0] != "planning.scope":
+    if not found or not found[0].startswith("implementation."):
         print(
-            "WARN orchestrate-planning-scope-first: expected_profiles must name "
-            f"planning.scope first, got {found!r}"
+            "WARN orchestrate-bounded-fast-path: expected_profiles must name an "
+            f"implementation.* profile first, got {found!r}"
+        )
+        violations += 1
+    elif "planning.scope" in found:
+        print(
+            "WARN orchestrate-bounded-fast-path: must NOT name planning.scope "
+            "(the bounded fast path skips the scope hop)"
         )
         violations += 1
     else:
-        print("ok   scenario row names planning.scope as the first entry phase")
+        print("ok   bounded fast-path scenario dispatches implementation.* with no scope hop")
 
-# (b) the kernel orchestrate workflow first_phase is planning.scope.
-wf = next((w for w in workflows if w["id"] == "orchestrate"), None)
-if wf is None or wf.get("first_phase") != "planning.scope":
-    print(
-        "WARN kernel orchestrate workflow first_phase must be planning.scope, "
-        f"got {wf.get('first_phase') if wf else None!r}"
-    )
-    violations += 1
-elif "planning.scope" not in wf.get("allowed_profiles", []):
-    print("WARN kernel orchestrate workflow allowed_profiles missing planning.scope")
-    violations += 1
-else:
-    print("ok   kernel orchestrate workflow enters at planning.scope")
-
-# (c) the orchestrate skill body commits to dispatching planning.scope first.
-commits_first = (
-    "planning.scope" in skill_body
-    and re.search(
-        r"planning\.scope[^\n]{0,80}\bfirst\b|\bfirst\b[^\n]{0,80}planning\.scope|"
-        r"always dispatch(?:es)?[^\n]{0,40}planning\.scope|"
-        r"planning\.scope[^\n]{0,40}always",
-        skill_body,
-        re.I,
-    )
+# (b) the scope-when-unresolved scenario names planning.scope first, conditionally.
+row = next(
+    (s for s in scenarios if s["scenario_id"] == "orchestrate-scope-when-unresolved"),
+    None,
 )
-if not commits_first:
-    print("WARN orchestrate skill body no longer commits to dispatching planning.scope first")
+if row is None:
+    print("WARN missing scenario row: orchestrate-scope-when-unresolved")
     violations += 1
 else:
-    print("ok   orchestrate skill body dispatches planning.scope first")
+    found = profile_re.findall(row.get("expected_profiles", ""))
+    blob = " ".join(str(v) for v in row.values()).lower()
+    if not found or found[0] != "planning.scope":
+        print(
+            "WARN orchestrate-scope-when-unresolved: expected_profiles must name "
+            f"planning.scope first, got {found!r}"
+        )
+        violations += 1
+    elif "only when" not in blob and "unresolved" not in blob:
+        print(
+            "WARN orchestrate-scope-when-unresolved: must scope planning.scope to "
+            "the unresolved case ('only when' / 'unresolved')"
+        )
+        violations += 1
+    else:
+        print("ok   scope scenario runs planning.scope only when classification is unresolved")
+
+# (c) the kernel orchestrate workflow is NOT scope-first but keeps both routes.
+wf = next((w for w in workflows if w["id"] == "orchestrate"), None)
+allowed = wf.get("allowed_profiles", []) if wf else []
+has_impl = any(p.startswith("implementation.") for p in allowed)
+if wf is None:
+    print("WARN kernel orchestrate workflow missing")
+    violations += 1
+elif wf.get("first_phase") == "planning.scope":
+    print("WARN kernel orchestrate workflow first_phase must no longer be planning.scope")
+    violations += 1
+elif not has_impl:
+    print("WARN kernel orchestrate workflow must allow an implementation.* fast-path profile")
+    violations += 1
+elif "planning.scope" not in allowed:
+    print("WARN kernel orchestrate workflow must still allow planning.scope for the unresolved case")
+    violations += 1
+else:
+    print("ok   kernel orchestrate workflow enters at implementation.* with planning.scope conditional")
+
+# (d) the orchestrate skill body dispatches the conditional path, not scope-always.
+dispatches_direct = re.search(
+    r"implementation\.[a-z-]+[^\n]{0,120}\b(direct|directly)\b|"
+    r"\b(direct|directly)\b[^\n]{0,120}implementation\.[a-z-]+",
+    skill_body,
+    re.I,
+)
+scope_conditional = re.search(
+    r"planning\.scope[^\n]{0,160}\bonly\b|\bonly\b[^\n]{0,160}planning\.scope",
+    skill_body,
+    re.I,
+)
+commits_scope_always = re.search(
+    r"planning\.scope[^\n]{0,80}\bfirst\b|\bfirst\b[^\n]{0,80}planning\.scope|"
+    r"always dispatch(?:es)?[^\n]{0,40}planning\.scope|"
+    r"planning\.scope[^\n]{0,40}always",
+    skill_body,
+    re.I,
+)
+if commits_scope_always:
+    print("WARN orchestrate skill body still commits to dispatching planning.scope first/always")
+    violations += 1
+elif not dispatches_direct:
+    print("WARN orchestrate skill body must dispatch implementation.* directly for a bounded request")
+    violations += 1
+elif not scope_conditional:
+    print("WARN orchestrate skill body must run planning.scope only when classification is unresolved")
+    violations += 1
+else:
+    print("ok   orchestrate skill body dispatches the conditional bounded fast path")
 
 print(f"__VIOLATIONS__ {violations}")
 PY
@@ -2078,7 +2101,7 @@ PY
   scope_violations=$(printf '%s\n' "$scope_out" | awk '/^__VIOLATIONS__/{print $2}')
   printf '%s\n' "$scope_out" | grep -v '^__VIOLATIONS__'
   violations=$((violations + ${scope_violations:-0}))
-  [ "${scope_violations:-0}" -eq 0 ] && printf 'CLEAN: planning.scope is the fixed first /orchestrate phase\n'
+  [ "${scope_violations:-0}" -eq 0 ] && printf 'CLEAN: conditional bounded fast path for /orchestrate\n'
 
   # ---- Check 10: clean-handoff git invariant consistency -----------------
   # Wave 5 replaced "a mutating worker commits every completed slice" with the
@@ -2283,7 +2306,7 @@ for row in profile_rows:
         raise SystemExit(f"{profile_id}: word budget exceeded {total}>{budget_value}")
 
 required_scenarios = {
-    "orchestrate-planning-scope-first",
+    "orchestrate-bounded-fast-path", "orchestrate-scope-when-unresolved",
     "bounded-quick-fix", "unclear-small-work", "medium-brief-plan",
     "tracked-change-plan", "dirty-tree-shipping", "named-plan-shipping",
     "docs-repair", "report-only-review", "configured-app-review",
@@ -2295,7 +2318,8 @@ if missing:
     raise SystemExit(f"missing scenario rows: {sorted(missing)}")
 
 checks = {
-    "orchestrate-planning-scope-first": ["planning.scope first", "no inline classification before it"],
+    "orchestrate-bounded-fast-path": ["implementation.code", "no planning.scope hop", "no scope hop"],
+    "orchestrate-scope-when-unresolved": ["planning.scope first", "only when"],
     "bounded-quick-fix": ["no classifier", "implementation.code", "one implementation", "gate observes post-mutation"],
     "unclear-small-work": ["one material task question", "no dial picker"],
     "medium-brief-plan": ["planning.brief", "read-only"],
@@ -2657,12 +2681,6 @@ section "read-only skill/profile consistency checks"
 # (the SKILL-layer half of read-only-vs-mutating consistency; the profile-layer
 # half is in validate_context_profiles).
 validate_readonly_skill_profiles
-
-section "cost-regression budget guard (scope-worker hop)"
-# Bounds the Q1-accepted regression: the uniform planning.scope first phase adds a
-# read-only scope-worker hop to every /orchestrate run; this measures that hop and
-# FAILs if it grows past the kernel's documented planning.scope bound.
-validate_scope_hop_budget
 
 # Gates (c) + (d): the deterministic pack-merge rule, proven against the dogfood
 # repo. The resolver is the SOLE pack loader; agent-docs (bash + markdown) routes

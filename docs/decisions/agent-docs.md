@@ -426,18 +426,41 @@ Markdown/bash.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
-## Uniform `planning.scope` `/orchestrate` entry
+## Conditional bounded fast path for `/orchestrate`
 
-**Decision.** Every `/orchestrate` run begins with a read-only `planning.scope`
-worker that produces a workflow brief; the orchestrator never short-circuits it,
-even for bounded work. Read-only skills never select a mutating profile.
+> **Supersedes** the prior "Uniform `planning.scope` `/orchestrate` entry"
+> decision, which made a read-only `planning.scope` worker the mandatory first
+> phase of every run and accepted a per-run cost regression. That call is
+> reversed.
 
-**Why.** A uniform entry phase removes the inline bounded/briefed/tracked
-classification and gives every run the same source-backed scoping. The **cost
-regression on bounded runs is accepted**; a Wave 7 budget guard measures the
-added scope-worker hop, keeping it visible.
+**Decision.** `/orchestrate` classifies the request inline (cheap routing, never
+implementation) and takes one of two routes. When the request already states a
+bounded outcome, an acceptance criterion, and a likely check, the orchestrator
+dispatches an `implementation.*` worker **directly** — no scope hop. It dispatches
+a read-only `planning.scope` worker **only** when classification, decomposition,
+or a genuine user decision is unresolved; that brief then resolves the
+bounded/briefed/tracked lifecycle. Subagent-first is retained on both routes: the
+orchestrator only routes work, never does it inline. The cost-regression budget
+guard that bounded the old mandatory scope hop is removed (the hop is now
+conditional, so there is no per-run regression to bound).
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/).
+**Why.** Dogfooding showed the mandatory scope phase taxes every already-bounded
+`/orchestrate` run with a read-only worker hop that resolves nothing new — the
+request had already stated the outcome, acceptance, and check. Charging that hop
+unconditionally is the cost regression the prior decision accepted; for a
+single-author dogfood kit it is not worth paying when the bounded shape is
+already legible. Making the scope worker conditional restores the fast path while
+keeping the source-backed scoping for genuinely unresolved work.
+
+**Alternatives considered.** Keeping the uniform scope-first entry (the
+superseded decision) — rejected: it pays a worker hop on every bounded run for no
+new information. Dropping `planning.scope` entirely — rejected: unresolved,
+multi-stream, or decision-laden requests still need a source-backed brief before
+the lifecycle can be chosen.
+
+**Code anchors.** `src/skills/orchestrate/SKILL.md → ## Entry: conditional bounded fast path`; `src/rules/orchestrator/lifecycle.md → ## Deterministic first phases`; `src/kernel/workflows.json → orchestrate`; `src/kernel/scenarios.json → orchestrate-bounded-fast-path`, `orchestrate-scope-when-unresolved`; `src/verify-agent-docs.sh → check 9`.
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/kernel/`](../../src/kernel/), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
 ## Source-only until final migration
 
