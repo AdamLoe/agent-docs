@@ -151,11 +151,14 @@ shipping any kit change, run `bash src/verify-agent-docs.sh`.
 
 With no arguments, the verifier validates the source checkout: docs, manifest,
 ownership, skill registry, template scaffold, the kernel, `execution.yaml`
-schema, pack triggers/non-activation, the source-bound contract checks, the
+schema, pack triggers/non-activation (prose gated for *shipped* packs only; the
+six deferred packs are listed, not gated), the source-bound contract checks, the
 single-authority and clean-handoff scenario gates, stale references, executable
-bits, and adapter freshness. `--equivalence` is the
-standalone single-authority proof. Outside the source repo it prints a
-`--scaffold` directive and exits 0.
+bits, and adapter freshness. Launch and doc-class budgets are
+**advisory-with-ceiling**: an over-target doc/skill WARNs (non-gating) and only an
+over-ceiling one fails; contract-check 7 (scenario→skill profile naming) is
+advisory. `--equivalence` is the standalone single-authority proof. Outside the
+source repo it prints a `--scaffold` directive and exits 0.
 
 For profile inspection use `--context-report [--profile <id>]`. A consuming repo
 runs the target-aware scaffold check `bash ~/.agentdocs/verify-agent-docs.sh

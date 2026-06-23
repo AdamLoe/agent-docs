@@ -296,29 +296,45 @@ deterministic checks catch drift without adapter runtime metrics.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
-## Enforced budgets with correctness floors (E3)
+## Budgets with correctness floors (E3) and advisory-with-ceiling (Wave 3)
 
-**Decision.** All budgets enforced. Three profiles were raised to measured floors
-(planning.tracked 1600, review.docs 1200, maintenance.plan 2100) after full
-relocation with zero correctness loss. Launch budgets: fixed-skill 2000,
-classifier 3300. No budget rises without a documented correctness reason.
+**Decision.** Per-profile context budgets keep their measured correctness floors
+(planning.tracked 1600, review.docs 1200, maintenance.plan 2100) and stay enforced
+by `enforcement_status`. **Launch budgets and documentation-class budgets are
+advisory-with-ceiling:** each kind keeps an advisory target (launch: fixed 2000,
+classifier 3300; doc classes unchanged) plus an absolute hard ceiling (launch:
+fixed 2600, classifier 4200, kernel-owned; doc classes: target × 1.2). An overage
+above the advisory target is a non-gating WARN; only an overage above the ceiling
+fails the gate. No budget rises without a documented reason.
 
-**Why.** Deleting rules to hit a number is worse than an honest floor;
-enforcement makes over-budget a hard gate failure.
+**Why.** The Wave-5b zero-headroom launch floors sat a few percent above the
+honest measured maxima, so any addition broke the gate — a "budget treadmill" with
+no value for a single-author dogfood kit. Advisory-with-ceiling keeps a target to
+hold and a real safety net against runaway bloat / un-split docs, without gating on
+a one-word overage. Deleting rules to hit a number is still worse than an honest
+floor.
 
-**Code anchors.** `src/rules/context-profiles.md → Budget floors`, `Launch budgets`; `src/verify-agent-docs.sh → fixed_budget`, `classifier_budget`.
+**Code anchors.** `src/rules/context-profiles.md → Budget floors`, `Launch budgets`; `src/kernel/profiles.json → budgets` (`*_skill_launch`, `*_skill_ceiling`); `src/verify-agent-docs.sh → enforce_doc_budget`, `doc_budget_ceiling`, `contract_check` (check 1).
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh), [`../../src/kernel/profiles.json`](../../src/kernel/profiles.json).
 
 ## Reference-leaf relocation pattern
 
 **Decision.** Each dense runtime rule keeps only the normative contract; examples
 and rationale relocate to never-auto-loaded `*-reference.md` leaves. Language
 idioms split into conditional overlays
-(`coding-style-{rust,python,frontend}.md`). Both add zero launch cost.
+(`coding-style-{rust,python,frontend}.md`). Both add zero launch cost. **Wave 3
+re-merge audit (kept ALL seven splits):** every `*-reference.md` (skill-contracts,
+context-profiles, authoring-rules, repo-rules, dispatch, lifecycle, plan-lifecycle)
+was tested against "is the normative parent unusable without it?" Each parent is
+fully self-applicable — the references carry only rationale, worked examples, and
+soft tuning (e.g. lifecycle's per-tier fan-out table, explicitly "vibes, not a
+rulebook"), never normative content the parent needs to apply. None re-merged;
+merging would only bloat always-loaded files past budget for no usability gain.
 
 **Why.** Relocating explanations compresses rules to correctness floors while
-keeping rationale.
+keeping rationale. Re-merge only when the loaded file genuinely cannot be applied
+without its exiled examples — which none here trip.
 
 **Code anchors.** `src/rules/*-reference.md`; `src/rules/orchestrator/*-reference.md`; `src/rules/coding-style-{rust,python,frontend}.md`.
 
@@ -353,18 +369,22 @@ risks the wrong plan.
 
 ## Source-bound contract-check gate
 
-**Decision.** `--contract-check` runs nine source-bound checks — launch budgets,
-lifecycle loading, subagent bundles, role authority, plan_closeout consistency,
-review-app pre-audit, scenario source-binding, report fields, and final-ordering.
-Exits nonzero on any violation; `PASS` never prints while a violation exists.
-`workflow-scenarios.json` is verifier-only.
+**Decision.** `--contract-check` runs source-bound checks — launch budgets
+(advisory target + hard ceiling), lifecycle loading, subagent bundles, role
+authority, plan_closeout consistency, review-app pre-audit, scenario source-binding
+(**check 7, ADVISORY/non-gating since Wave 3**), report fields, and final-ordering.
+Any *gating* violation exits nonzero; `PASS` never prints while one exists.
 
 **Why.** Phrase-checking a self-authored table proves only self-consistency;
-source-bound checks prove the contract against real files.
+source-bound checks prove the contract against real files. Check 7 (a mapped skill
+body must name a scenario's expected profile IDs) is low ground-truth value — a
+profile can be correctly dispatched without its literal ID appearing in the skill
+prose, and the kernel scenario/profile data is the real authority (gated by
+`--equivalence`) — so it reports ADVISORY lines without gating.
 
-**Code anchors.** `src/verify-agent-docs.sh → contract_check`; `src/verify-fixtures/workflow-scenarios.json`.
+**Code anchors.** `src/verify-agent-docs.sh → contract_check` (check 7 prints `ADVISORY`, increments `advisories` not `violations`); `src/kernel/scenarios.json`.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh), [`../../src/verify-fixtures/`](../../src/verify-fixtures/).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh), [`../../src/kernel/scenarios.json`](../../src/kernel/scenarios.json).
 
 ## Final-state shipping order
 
@@ -417,6 +437,27 @@ generated-repo-local-context. One machine fact never lives in both the kernel an
 Markdown/bash.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+
+## Deferred quality packs (dogfood routes only two)
+
+**Decision.** Each pack in `src/kernel/packs.json` carries a `status`. Only the
+two packs the dogfood repo routes in `docs/_meta/execution.yaml` are **shipped**
+and prose-gated: **`testing-reliability`** and **`deployment-ops`**. The other six
+are **deferred**: **`frontend`, `accessibility`, `backend-api`, `auth-security`,
+`db-migration`, `performance-concurrency`**. Deferred packs keep their authored
+leaf on disk but the verifier no longer gates their prose (`validate_kernel_packs`
+gates shipped packs only and LISTS the deferred ids); they are re-enabled by
+routing them in a repo's `execution.yaml` and flipping `status` to `shipped`.
+
+**Why.** agent-docs is bash + markdown — no frontend/UI/API/auth/DB/hot-concurrent
+surface — so six packs never route here and gating their prose was machinery a
+single-author dogfood kit does not earn. Deferring (not deleting) preserves the
+authored content for the day a consuming repo needs it. The pack-merge
+non-activation gate already proves deferred packs never activate.
+
+**Code anchors.** `src/kernel/packs.json → status`; `src/verify-agent-docs.sh → validate_kernel_packs` (shipped-only gate + deferred list).
+
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/kernel/packs.json`](../../src/kernel/packs.json), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
 ## Conditional bounded fast path for `/orchestrate`
 

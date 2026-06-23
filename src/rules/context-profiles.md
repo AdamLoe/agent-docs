@@ -111,28 +111,29 @@ author can read it with `bash src/verify-agent-docs.sh --resolve <id>` or
 
 A skill's controlled launch is its body plus the irreducible startup surface:
 the shared skill-contracts contract, the docs index, and its requested manifest
-slots (a classifier additionally reads `orchestrator/lifecycle.md`). After the
-Wave-5b honest `--measure-launch` fix — a `rules/...` path counts as a startup
-load only when a sentence genuinely instructs reading it at launch, never when
-it appears only in a prohibition, a `load only when/after` deferred-load gloss,
-or a References pointer — the enforced launch budgets sit at their E3 measured
-floors.
+slots (a classifier additionally reads `orchestrator/lifecycle.md`). A `rules/...`
+path counts as a startup load only when a sentence genuinely instructs reading it
+at launch, never when it appears only in a prohibition, a `load only when/after`
+deferred-load gloss, or a References pointer (the honest `--measure-launch`
+formula).
 
-The two enforced launch budgets (one for fixed skills, one for the allowlisted
-classifiers) and the classifier allowlist itself are kernel facts in
-`src/kernel/profiles.json` (`budgets`). Read the operative numbers and the
-allowlist with `bash src/verify-agent-docs.sh --context-report`; the
-`--measure-launch` mode reports each skill's actual launch total.
+Launch budgets are **advisory-with-ceiling**. Each kind carries two kernel facts
+in `src/kernel/profiles.json` (`budgets`): an **advisory target**
+(`fixed_skill_launch`, `classifier_skill_launch`) and an absolute **hard ceiling**
+(`fixed_skill_ceiling`, `classifier_skill_ceiling`). A launch over the advisory
+target prints a non-gating WARN; a launch over the ceiling fails the gate. This
+replaces the prior zero-headroom hard floor (the "budget treadmill" where the
+target sat a few percent above the honest measured maxima, so any addition broke
+the gate). The classifier allowlist is also a kernel fact.
 
-The aspirational targets are unreachable: the shared startup surface
-(skill-contracts 637 + docs index 114 + manifest slots 430 = 1181) loads on
-every launch, and a classifier irreducibly reads lifecycle.md (1037). The honest
-measured maxima are ~1922 for the heaviest fixed skill (`review-app`) and ~3118
-for the heaviest classifier (`orchestrate`), each leaving only a few percent of
-headroom against the enforced floor — which is why the budgets were set there.
-Per E3 these floors are documented target changes, not inflation to hide drift.
-The verifier (`src/verify-agent-docs.sh`) holds the operative values and gates on
-them; this prose is the human-owned rationale, not a second copy of the budgets.
+The startup surface (skill-contracts + docs index + manifest slots, plus
+lifecycle.md for a classifier) is irreducible and sets where the advisory targets
+sit; the ceiling gives real headroom above it without licensing unbounded growth.
+Read the operative numbers and the allowlist with
+`bash src/verify-agent-docs.sh --context-report`; `--measure-launch` reports each
+skill's actual launch total. The verifier holds the values and gates on the
+ceiling; this prose is the human-owned rationale, not a second copy of the
+budgets.
 
 ## See also
 

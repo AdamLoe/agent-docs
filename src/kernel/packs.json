@@ -1,9 +1,10 @@
 {
-  "_comment": "Kernel machine authority for conditional app-quality packs. Each pack is a first-class rule leaf under src/rules/packs/ plus this kernel entry (id, trigger, rule_leaf, evidence). The resolver is the SOLE loader: a pack activates only when (path-routes union scoper-tags) intersect execution-allowlist selects it - path_globs/risk_tags here describe what a pack RESPONDS to, and the repo's pack_routes in execution.yaml is the allowlist that gates activation. Every pack MUST carry a trigger (path_globs and/or risk_tags); a pack present without a trigger FAILS the gate. The resolver copies no leaf body and writes no artifact.",
+  "_comment": "Kernel machine authority for conditional app-quality packs. Each pack is a first-class rule leaf under src/rules/packs/ plus this kernel entry (id, trigger, rule_leaf, evidence, status). The resolver is the SOLE loader: a pack activates only when (path-routes union scoper-tags) intersect execution-allowlist selects it - path_globs/risk_tags here describe what a pack RESPONDS to, and the repo's pack_routes in execution.yaml is the allowlist that gates activation. 'status' is the dogfood ship gate: 'shipped' packs are routed by this repo and their prose is gated; 'deferred' packs carry authored content that no dogfood path routes (bash + markdown has no frontend/UI/api/auth/db/hot-concurrent surface), so the verifier no longer gates their prose - they stay on disk, cheaply re-enableable by routing them in a repo's execution.yaml and flipping status to 'shipped'. Every SHIPPED pack MUST carry a trigger (path_globs and/or risk_tags); a shipped pack without a trigger FAILS the gate. The resolver copies no leaf body and writes no artifact.",
   "merge_rule": "(path-routes ∪ scoper-tags) ∩ execution-allowlist",
   "packs": [
     {
       "id": "frontend",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/web/**", "**/ui/**", "**/components/**", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.css"],
         "risk_tags": ["frontend", "ui"]
@@ -13,6 +14,7 @@
     },
     {
       "id": "accessibility",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/web/**", "**/ui/**", "**/components/**"],
         "risk_tags": ["accessibility", "a11y"]
@@ -22,6 +24,7 @@
     },
     {
       "id": "backend-api",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/api/**", "**/services/**", "**/handlers/**", "**/routes/**", "**/*.proto", "**/openapi*.yaml"],
         "risk_tags": ["backend", "api"]
@@ -31,6 +34,7 @@
     },
     {
       "id": "auth-security",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/auth/**", "**/session*/**", "**/login/**", "**/security/**", "**/*secret*"],
         "risk_tags": ["auth", "security"]
@@ -40,6 +44,7 @@
     },
     {
       "id": "db-migration",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/migrations/**", "**/migrate/**", "**/schema*/**", "**/*.sql"],
         "risk_tags": ["db-migration", "data-safety"]
@@ -49,6 +54,7 @@
     },
     {
       "id": "testing-reliability",
+      "status": "shipped",
       "trigger": {
         "path_globs": ["**/src/**", "**/tests/**", "src/verify-agent-docs.sh"],
         "risk_tags": ["testing", "reliability"]
@@ -58,6 +64,7 @@
     },
     {
       "id": "performance-concurrency",
+      "status": "deferred",
       "trigger": {
         "path_globs": ["**/worker*/**", "**/queue*/**", "**/cache*/**", "**/concurrent/**"],
         "risk_tags": ["performance", "concurrency"]
@@ -67,6 +74,7 @@
     },
     {
       "id": "deployment-ops",
+      "status": "shipped",
       "trigger": {
         "path_globs": ["**/install*.sh", "**/*deploy*", "**/.github/workflows/**", "**/Dockerfile", "**/ci/**"],
         "risk_tags": ["deployment", "ops"]

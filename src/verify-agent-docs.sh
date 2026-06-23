@@ -343,6 +343,40 @@ require_no_scaffold_placeholders() {
     fail "$label contains unresolved '\"fill\"' placeholder: ${match#$root/}"
 }
 
+# Documentation budgets are ADVISORY-with-ceiling (Wave 3): a doc over its class
+# budget prints a WARN (non-gating); a doc over its ABSOLUTE CEILING still FAILs.
+# The ceiling is the class budget scaled by DOC_BUDGET_CEILING_NUM/DEN (20%
+# headroom). This lets a sane near-cap edit land — e.g. a decision doc at
+# 2599/2600 that a new entry pushes a little past 2600 — while a runaway doc that
+# should have been split (>3120 for a 2600 class) still hard-fails. The per-class
+# budgets above each helper are the advisory target the doc author should hold;
+# the ceiling is the safety net, not a license to grow.
+DOC_BUDGET_CEILING_NUM=12
+DOC_BUDGET_CEILING_DEN=10
+
+doc_budget_ceiling() {
+  # ceil(cap * NUM / DEN) so the ceiling is never below the advisory cap.
+  local cap=$1
+  printf '%s' $(( (cap * DOC_BUDGET_CEILING_NUM + DOC_BUDGET_CEILING_DEN - 1) / DOC_BUDGET_CEILING_DEN ))
+}
+
+# enforce_doc_budget <count> <cap> <label> <display-path>: advisory-with-ceiling
+# comparison shared by both doc-budget helpers.
+enforce_doc_budget() {
+  local count=$1
+  local cap=$2
+  local label=$3
+  local display=$4
+  local ceiling
+  ceiling=$(doc_budget_ceiling "$cap")
+  if [ "$count" -gt "$ceiling" ]; then
+    fail "$label word CEILING exceeded for $display: $count > $ceiling (advisory cap $cap; split this doc)"
+  elif [ "$count" -gt "$cap" ]; then
+    printf 'WARN %s over advisory budget (non-gating): %s %s > %s (ceiling %s)\n' \
+      "$label" "$display" "$count" "$cap" "$ceiling"
+  fi
+}
+
 require_word_limit_under() {
   local root=$1
   local path=$2
@@ -353,8 +387,7 @@ require_word_limit_under() {
   [ -f "$root/$path" ] || fail "$label word-count target missing: $path"
   count=$(wc -w < "$root/$path")
   count=${count//[[:space:]]/}
-  [ "$count" -le "$cap" ] ||
-    fail "$label word cap exceeded for $path: $count > $cap"
+  enforce_doc_budget "$count" "$cap" "$label" "$path"
 }
 
 require_word_limit() {
@@ -374,8 +407,7 @@ require_file_word_limit() {
   [ -f "$file" ] || fail "$label word-count target missing: ${file#$repo_root/}"
   count=$(wc -w < "$file")
   count=${count//[[:space:]]/}
-  [ "$count" -le "$cap" ] ||
-    fail "$label word cap exceeded for ${file#$repo_root/}: $count > $cap"
+  enforce_doc_budget "$count" "$cap" "$label" "${file#$repo_root/}"
 }
 
 require_text() {
@@ -591,11 +623,16 @@ print(f"  {label}: execution.yaml full-schema valid "
 PY
 }
 
-# validate_kernel_packs: the kernel pack gates (Wave 4b). Every pack in packs.json
-# must (a) carry a trigger — at least one path_glob or risk_tag (a pack without a
-# trigger FAILS, since the merge rule cannot route an un-triggered pack), (b) name
-# a rule_leaf that exists on disk, and (c) name an evidence requirement. Reads the
-# kernel with stdlib json only (no YAML); writes nothing.
+# validate_kernel_packs: the kernel pack gates, narrowed to the dogfood-SHIPPED
+# set (Wave 3). Each pack carries a `status` (shipped | deferred). A SHIPPED pack
+# must (a) carry a trigger — at least one path_glob or risk_tag (a shipped pack
+# without a trigger FAILS, since the merge rule cannot route an un-triggered
+# pack), (b) name a rule_leaf that exists on disk, and (c) name an evidence
+# requirement. DEFERRED packs carry authored content no dogfood path routes; their
+# prose is NOT gated (it stays on disk, cheaply re-enableable), but their id must
+# be unique and their `status` recognized. The deferred ids are LISTED, not
+# silently dropped. Reads the kernel with stdlib json only (no YAML); writes
+# nothing.
 validate_kernel_packs() {
   local python_cmd
   python_cmd=$(find_python_cmd)
@@ -611,6 +648,7 @@ packs = data.get("packs", [])
 
 errors = []
 seen = set()
+shipped, deferred = [], []
 for i, p in enumerate(packs):
     pid = p.get("id")
     if not pid:
@@ -619,6 +657,16 @@ for i, p in enumerate(packs):
     if pid in seen:
         errors.append(f"duplicate pack id: {pid}")
     seen.add(pid)
+    status = p.get("status")
+    if status not in ("shipped", "deferred"):
+        errors.append(f"pack {pid} has unrecognized status: {status!r} "
+                      "(want 'shipped' or 'deferred')")
+        continue
+    if status == "deferred":
+        deferred.append(pid)
+        continue
+    shipped.append(pid)
+    # Shipped-only gates: trigger + existing rule_leaf + evidence.
     trig = p.get("trigger") or {}
     globs = trig.get("path_globs") or []
     tags = trig.get("risk_tags") or []
@@ -636,8 +684,10 @@ if errors:
     for e in errors:
         print(f"KERNEL-PACK FAIL: {e}", file=sys.stderr)
     raise SystemExit(1)
-print(f"  kernel packs valid: {len(packs)} packs, each with a trigger, an "
-      f"existing rule_leaf, and an evidence requirement")
+print(f"  kernel packs valid: {len(shipped)} shipped "
+      f"[{', '.join(shipped)}] gated (trigger + existing rule_leaf + evidence)")
+print(f"  kernel packs deferred (authored, not gated, not routed): "
+      f"{len(deferred)} [{', '.join(deferred)}]")
 PY
 }
 
@@ -1586,26 +1636,25 @@ launch_total() {
 # count is nonzero. The function still prints all WARN lines first so a red run
 # is fully diagnosable. Also surfaced as a section inside --context-report.
 #
-# Budgets (E3 measured floors, now ENFORCED launch budgets in Wave 5b):
-#   fixed skill controlled launch  <= 2000   (honest max 1922 = review-app;
-#                                              floor + ~4% headroom)
-#   classifier controlled launch   <= 3300   (honest max 3118 = orchestrate;
-#                                              floor + ~6% headroom; allowlist:
-#                                              orchestrate, fresh-chat,
-#                                              start-session)
-# These floors are irreducible: the shared startup contract (skill-contracts 637)
-# + docs index (114) + requested manifest slots (430) = 1181 words load on every
-# launch regardless of skill body, and a classifier additionally reads
-# lifecycle.md (1037). The aspirational 1200/2000 targets are unreachable without
-# deleting that irreducible normative startup surface (Decision E3). After the
-# honest --measure-launch fix (path strings in prohibitions, deferred-load
-# glosses, and References pointers no longer count as startup loads), zero skills
-# exceed these floors.
+# Launch budgets (Wave 3: ADVISORY target + absolute ceiling). The kernel holds
+# two numbers per kind: a *_skill_launch ADVISORY target and a *_skill_ceiling
+# absolute hard floor.
+#   fixed:      target 2000, ceiling 2600   (honest max 1922 = review-app)
+#   classifier: target 3300, ceiling 4200   (honest max 3118 = orchestrate;
+#                                             allowlist: orchestrate, fresh-chat,
+#                                             start-session)
+# A launch over the ADVISORY target prints a WARN but does NOT gate (it used to be
+# a zero-headroom hard floor — the "budget treadmill" Wave 3 removes). A launch
+# over the ABSOLUTE CEILING still increments the gating violation counter and
+# FAILS, catching runaway bloat. The irreducible startup surface (skill-contracts
+# 637 + docs index 114 + manifest slots 430 = 1181, plus lifecycle.md 1037 for a
+# classifier) is why the targets sit where they do; the ceiling gives real
+# headroom above it without licensing unbounded growth.
 contract_check() {
   local violations=0
-  local skill_dir skill_name skill_file total budget kind clean
+  local skill_dir skill_name skill_file total budget ceiling kind clean
   local match python_cmd
-  local fixed_budget classifier_budget classifier_allowlist
+  local fixed_budget classifier_budget fixed_ceiling classifier_ceiling classifier_allowlist
 
   section "source-bound contract checks (enforced; gating)"
 
@@ -1613,8 +1662,9 @@ contract_check() {
   [ -n "$python_cmd" ] || fail "cannot run contract checks; install python"
 
   # Launch budgets come from the kernel (src/kernel/profiles.json budgets), the
-  # sole authority since the Wave 1b cutover. classifier_allowlist is rebuilt
-  # from the kernel's classifier_skills as " name name name " for the
+  # sole authority since the Wave 1b cutover. Each kind carries an ADVISORY target
+  # (*_skill_launch) and an absolute hard CEILING (*_skill_ceiling). classifier_allowlist
+  # is rebuilt from the kernel's classifier_skills as " name name name " for the
   # whitespace-bounded substring match the checks below rely on.
   fixed_budget=$(
     "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
@@ -1628,6 +1678,18 @@ import json, sys
 print(json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["classifier_skill_launch"])
 PY
   )
+  fixed_ceiling=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["fixed_skill_ceiling"])
+PY
+  )
+  classifier_ceiling=$(
+    "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8"))["budgets"]["classifier_skill_ceiling"])
+PY
+  )
   classifier_allowlist=$(
     "$python_cmd" - "$repo_root/src/kernel/profiles.json" <<'PY'
 import json, sys
@@ -1636,11 +1698,11 @@ print(" " + " ".join(skills) + " ")
 PY
   )
 
-  # ---- Check 1: launch budgets -------------------------------------------
-  # For every skill, compute the controlled launch total and warn if it exceeds
-  # the kernel's enforced launch budget for its kind (fixed_skill_launch for a
-  # fixed skill, classifier_skill_launch for an allowlisted classifier).
-  printf -- '-- check 1: controlled launch budgets --\n'
+  # ---- Check 1: launch budgets (advisory target + hard ceiling) ----------
+  # For every skill, compute the controlled launch total and compare against its
+  # kind's ADVISORY target and absolute CEILING. Over target but within ceiling →
+  # WARN, non-gating (no treadmill). Over ceiling → gating violation (real bloat).
+  printf -- '-- check 1: controlled launch budgets (advisory target; hard ceiling) --\n'
   clean=1
   for skill_dir in "$repo_root"/src/skills/*/; do
     [ -d "$skill_dir" ] || continue
@@ -1648,19 +1710,23 @@ PY
     [ -f "$skill_dir/SKILL.md" ] || continue
     total=$(launch_total "$skill_name")
     case "$classifier_allowlist" in
-      *" $skill_name "*) kind=classifier; budget=$classifier_budget ;;
-      *) kind=fixed; budget=$fixed_budget ;;
+      *" $skill_name "*) kind=classifier; budget=$classifier_budget; ceiling=$classifier_ceiling ;;
+      *) kind=fixed; budget=$fixed_budget; ceiling=$fixed_ceiling ;;
     esac
-    if [ "$total" -gt "$budget" ]; then
-      printf 'WARN launch over budget: %s (%s) launch=%s > %s\n' \
-        "$skill_name" "$kind" "$total" "$budget"
+    if [ "$total" -gt "$ceiling" ]; then
+      printf 'WARN launch OVER CEILING (gating): %s (%s) launch=%s > ceiling %s\n' \
+        "$skill_name" "$kind" "$total" "$ceiling"
       violations=$((violations + 1))
       clean=0
+    elif [ "$total" -gt "$budget" ]; then
+      printf 'WARN launch over advisory target (non-gating): %s (%s) launch=%s > target %s (ceiling %s)\n' \
+        "$skill_name" "$kind" "$total" "$budget" "$ceiling"
+      clean=0
     else
-      printf 'ok   %s (%s) launch=%s/%s\n' "$skill_name" "$kind" "$total" "$budget"
+      printf 'ok   %s (%s) launch=%s/%s (ceiling %s)\n' "$skill_name" "$kind" "$total" "$budget" "$ceiling"
     fi
   done
-  [ "$clean" -eq 1 ] && printf 'CLEAN: all skill launches within budget\n'
+  [ "$clean" -eq 1 ] && printf 'CLEAN: all skill launches within advisory target\n'
 
   # ---- Check 2: fixed skills must not load lifecycle.md at startup --------
   # A startup load is a line that names the lifecycle.md rule path AS something
@@ -1848,11 +1914,15 @@ PY
   fi
   [ "$clean" -eq 1 ] && printf 'CLEAN: review-app has no pre-audit confirm stop or eager run-doc/plan load\n'
 
-  # ---- Check 7: scenario source-binding ----------------------------------
-  # For each scenario row whose scenario_id maps cleanly to a skill, assert the
-  # profile IDs named in expected_profiles are actually named in that skill body.
-  # Unmappable scenarios are listed as "unmapped" rather than failing.
-  printf -- '-- check 7: scenario expected_profiles named in mapped skill --\n'
+  # ---- Check 7: scenario source-binding (ADVISORY, non-gating) -----------
+  # For each scenario row whose scenario_id maps cleanly to a skill, report
+  # whether the profile IDs named in expected_profiles also appear in that skill
+  # body. Wave 3 downgraded this from gating to ADVISORY: a skill body naming a
+  # profile string is low ground-truth value (a profile can be correctly dispatched
+  # without the skill body spelling its literal ID, and the real authority is the
+  # kernel scenario/profile data, already gated by --equivalence). Misses print an
+  # ADVISORY line and do NOT increment the gating violation counter.
+  printf -- '-- check 7 (advisory): scenario expected_profiles named in mapped skill --\n'
   local scenario_out
   scenario_out=$(
     "$python_cmd" - "$(scenario_fixture)" "$repo_root" <<'PY'
@@ -1879,7 +1949,7 @@ profile_re = re.compile(
     r"[a-z][a-z-]*\b"
 )
 
-violations = 0
+advisories = 0
 for row in data.get("scenarios", []):
     sid = row.get("scenario_id", "")
     expected = row.get("expected_profiles", "")
@@ -1890,27 +1960,30 @@ for row in data.get("scenarios", []):
         continue
     body_path = repo_root / "src" / "skills" / skill / "SKILL.md"
     if not body_path.is_file():
-        print(f"WARN {sid}: mapped skill missing: src/skills/{skill}/SKILL.md")
-        violations += 1
+        # A missing skill dir is independently GATED by the workflow/registry
+        # referential-integrity checks; advisory here keeps this check non-gating.
+        print(f"ADVISORY {sid}: mapped skill missing: src/skills/{skill}/SKILL.md")
+        advisories += 1
         continue
     body = body_path.read_text(encoding="utf-8")
     missing = [p for p in want if p not in body]
     if missing:
         print(
-            f"WARN {sid}->{skill}: expected profiles not named in skill body: "
+            f"ADVISORY {sid}->{skill}: expected profiles not named in skill body: "
             f"{missing}"
         )
-        violations += 1
+        advisories += 1
     else:
         print(f"ok   {sid}->{skill}: profiles {want} all named")
-print(f"__VIOLATIONS__ {violations}")
+print(f"__ADVISORIES__ {advisories}")
 PY
   )
-  local sc_violations
-  sc_violations=$(printf '%s\n' "$scenario_out" | awk '/^__VIOLATIONS__/{print $2}')
-  printf '%s\n' "$scenario_out" | grep -v '^__VIOLATIONS__'
-  violations=$((violations + ${sc_violations:-0}))
-  [ "${sc_violations:-0}" -eq 0 ] && printf 'CLEAN: all mapped scenarios name their expected profiles\n'
+  local sc_advisories
+  sc_advisories=$(printf '%s\n' "$scenario_out" | awk '/^__ADVISORIES__/{print $2}')
+  printf '%s\n' "$scenario_out" | grep -v '^__ADVISORIES__'
+  # ADVISORY: not added to the gating violation counter.
+  [ "${sc_advisories:-0}" -eq 0 ] && printf 'CLEAN: all mapped scenarios name their expected profiles\n'
+  [ "${sc_advisories:-0}" -ne 0 ] && printf 'ADVISORY: %s scenario(s) do not name expected profiles (non-gating)\n' "${sc_advisories:-0}"
 
   # ---- Check 8: report-field + final-ordering presence -------------------
   # Warn if dispatch.md Worker Reports lacks any required field, or lifecycle.md

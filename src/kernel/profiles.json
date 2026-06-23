@@ -1,8 +1,10 @@
 {
-  "_comment": "Kernel machine authority for worker context profiles and global launch budgets. Read by the verifier's stdlib json (src/verify-agent-docs.sh). Field values are byte-faithful to the legacy context-profiles.md '## Profiles' table the kernel supersedes; core_rule_paths/overlays keep their inline backtick markup so the resolved rows are identical to the prior awk-parsed output. This is the SOLE authority for these facts after the Wave 1b cutover - no profile field or budget number lives in both here and Markdown/bash.",
+  "_comment": "Kernel machine authority for worker context profiles and global launch budgets. Read by the verifier's stdlib json (src/verify-agent-docs.sh). Field values are byte-faithful to the legacy context-profiles.md '## Profiles' table the kernel supersedes; core_rule_paths/overlays keep their inline backtick markup so the resolved rows are identical to the prior awk-parsed output. This is the SOLE authority for these facts after the Wave 1b cutover - no profile field or budget number lives in both here and Markdown/bash. Wave 3: the *_skill_launch numbers are ADVISORY targets (an overage WARNs, non-gating); the *_skill_ceiling numbers are the absolute hard floors that still FAIL the gate, killing the zero-headroom budget treadmill while still catching runaway bloat.",
   "budgets": {
     "fixed_skill_launch": 2000,
+    "fixed_skill_ceiling": 2600,
     "classifier_skill_launch": 3300,
+    "classifier_skill_ceiling": 4200,
     "classifier_skills": [
       "orchestrate",
       "fresh-chat",
