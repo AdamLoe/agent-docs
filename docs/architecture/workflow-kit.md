@@ -45,8 +45,8 @@ bundled `~/.agentdocs/rules/...` paths and the worker reads them. The kernel is
 kernel-backed gate run only in the source checkout — a runtime worker never runs
 them. `--resolve` is a source-only authoring/verification aid for confirming what
 a dispatch names. A disposable temp-HOME sim proved this: with the runtime bundle
-but no kernel, direct naming reads every core rule file, while `--resolve` fails
-on the missing `src/kernel/profiles.json`.
+but no kernel, direct naming reads every core rule file while `--resolve` fails on
+the missing kernel.
 
 Rules live at the layer that owns them:
 
@@ -71,15 +71,14 @@ exact rule links, starting inputs, path plus heading/search hints for large docs
 observed facts to preserve, expected checks/evidence, and report shape. Packets
 stay compact: no copied rules, generated artifacts, or full transcripts.
 
-`/orchestrate` takes a **conditional bounded fast path**: it classifies the
-request inline and dispatches an `implementation.*` worker directly when the
-request already states a bounded outcome, acceptance, and a likely check;
-otherwise it opens with a read-only `planning.scope` worker that investigates and
-returns a **workflow-brief**. Lighter work uses a `planning.brief` worker for an
-inline implementation brief. Both briefs are plain Markdown, not generated
-packets. The canonical field shape is owned by
+`/orchestrate` takes a **conditional bounded fast path**: it classifies inline
+and dispatches an `implementation.*` worker directly when the request already
+states a bounded outcome, acceptance, and a likely check; otherwise a read-only
+`planning.scope` worker returns a **workflow-brief** (lighter work uses
+`planning.brief`). Briefs are plain Markdown, not generated packets; the field
+shape is owned by
 [`../../src/rules/subagent/planning.md`](../../src/rules/subagent/planning.md)
-(`## Workflow-brief`) and not duplicated here.
+(`## Workflow-brief`).
 
 Implementation workers receive either a bounded task or the planner's brief.
 They discover source files and tests inside that slice, run the cheapest
@@ -168,9 +167,8 @@ The full command inventory lives in
 below picks the smallest owner. Load-bearing workflow facts not obvious from a
 command name:
 
-- `/orchestrate` takes a conditional bounded fast path: a bounded request
-  (stated outcome + acceptance + likely check) dispatches `implementation.*`
-  directly with no scope hop, and a read-only `planning.scope` worker runs only
+- `/orchestrate` conditional bounded fast path (above): a bounded request
+  dispatches `implementation.*` directly, no scope hop; `planning.scope` runs only
   when classification, decomposition, or a user decision is unresolved.
 - `/quick-fix` dispatches implementation only for already bounded fixes; unclear
   small work is first shaped by a planning worker or routed to `/plan`.

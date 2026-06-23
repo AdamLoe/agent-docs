@@ -285,16 +285,16 @@ short packets save tokens without weakening evidence.
 
 ## Profiles are the sole worker-context authority
 
-**Decision.** `src/rules/context-profiles.md` owns all 11 worker profiles. Skills
-name profile IDs; workers resolve exact context via `--resolve <id>`. Role cards
-add no default rule files beyond the resolved profile. All 11 are `enforced`; the
-verifier exits nonzero on budget overrun or contract-check failure. Usage counts
-appear in reports only when exposed or requested.
+**Decision.** The kernel (`src/kernel/profiles.json`) owns the worker profiles;
+`src/rules/context-profiles.md` is the human contract. Skills name profile IDs and
+a dispatch names that profile's rule files directly — runtime workers never run
+`--resolve` (a source-only aid). Role cards add no rule files beyond the named
+profile. The verifier exits nonzero on budget overrun or contract-check failure.
 
 **Why.** One authority prevents role cards from silently expanding context;
 deterministic checks catch drift without adapter runtime metrics.
 
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/context-profiles.md`](../../src/rules/context-profiles.md), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
 
 ## Enforced budgets with correctness floors (E3)
 
@@ -379,14 +379,6 @@ to edit, verify, stage, and commit.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/rules/orchestrator/lifecycle.md`](../../src/rules/orchestrator/lifecycle.md), [`../../src/rules/orchestrator/dispatch.md`](../../src/rules/orchestrator/dispatch.md), [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md).
 
-## Orchestrate coordinates specialists
-
-**Decision.** `/orchestrate` is a lifecycle controller dispatching planning,
-plan-review, implementation, work-review, or quick-fix worker phases — never
-reimplementing them inline. (Rationale: "Subagent-first execution" above.)
-
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/).
-
 ## Orchestration run docs are opt-in
 
 **Decision.** `/orchestrate` creates `docs/plans/orchestrator/<run-slug>/` only
@@ -395,9 +387,9 @@ orchestrator explains a concrete resume risk.
 
 **Why.** Persistent run state helps long multi-agent work, but defaulting it on
 would create extra temporary docs for ordinary changes. Keeping the mode inside
-`/orchestrate` preserves the compact command surface and avoids reviving retired
-command names. Default runs are less resumable after context loss — the accepted
-cost of not committing coordination folders unasked.
+`/orchestrate` preserves the compact command surface. Default runs are less
+resumable after context loss — the accepted cost of not committing folders
+unasked.
 
 **Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/run-docs.md`](../../src/rules/orchestrator/run-docs.md), [`../../src/plan-lifecycle.md`](../../src/plan-lifecycle.md).
 
@@ -428,39 +420,22 @@ Markdown/bash.
 
 ## Conditional bounded fast path for `/orchestrate`
 
-> **Supersedes** the prior "Uniform `planning.scope` `/orchestrate` entry"
-> decision, which made a read-only `planning.scope` worker the mandatory first
-> phase of every run and accepted a per-run cost regression. That call is
-> reversed.
+> **Supersedes** "Uniform `planning.scope` `/orchestrate` entry" (mandatory
+> scope-first).
 
-**Decision.** `/orchestrate` classifies the request inline (cheap routing, never
-implementation) and takes one of two routes. When the request already states a
-bounded outcome, an acceptance criterion, and a likely check, the orchestrator
-dispatches an `implementation.*` worker **directly** — no scope hop. It dispatches
-a read-only `planning.scope` worker **only** when classification, decomposition,
-or a genuine user decision is unresolved; that brief then resolves the
-bounded/briefed/tracked lifecycle. Subagent-first is retained on both routes: the
-orchestrator only routes work, never does it inline. The cost-regression budget
-guard that bounded the old mandatory scope hop is removed (the hop is now
-conditional, so there is no per-run regression to bound).
+**Decision.** `/orchestrate` classifies inline (routing, never implementation). A
+bounded request (outcome + acceptance + likely check) dispatches an
+`implementation.*` worker **directly**, no scope hop. A read-only `planning.scope`
+worker runs **only** when classification, decomposition, or a user decision is
+unresolved; its brief then resolves the lifecycle. Subagent-first holds on both
+routes; the now-moot cost-regression scope-hop budget guard is removed.
 
-**Why.** Dogfooding showed the mandatory scope phase taxes every already-bounded
-`/orchestrate` run with a read-only worker hop that resolves nothing new — the
-request had already stated the outcome, acceptance, and check. Charging that hop
-unconditionally is the cost regression the prior decision accepted; for a
-single-author dogfood kit it is not worth paying when the bounded shape is
-already legible. Making the scope worker conditional restores the fast path while
-keeping the source-backed scoping for genuinely unresolved work.
+**Why.** The mandatory scope phase taxed every already-bounded run with a worker
+hop that resolved nothing new — not worth it for a single-author dogfood kit.
+Conditional scope restores the fast path, keeping source-backed scoping for
+unresolved work.
 
-**Alternatives considered.** Keeping the uniform scope-first entry (the
-superseded decision) — rejected: it pays a worker hop on every bounded run for no
-new information. Dropping `planning.scope` entirely — rejected: unresolved,
-multi-stream, or decision-laden requests still need a source-backed brief before
-the lifecycle can be chosen.
-
-**Code anchors.** `src/skills/orchestrate/SKILL.md → ## Entry: conditional bounded fast path`; `src/rules/orchestrator/lifecycle.md → ## Deterministic first phases`; `src/kernel/workflows.json → orchestrate`; `src/kernel/scenarios.json → orchestrate-bounded-fast-path`, `orchestrate-scope-when-unresolved`; `src/verify-agent-docs.sh → check 9`.
-
-**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/kernel/`](../../src/kernel/), [`../../src/verify-agent-docs.sh`](../../src/verify-agent-docs.sh).
+**Applies to.** [`../architecture/workflow-kit.md`](../architecture/workflow-kit.md), [`../../src/skills/orchestrate/SKILL.md`](../../src/skills/orchestrate/SKILL.md), [`../../src/rules/orchestrator/`](../../src/rules/orchestrator/), [`../../src/kernel/`](../../src/kernel/).
 
 ## Source-only until final migration
 
