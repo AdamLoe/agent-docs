@@ -48,6 +48,14 @@ a dispatch names. A disposable temp-HOME sim proved this: with the runtime bundl
 but no kernel, direct naming reads every core rule file while `--resolve` fails on
 the missing kernel.
 
+**Runtime canary caveat.** The installed runtime bundles `rules/`, `skills/`, and
+`template/` but NOT `src/kernel/`. The profile→rules table is a kernel fact absent
+from the bundled `context-profiles.md`; at runtime the orchestrator names a
+profile's rule files by skill/role-card convention and the worker reads them
+directly. Confirming that a live orchestrator resolves profiles correctly in a real
+consuming repo is the user-gated real-install canary's job — not provable by the
+source-only sim.
+
 Rules live at the layer that owns them:
 
 - **Universal** (`src/rules/*.md`) - what every skill needs regardless of role.

@@ -1,8 +1,8 @@
 ---
-status:        active
+status:        shipped
 owner:         implementation
 last_updated:  2026-06-23
-okay_to_delete: false
+okay_to_delete: true
 long_lived:    false
 owning_docs:
   - architecture/workflow-kit.md
@@ -175,11 +175,27 @@ unchanged).
 
 ## Migration notes (filled in at ship time)
 
-Route at ship: the fast-path reversal and its rationale → `decisions/agent-docs.md`
-(superseding the Q1 disposition); the trimmed gate set, deferred packs, and the
-runtime profile-resolution answer → `architecture/workflow-kit.md`; any new
-concept-to-doc routing → `_meta/ownership.json`. List what moved where so
-`okay_to_delete: true` is honest.
+What moved where (all confirmed present in owning docs):
+
+- **Q1 fast-path reversal + rationale** → `docs/decisions/agent-docs.md` §
+  "Conditional bounded fast path for `/orchestrate`" (Wave 2; supersedes the prior
+  mandatory scope-first disposition).
+- **Trimmed gate set, deferred-packs list, advisory-with-ceiling budget policy,
+  runtime profile-resolution answer** → `docs/architecture/workflow-kit.md` §
+  "Runtime profile resolution" and § "Workflow commands" advisory-with-ceiling
+  text (Waves 1/3). Deferred pack list also in `docs/decisions/agent-docs.md` §
+  "Deferred quality packs".
+- **Runtime canary caveat** ("what only a real install can prove") → `docs/
+  architecture/workflow-kit.md` § "Runtime canary caveat" paragraph (added at
+  closeout): the source-only sim confirmed direct rule-file naming works without
+  the kernel, but validating live profile resolution in a real consuming repo
+  requires the user-gated real-install canary.
+- **Wave 4 canary findings** → run hub (disposable temp-HOME sandbox, findings
+  reported to the orchestrator, sandbox deleted after). The "what only a real
+  install can prove" list was handed to the user at Wave 4 closeout.
+
+No new `_meta/ownership.json` entries required; all migrated facts route to
+existing owners.
 
 ## See also
 

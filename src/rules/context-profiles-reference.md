@@ -59,11 +59,11 @@ that exercise it, and the verifier checks all agree — never by flipping
 The workflow scenarios are a report-only behavioral contract: each row names the
 expected questions, profiles, phases, mutator count, state-basis fields, final
 ordering, and budget expectation for one task shape. That matrix is verifier-only
-data, so it lives in the never-auto-loaded fixture
-`src/verify-fixtures/workflow-scenarios.json` rather than on this runtime-loaded
+data, so it lives in the never-auto-loaded machine authority
+`src/kernel/scenarios.json` rather than on this runtime-loaded
 file. Keeping it out of `context-profiles.md` is what lets the profile owner stay
 a small, always-resolvable contract while the scenario matrix grows. No skill or
-runtime context loads the fixture; only the verifier reads it.
+runtime context loads the kernel JSON; only the verifier reads it.
 
 ## See also
 
