@@ -1,7 +1,7 @@
 ---
 status:        active
 owner:         orchestrator
-last_updated:  2026-06-22
+last_updated:  2026-06-23
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -80,23 +80,26 @@ decisions, recorded incrementally in W0+W5), `docs/_meta/{manifest.md,
 ownership.json}`, `src/agent-docs-guide.md`, `src/template/docs/`. The build plan
 is `status: active`, `okay_to_delete: false` — SOURCE-COMPLETE, not shipped.
 
+**Kernel bundling — RESOLVED by no-install test (2026-06-23): NO change needed.**
+A simulated installed (flat) layout in `/tmp` showed: the installed runtime's only
+job is `--scaffold` (no-arg run prints the `--scaffold` directive), and `--scaffold`
+validates a consuming repo's `docs/` and NEVER reads `src/kernel/`. `--resolve` and
+the full gate are source-checkout-only tools (they need `src/kernel/` relative to a
+real repo root, absent post-install) — this was true before the kernel too. So both
+installers' `bundle_dirs=(skills rules template)` are correct as-is; the earlier
+"must bundle kernel/" flag (and the final-verify worker's "no gap") are both
+superseded by this test: no gap, and no bundle change. Open for the canary only:
+whether a *consuming-repo* dispatch should resolve a profile→rules mapping at
+runtime (today it reads the named rule files directly per dispatch).
+
 **REMAINING — user-gated FINAL migration only (do NOT run without authorization):**
-1. **Bundle the kernel.** Both installers' `bundle_dirs=(skills rules template)`
-   EXCLUDE `kernel/`. The verifier reads `$repo_root/src/kernel/*.json`, so the
-   installed `~/.agentdocs` runtime `--resolve` would break. Add `kernel` to
-   `bundle_dirs` in `install-agentdocs-local.sh` + `src/install-agentdocs.sh` (and
-   the GitHub bundle-shape validation) and confirm runtime path resolution. (The
-   final-verify worker initially called this "no gap" — it IS a gap; corrected
-   here.) Assess whether `verify-fixtures/` baseline is needed at runtime (likely
-   not — only `--equivalence` uses it).
-2. Run the installer; refresh `~/.agentdocs/` + Claude/Codex adapter skill copies;
-   prune the renamed `check-docs`/`review-plans-health` dirs via
-   `remove_stale_managed`.
-3. Roll `execution.yaml` out to other consuming repos (deliberately broken until now).
-4. Run the two live canaries (ordinary feature + UI feature) per adapter (Claude
-   Code, Codex).
+1. Run an installer; refresh `~/.agentdocs/` + Claude/Codex adapter skill copies;
+   prune the renamed `check-docs`/`review-plans-health` dirs via `remove_stale_managed`.
+2. Roll `execution.yaml` out to other consuming repos (deliberately broken until now).
+3. Run the two live canaries (ordinary feature + UI feature) per adapter; the canary
+   answers the consuming-repo profile-resolution question above.
 After that succeeds: build plan → `status: shipped`, `okay_to_delete: true`; this
-hub → same; then `/clear-plans`.
+hub → same; then `/clear-plans`. **No source changes remain** — only the install.
 
 ## Decisions & accepted risks
 

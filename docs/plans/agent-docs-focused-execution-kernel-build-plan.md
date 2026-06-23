@@ -1,7 +1,7 @@
 ---
 status:        active
 owner:         implementation
-last_updated:  2026-06-22
+last_updated:  2026-06-23
 okay_to_delete: false
 long_lived:    false
 owning_docs:
@@ -386,12 +386,14 @@ enforced by the dual-authority detector. `workflow-scenarios.json` →
 `scenarios.json` (deleted); per-skill facts → `workflows.json`. No machine fact
 lives twice.
 
-**Remaining ONLY for the user-gated FINAL migration:** extend installer bundles if
-the runtime needs `kernel/`; run an installer; refresh `~/.agentdocs/` + the
-Claude/Codex adapter copies (prune renamed `check-docs`/`review-plans-health` dirs
-via `remove_stale_managed`); roll `execution.yaml` to other consuming repos; run
-the two live canaries per adapter. Then set `status: shipped`,
-`okay_to_delete: true`.
+**Remaining ONLY for the user-gated FINAL migration:** run an installer; refresh
+`~/.agentdocs/` + the Claude/Codex adapter copies (prune renamed
+`check-docs`/`review-plans-health` dirs via `remove_stale_managed`); roll
+`execution.yaml` to other consuming repos; run the two live canaries per adapter.
+Then set `status: shipped`, `okay_to_delete: true`. **No `kernel/` bundle change is
+needed** — a no-install layout sim (2026-06-23) showed the runtime only runs
+`--scaffold` (never the kernel); `--resolve`/full gate are source-only. The canary
+should confirm how consuming-repo dispatch resolves a profile's rules at runtime.
 
 ## See also
 
